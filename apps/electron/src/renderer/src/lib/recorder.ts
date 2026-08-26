@@ -203,11 +203,11 @@ function normalizeAudio(data: Float32Array): Float32Array {
   if (gain < 1.0) gain = 1.0;
 
   // Check if linear scaling would exceed 0.90 peak
-  if (maxPeak * gain > 0.90) {
-    gain = 0.90 / maxPeak;
+  if (maxPeak * gain > 0.9) {
+    gain = 0.9 / maxPeak;
   }
 
-  if (gain <= 1.05 && maxPeak >= 0.80) {
+  if (gain <= 1.05 && maxPeak >= 0.8) {
     return data;
   }
 

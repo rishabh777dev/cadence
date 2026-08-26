@@ -8,6 +8,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragSpacer } from "@renderer/components/drag-spacer";
 import { KeyComboDisplay } from "@renderer/components/key-combo";
+import { LanguageModal } from "@renderer/components/language-modal";
 import { LanguageSelector } from "@renderer/components/language-selector";
 import { Badge } from "@renderer/components/ui/badge";
 import { Button } from "@renderer/components/ui/button";
@@ -42,7 +43,6 @@ import {
   refreshApiBase,
 } from "@renderer/lib/api";
 import { useCloudAuth } from "@renderer/lib/auth-context";
-import { LanguageModal } from "@renderer/components/language-modal";
 import { formatLanguageDisplay } from "@renderer/lib/languages";
 import { requestMicAccess, resolveMicStatus } from "@renderer/lib/permissions";
 import { IS_LINUX, IS_MAC, IS_WINDOWS } from "@renderer/lib/platform";
@@ -181,7 +181,6 @@ export default function SettingsPage(): React.JSX.Element {
     ],
     [devices, t],
   );
-
 
   const retentionOptions = useMemo(
     () => [
@@ -493,8 +492,6 @@ export default function SettingsPage(): React.JSX.Element {
       })
       .catch(() => {});
   }, []);
-
-
 
   const handleOutputModeChange = useCallback((value: string) => {
     setOutputMode(value);
@@ -857,7 +854,6 @@ export default function SettingsPage(): React.JSX.Element {
                 )}
               </Row>
 
-
               <Row
                 label={t("settings.recording.activation")}
                 desc={
@@ -915,7 +911,6 @@ export default function SettingsPage(): React.JSX.Element {
                   </SelectContent>
                 </Select>
               </Row>
-
 
               <Row
                 label={t("settings.recording.outputMode")}

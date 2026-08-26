@@ -22,8 +22,8 @@ import {
 import { SETTINGS_KEYS } from "../../../shared/settings-keys";
 
 const BARS = 11;
-const RISE = 0.70;
-const FALL = 0.20;
+const RISE = 0.7;
+const FALL = 0.2;
 const SVG_WIDTH = 54;
 const SVG_HEIGHT = 16;
 
@@ -126,7 +126,7 @@ function generateWavePath(
 
     // Smooth envelope tapering cleanly to 0 at both needle points
     const envelope = Math.max(0, Math.cos((d * Math.PI) / 2));
-    const envelopeSq = Math.pow(envelope, 1.8);
+    const envelopeSq = envelope ** 1.8;
 
     // Interpolate audio level across frequency bins
     const levelIdx = u * (levels.length - 1);
@@ -964,10 +964,9 @@ export default function AppPage(): React.JSX.Element {
           supportsSessionTransportRef.current;
 
         // Acquire stream directly
-        const stream =
-          recordingSessionUsesTransportRef.current
-            ? await recorderRef.current.acquireStream()
-            : await recorderRef.current.start();
+        const stream = recordingSessionUsesTransportRef.current
+          ? await recorderRef.current.acquireStream()
+          : await recorderRef.current.start();
 
         if (!wantsMicRef.current) {
           recorderRef.current.cancel();
@@ -1123,7 +1122,10 @@ export default function AppPage(): React.JSX.Element {
       } catch (err) {
         // Suppress benign abort/cancel errors
         const msg = err instanceof Error ? err.message : String(err);
-        if (!msg.toLowerCase().includes("abort") && !msg.toLowerCase().includes("cancel")) {
+        if (
+          !msg.toLowerCase().includes("abort") &&
+          !msg.toLowerCase().includes("cancel")
+        ) {
           window.api.showErrorDialog("Magic Edit", msg);
         }
       } finally {
@@ -1493,8 +1495,7 @@ export default function AppPage(): React.JSX.Element {
 
   // For Magic Edit: show bars ONLY while recording (listening to voice instruction),
   // NOT during processing/transcribing — we show a spinner then instead.
-  const isMagicEditProcessing =
-    isMagicEdit && state === "transcribing";
+  const isMagicEditProcessing = isMagicEdit && state === "transcribing";
 
   const showBars =
     !isMagicEditProcessing &&

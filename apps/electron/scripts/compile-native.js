@@ -153,10 +153,17 @@ function compileWindows() {
 
     if (!ok) {
       const csSrc = src.replace(/\.c$/, ".cs");
-      const cscPath = "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe";
+      const cscPath =
+        "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe";
       if (existsSync(csSrc) && existsSync(cscPath)) {
         console.log("  Trying Windows .NET csc.exe...");
-        ok = run(cscPath, ["/nologo", "/optimize", "/target:exe", `/out:${out}`, csSrc]);
+        ok = run(cscPath, [
+          "/nologo",
+          "/optimize",
+          "/target:exe",
+          `/out:${out}`,
+          csSrc,
+        ]);
       }
     }
 

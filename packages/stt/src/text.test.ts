@@ -23,8 +23,12 @@ describe("sanitizeTranscriptText", () => {
   });
 
   it("suppresses Whisper prompt leaks and meta-instructions on silence", () => {
-    expect(sanitizeTranscriptText("Transcribe in English and Hinglish.")).toBe("");
-    expect(sanitizeTranscriptText("Transcribe accurately in English and Hinglish.")).toBe("");
+    expect(sanitizeTranscriptText("Transcribe in English and Hinglish.")).toBe(
+      "",
+    );
+    expect(
+      sanitizeTranscriptText("Transcribe accurately in English and Hinglish."),
+    ).toBe("");
     expect(sanitizeTranscriptText("Spoken in English and Hinglish.")).toBe("");
   });
 

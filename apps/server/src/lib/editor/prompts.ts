@@ -29,7 +29,10 @@ export function buildLanguageBlock(language: string | undefined): string {
     .split(",")
     .map((c) => c.trim().toLowerCase())
     .filter(Boolean);
-  if (rawCodes.length === 0 || (rawCodes.length === 1 && rawCodes[0] === "auto")) {
+  if (
+    rawCodes.length === 0 ||
+    (rawCodes.length === 1 && rawCodes[0] === "auto")
+  ) {
     return config.autoLanguageConstraint;
   }
 

@@ -384,8 +384,8 @@ function Wave({
       const pCenter = 0.95 + 0.12 * Math.sin(t * 4.2);
       const pMidL = 0.72 + 0.15 * Math.sin(t * 3.6 + 1.2);
       const pMidR = 0.72 + 0.15 * Math.cos(t * 3.9 + 0.7);
-      const pOutL = 0.42 + 0.10 * Math.sin(t * 5.1 + 2.1);
-      const pOutR = 0.42 + 0.10 * Math.cos(t * 4.7 + 1.8);
+      const pOutL = 0.42 + 0.1 * Math.sin(t * 5.1 + 2.1);
+      const pOutR = 0.42 + 0.1 * Math.cos(t * 4.7 + 1.8);
 
       const top: string[] = [];
       const bot: string[] = [];
@@ -395,18 +395,21 @@ function Wave({
         const x = (tt * W).toFixed(1);
 
         // Gaussian lobe synthesis for 5 distinct rounded peaks
-        const gCenter = Math.exp(-Math.pow((tt - 0.5) / 0.095, 2)) * pCenter;
-        const gMidL = Math.exp(-Math.pow((tt - 0.33) / 0.075, 2)) * pMidL;
-        const gMidR = Math.exp(-Math.pow((tt - 0.67) / 0.075, 2)) * pMidR;
-        const gOutL = Math.exp(-Math.pow((tt - 0.18) / 0.055, 2)) * pOutL;
-        const gOutR = Math.exp(-Math.pow((tt - 0.82) / 0.055, 2)) * pOutR;
+        const gCenter = Math.exp(-(((tt - 0.5) / 0.095) ** 2)) * pCenter;
+        const gMidL = Math.exp(-(((tt - 0.33) / 0.075) ** 2)) * pMidL;
+        const gMidR = Math.exp(-(((tt - 0.67) / 0.075) ** 2)) * pMidR;
+        const gOutL = Math.exp(-(((tt - 0.18) / 0.055) ** 2)) * pOutL;
+        const gOutR = Math.exp(-(((tt - 0.82) / 0.055) ** 2)) * pOutR;
 
         // Base continuous wave floor so troughs curve smoothly
         const baseFloor = 0.08 * Math.sin(Math.PI * tt);
-        const combined = Math.max(baseFloor, gCenter + gMidL + gMidR + gOutL + gOutR);
+        const combined = Math.max(
+          baseFloor,
+          gCenter + gMidL + gMidR + gOutL + gOutR,
+        );
 
         // Outer flare envelope to pinch to a sharp point at the tips
-        const taper = Math.pow(Math.sin(Math.PI * tt), 1.2);
+        const taper = Math.sin(Math.PI * tt) ** 1.2;
         const h = Math.max(0.6, H * 0.45 * amp * combined * taper);
 
         top.push(`${x},${(H / 2 - h).toFixed(2)}`);

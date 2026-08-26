@@ -1,11 +1,15 @@
-import { useState, useMemo, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@renderer/components/ui/dialog";
 import { Button } from "@renderer/components/ui/button";
-import { Switch } from "@renderer/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@renderer/components/ui/dialog";
 import { Label } from "@renderer/components/ui/label";
-import { LANGUAGES, LanguageOption } from "@renderer/lib/languages";
-import { Search, Globe, Minus } from "lucide-react";
+import { Switch } from "@renderer/components/ui/switch";
+import { LANGUAGES, type LanguageOption } from "@renderer/lib/languages";
 import { cn } from "@renderer/lib/utils";
+import { Globe, Minus, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface LanguageModalProps {
   open: boolean;
@@ -23,7 +27,10 @@ export function LanguageModal({
   const initialAutoDetect = !value || value === "auto";
   const initialSelected = useMemo(() => {
     if (!value || value === "auto") return ["en", "hinglish"];
-    return value.split(",").map((c) => c.trim()).filter(Boolean);
+    return value
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
   }, [value]);
 
   const [autoDetect, setAutoDetect] = useState(initialAutoDetect);
@@ -36,7 +43,10 @@ export function LanguageModal({
       const isAuto = !value || value === "auto";
       setAutoDetect(isAuto);
       if (value && value !== "auto") {
-        const parsed = value.split(",").map((c) => c.trim()).filter(Boolean);
+        const parsed = value
+          .split(",")
+          .map((c) => c.trim())
+          .filter(Boolean);
         setSelected(parsed.length > 0 ? parsed : ["en", "hinglish"]);
       } else {
         setSelected(["en", "hinglish"]);
@@ -139,7 +149,8 @@ export function LanguageModal({
                   Auto-detect is on
                 </h4>
                 <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                  Cadence will automatically detect whatever language you speak across 99 supported languages.
+                  Cadence will automatically detect whatever language you speak
+                  across 99 supported languages.
                 </p>
               </div>
             ) : (

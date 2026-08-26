@@ -58,16 +58,30 @@ export function isWhisperHallucination(text: string): boolean {
   if (!t) return true;
 
   // Stripped string without punctuation
-  const stripped = t.replace(/[.,/#!$%^&*;:{}=\-_`~()"'[\]]/g, "").trim().toLowerCase();
+  const stripped = t
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()"'[\]]/g, "")
+    .trim()
+    .toLowerCase();
   if (!stripped) return true;
 
   // Prompt regurgitations & meta-instructions
-  if (/^transcribe (accurately )?(in|and|exclusively) .+/i.test(stripped)) return true;
+  if (/^transcribe (accurately )?(in|and|exclusively) .+/i.test(stripped))
+    return true;
   if (/^spoken in .+/i.test(stripped)) return true;
   if (/^the speaker may speak in .+/i.test(stripped)) return true;
   if (/^hindi speech is written in .+/i.test(stripped)) return true;
-  if (/^transcribe (in )?(english|hinglish|hindi|spanish|french|german)(\s+(and|or)\s+(english|hinglish|hindi|spanish|french|german))*$/i.test(stripped)) return true;
-  if (/^(english|hinglish|hindi|spanish|french|german)(\s+(and|or)\s+(english|hinglish|hindi|spanish|french|german))*$/i.test(stripped)) return true;
+  if (
+    /^transcribe (in )?(english|hinglish|hindi|spanish|french|german)(\s+(and|or)\s+(english|hinglish|hindi|spanish|french|german))*$/i.test(
+      stripped,
+    )
+  )
+    return true;
+  if (
+    /^(english|hinglish|hindi|spanish|french|german)(\s+(and|or)\s+(english|hinglish|hindi|spanish|french|german))*$/i.test(
+      stripped,
+    )
+  )
+    return true;
 
   // YouTube / Subtitle / Video dataset artifacts during silence
   if (
@@ -79,7 +93,11 @@ export function isWhisperHallucination(text: string): boolean {
   }
 
   // Audio annotation tags like [Silence], (music), [applause], etc.
-  if (/^(\[|\()(silence|music|applause|laughter|background noise|noise|cough|coughing|sniffling|sigh|sound of typing|whispering|screaming|bell tolls|dramatic music|soft music|upbeat music)(\]|\))\.?$/i.test(t)) {
+  if (
+    /^(\[|\()(silence|music|applause|laughter|background noise|noise|cough|coughing|sniffling|sigh|sound of typing|whispering|screaming|bell tolls|dramatic music|soft music|upbeat music)(\]|\))\.?$/i.test(
+      t,
+    )
+  ) {
     return true;
   }
 

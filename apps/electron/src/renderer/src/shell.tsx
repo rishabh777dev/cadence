@@ -425,7 +425,12 @@ export default function AppShell(): React.JSX.Element {
           <NavList items={mainNav} compact={!sidebarOpen} />
           {pluginNav.length > 0 ? (
             <>
-              <div className={cn("border-sidebar-border my-1.5 border-t", sidebarOpen ? "mx-3" : "mx-2")} />
+              <div
+                className={cn(
+                  "border-sidebar-border my-1.5 border-t",
+                  sidebarOpen ? "mx-3" : "mx-2",
+                )}
+              />
               <NavList items={pluginNav} compact={!sidebarOpen} />
             </>
           ) : null}
@@ -433,7 +438,12 @@ export default function AppShell(): React.JSX.Element {
         {!user ? (
           <>
             {pluginNav.length > 0 ? (
-              <div className={cn("border-sidebar-border my-1.5 border-t", sidebarOpen ? "mx-3" : "mx-2")} />
+              <div
+                className={cn(
+                  "border-sidebar-border my-1.5 border-t",
+                  sidebarOpen ? "mx-3" : "mx-2",
+                )}
+              />
             ) : null}
             <NavList items={footerNav} compact={!sidebarOpen} />
           </>

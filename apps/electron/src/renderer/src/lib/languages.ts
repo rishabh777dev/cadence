@@ -112,9 +112,14 @@ export function defaultLanguage(): string {
   return ONBOARDING_LANGUAGES.some((l) => l.id === code) ? code : "auto";
 }
 
-export function formatLanguageDisplay(value: string | null | undefined): string {
+export function formatLanguageDisplay(
+  value: string | null | undefined,
+): string {
   if (!value || value === "auto") return "Auto-detect (99 languages)";
-  const codes = value.split(",").map((c) => c.trim()).filter(Boolean);
+  const codes = value
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
   if (codes.length === 0) return "Auto-detect (99 languages)";
   const map = new Map(LANGUAGES.map((l) => [l.id, l.label]));
   const labels = codes.map((c) => map.get(c) || c);

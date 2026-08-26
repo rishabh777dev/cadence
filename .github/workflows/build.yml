@@ -488,7 +488,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/freestyle-voice/freestyle-server
+          images: ghcr.io/${{ github.repository }}-server
           # The release SHA tag is what the Craft docker target copies from.
           tags: |
             type=raw,value=${{ github.sha }}

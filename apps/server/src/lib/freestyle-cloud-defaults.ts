@@ -30,11 +30,7 @@ export function applyFreestyleCloudDefaults(): void {
     "Cadence Transcribe",
     "voice",
   );
-  setDefault(
-    FREESTYLE_CLOUD_CLEANUP_MODEL_ID,
-    "Cadence Cleanup",
-    "llm",
-  );
+  setDefault(FREESTYLE_CLOUD_CLEANUP_MODEL_ID, "Cadence Cleanup", "llm");
 
   db.prepare(
     `INSERT INTO settings (key, value, updated_at) VALUES ('llm_cleanup', 'true', datetime('now'))

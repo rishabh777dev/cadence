@@ -4,7 +4,10 @@ import type {
   ActiveAudioPlaybackMode,
   AudioPlaybackMode,
 } from "../shared/audio-playback";
-import { getDefaultHotkey, getDefaultMagicEditHotkey } from "../shared/hotkey-defaults";
+import {
+  getDefaultHotkey,
+  getDefaultMagicEditHotkey,
+} from "../shared/hotkey-defaults";
 import type { OpenAppCandidate } from "../shared/open-apps";
 import type { PluginViewBounds } from "../shared/plugins";
 

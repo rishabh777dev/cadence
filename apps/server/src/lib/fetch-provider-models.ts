@@ -42,7 +42,16 @@ async function fetchOpenAIModels(apiKey: string): Promise<AvailableModel[]> {
   if (!json.data || !Array.isArray(json.data)) return [];
 
   const validPrefixes = ["gpt-4", "gpt-3.5", "o1", "o3", "chatgpt"];
-  const excludePatterns = [/audio/i, /realtime/i, /embedding/i, /dall-e/i, /tts/i, /whisper/i, /babbage/i, /davinci/i];
+  const excludePatterns = [
+    /audio/i,
+    /realtime/i,
+    /embedding/i,
+    /dall-e/i,
+    /tts/i,
+    /whisper/i,
+    /babbage/i,
+    /davinci/i,
+  ];
 
   return json.data
     .filter((m) => {
@@ -59,7 +68,8 @@ async function fetchOpenAIModels(apiKey: string): Promise<AvailableModel[]> {
       model_name: formatDisplayName(m.id),
       family: m.id.startsWith("o") ? "reasoning" : "gpt",
       type: "llm" as const,
-      curated: m.id === "gpt-4o" || m.id === "gpt-4o-mini" || m.id === "o3-mini",
+      curated:
+        m.id === "gpt-4o" || m.id === "gpt-4o-mini" || m.id === "o3-mini",
     }));
 }
 
@@ -190,7 +200,11 @@ async function fetchMistralModels(apiKey: string): Promise<AvailableModel[]> {
   if (!res.ok) throw new Error(`Mistral HTTP ${res.status}`);
 
   const json = (await res.json()) as {
-    data?: { id: string; name?: string; capabilities?: { completion_chat?: boolean } }[];
+    data?: {
+      id: string;
+      name?: string;
+      capabilities?: { completion_chat?: boolean };
+    }[];
   };
   if (!json.data || !Array.isArray(json.data)) return [];
 

@@ -650,11 +650,11 @@ async function buildSettingsWindow(initialPath?: string): Promise<void> {
           visualEffectState: "active" as const,
         }
       : process.platform === "win32"
-      ? {
-          backgroundColor: "#00000000",
-          backgroundMaterial: "acrylic" as const,
-        }
-      : {}),
+        ? {
+            backgroundColor: "#00000000",
+            backgroundMaterial: "acrylic" as const,
+          }
+        : {}),
     titleBarStyle: process.platform === "darwin" ? "hidden" : "default",
     trafficLightPosition:
       process.platform === "darwin" ? { x: 16, y: 16 } : undefined,
@@ -1776,760 +1776,781 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(async () => {
-  void startLinuxPasteHelper();
-  void recoverDuckedVolumeFromCrash();
+    void startLinuxPasteHelper();
+    void recoverDuckedVolumeFromCrash();
 
-  // Set app user model id for windows
-  electronApp.setAppUserModelId("com.cadence.app");
+    // Set app user model id for windows
+    electronApp.setAppUserModelId("com.cadence.app");
 
-  // Override app.name so macOS menu shows "Cadence" instead of the package name
-  app.setName("Cadence");
+    // Override app.name so macOS menu shows "Cadence" instead of the package name
+    app.setName("Cadence");
 
-  // Register the custom app:// protocol for production SPA support
-  registerAppProtocol();
+    // Register the custom app:// protocol for production SPA support
+    registerAppProtocol();
 
-  rebuildMenus();
+    rebuildMenus();
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  app.on("browser-window-created", (_, window) => {
-    optimizer.watchWindowShortcuts(window);
-  });
-
-  // IPC: paste text at cursor. `appContext` is accepted for backward
-  // compatibility with the preload signature but is unused here — the
-  // `beforeOutput` hook already ran server-side (`POST /api/output/deliver`)
-  // with it before the renderer called this.
-  ipcMain.handle(
-    "paste:text",
-    async (_event, text: string, _appContext?: string | null) => {
-      await deliverOutput(text, OutputMode.Paste);
-    },
-  );
-
-  // IPC: copy text to clipboard. See `paste:text` above re: `appContext`.
-  ipcMain.handle(
-    "copy:text",
-    async (_event, text: string, _appContext?: string | null) => {
-      await deliverOutput(text, OutputMode.Clipboard);
-    },
-  );
-
-  ipcMain.handle("audio:prepare", async (_event, mode: unknown) => {
-    if (!isActiveAudioPlaybackMode(mode)) return;
-    await audioPlaybackController.prepare(mode);
-  });
-
-  ipcMain.handle("audio:duck", async () => {
-    await audioPlaybackController.duck();
-  });
-
-  ipcMain.handle("audio:restore", async () => {
-    await audioPlaybackController.restore();
-  });
-
-  // IPC: broadcast output mode changes to pill window
-  ipcMain.on("settings:output-mode-changed", (_event, mode: string) => {
-    mainWindow?.webContents.send("settings:output-mode-changed", mode);
-  });
-
-  ipcMain.on("settings:audio-ducking-changed", (_event, enabled: boolean) => {
-    mainWindow?.webContents.send("settings:audio-ducking-changed", enabled);
-  });
-
-  ipcMain.on("settings:audio-playback-mode-changed", (_event, mode: string) => {
-    mainWindow?.webContents.send("settings:audio-playback-mode-changed", mode);
-  });
-
-  // IPC: hide the pill window on request from renderer
-  ipcMain.on("pill:hide", () => {
-    hidePill();
-  });
-
-  // IPC: fan out per-frame audio levels from the pill to other windows
-  // (e.g. the Today tutorial demo) so they can render a live waveform.
-  ipcMain.on("audio:level", (_event, level: number) => {
-    if (typeof level !== "number") return;
-    settingsWindow?.webContents.send("audio:level", level);
-  });
-
-  // IPC: pill notifies that a transcription has finished + been pasted, so
-  // history-driven views (Today, History) can refetch without polling.
-  ipcMain.on("transcription:done", () => {
-    settingsWindow?.webContents.send("transcription:done");
-  });
-
-  ipcMain.on("recording:committed", () => {
-    relayServerEvent({
-      type: FreestyleEventType.RecordingCommitted,
+    // Default open or close DevTools by F12 in development
+    // and ignore CommandOrControl + R in production.
+    app.on("browser-window-created", (_, window) => {
+      optimizer.watchWindowShortcuts(window);
     });
-  });
 
-  ipcMain.on("recording:cancelled", () => {
-    relayServerEvent({
-      type: FreestyleEventType.RecordingCancelled,
+    // IPC: paste text at cursor. `appContext` is accepted for backward
+    // compatibility with the preload signature but is unused here — the
+    // `beforeOutput` hook already ran server-side (`POST /api/output/deliver`)
+    // with it before the renderer called this.
+    ipcMain.handle(
+      "paste:text",
+      async (_event, text: string, _appContext?: string | null) => {
+        await deliverOutput(text, OutputMode.Paste);
+      },
+    );
+
+    // IPC: copy text to clipboard. See `paste:text` above re: `appContext`.
+    ipcMain.handle(
+      "copy:text",
+      async (_event, text: string, _appContext?: string | null) => {
+        await deliverOutput(text, OutputMode.Clipboard);
+      },
+    );
+
+    ipcMain.handle("audio:prepare", async (_event, mode: unknown) => {
+      if (!isActiveAudioPlaybackMode(mode)) return;
+      await audioPlaybackController.prepare(mode);
     });
-  });
 
-  // IPC: expose the server port to the renderer
-  ipcMain.handle("server:port", () => serverPort);
-
-  // IPC: read the configured server URL ("" = use the local server).
-  ipcMain.handle("server:url", () => getServerUrl());
-
-  // IPC: persist the server URL. The local server keeps running regardless, so
-  // switching between local and a configured URL takes effect immediately —
-  // renderers re-point their clients on the "server:changed" broadcast and on
-  // the next transcription's refreshApiBase(). Invalid values are ignored.
-  ipcMain.handle("server:set-url", (_event, url: unknown) => {
-    const parsed = serverUrlSchema.safeParse(url);
-    if (parsed.success) {
-      writeSettings({ serverUrl: parsed.data });
-      broadcastServerChanged();
-    }
-    return getServerUrl();
-  });
-
-  // IPC: read/persist the optional bearer token for a configured server.
-  ipcMain.handle("server:token", () => getServerToken());
-  ipcMain.handle("server:set-token", (_event, token: unknown) => {
-    writeSettings({
-      serverToken: typeof token === "string" ? token.trim() : "",
+    ipcMain.handle("audio:duck", async () => {
+      await audioPlaybackController.duck();
     });
-    broadcastServerChanged();
-    return getServerToken();
-  });
 
-  // IPC: reveal the diagnostic log folder so users can share freestyle.log.
-  ipcMain.handle("logs:open-folder", async () => {
-    if (!logsDir) return false;
-    try {
-      const result = await shell.openPath(logsDir);
-      if (result) {
-        log.error(`Failed to open logs folder: ${result}`);
-        return false;
-      }
-      return true;
-    } catch (err) {
-      log.error(`Failed to open logs folder: ${String(err)}`);
-      return false;
-    }
-  });
-
-  ipcMain.handle("open:external", async (_event, url: unknown) => {
-    if (typeof url !== "string") return false;
-    try {
-      const parsed = new URL(url);
-      // mailto: is allowed for support/sales links (e.g. "Contact sales" in
-      // the upgrade modal); everything else must be http(s).
-      if (
-        parsed.protocol !== "https:" &&
-        parsed.protocol !== "http:" &&
-        parsed.protocol !== "mailto:"
-      ) {
-        return false;
-      }
-      await shell.openExternal(parsed.toString());
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
-  ipcMain.handle("cloud:prompt-sign-in", async () => {
-    const { response } = await dialog.showMessageBox({
-      type: "info",
-      message: "Sign in to Cadence Transcribe",
-      detail:
-        "Cadence Transcribe needs you to sign in before it can transcribe or clean up text. Open Models settings to sign in or switch providers.",
-      buttons: ["Open Models", "Not Now"],
-      defaultId: 0,
-      cancelId: 1,
+    ipcMain.handle("audio:restore", async () => {
+      await audioPlaybackController.restore();
     });
-    if (response !== 0) return false;
-    showSettingsWindow("/settings/models");
-    return true;
-  });
 
-  // Shown when Cadence Cloud reports the free-tier usage limit is exhausted.
-  // "Upgrade" deep-links into the dashboard with `?upgrade=1`, which the
-  // renderer's UpgradeModalProvider reads to auto-open the Pro upsell modal.
-  ipcMain.handle("cloud:prompt-upgrade", async () => {
-    const { response } = await dialog.showMessageBox({
-      type: "info",
-      message: "Usage limit reached",
-      detail:
-        "You've used your free Cadence Cloud dictation for this week. Upgrade to Pro for unlimited dictation, or switch to a local or bring-your-own-key model in Settings > Models.",
-      buttons: ["Upgrade to Pro", "Not Now"],
-      defaultId: 0,
-      cancelId: 1,
+    // IPC: broadcast output mode changes to pill window
+    ipcMain.on("settings:output-mode-changed", (_event, mode: string) => {
+      mainWindow?.webContents.send("settings:output-mode-changed", mode);
     });
-    if (response !== 0) return false;
-    showSettingsWindow("/today?upgrade=1");
-    return true;
-  });
 
-  ipcMain.handle(
-    "dialog:show-error",
-    async (_event, title: string, detail: string) => {
-      await dialog.showMessageBox({
-        type: "error",
-        title,
-        message: title,
-        detail,
-        buttons: ["OK"],
+    ipcMain.on("settings:audio-ducking-changed", (_event, enabled: boolean) => {
+      mainWindow?.webContents.send("settings:audio-ducking-changed", enabled);
+    });
+
+    ipcMain.on(
+      "settings:audio-playback-mode-changed",
+      (_event, mode: string) => {
+        mainWindow?.webContents.send(
+          "settings:audio-playback-mode-changed",
+          mode,
+        );
+      },
+    );
+
+    // IPC: hide the pill window on request from renderer
+    ipcMain.on("pill:hide", () => {
+      hidePill();
+    });
+
+    // IPC: fan out per-frame audio levels from the pill to other windows
+    // (e.g. the Today tutorial demo) so they can render a live waveform.
+    ipcMain.on("audio:level", (_event, level: number) => {
+      if (typeof level !== "number") return;
+      settingsWindow?.webContents.send("audio:level", level);
+    });
+
+    // IPC: pill notifies that a transcription has finished + been pasted, so
+    // history-driven views (Today, History) can refetch without polling.
+    ipcMain.on("transcription:done", () => {
+      settingsWindow?.webContents.send("transcription:done");
+    });
+
+    ipcMain.on("recording:committed", () => {
+      relayServerEvent({
+        type: FreestyleEventType.RecordingCommitted,
       });
-    },
-  );
+    });
 
-  // IPC: permission checks
-  ipcMain.handle("permissions:check-mic", async () => {
-    if (process.platform === "linux") {
-      // Linux has no OS-level mic permission API; the renderer resolves the
-      // real state with a getUserMedia probe (see lib/permissions.ts).
-      return "unknown";
-    }
-    // macOS and Windows both report the real privacy-settings state here.
-    const { systemPreferences } = await import("electron");
-    return systemPreferences.getMediaAccessStatus("microphone");
-  });
+    ipcMain.on("recording:cancelled", () => {
+      relayServerEvent({
+        type: FreestyleEventType.RecordingCancelled,
+      });
+    });
 
-  ipcMain.handle("permissions:request-mic", async () => {
-    if (process.platform === "darwin") {
-      const { systemPreferences } = await import("electron");
-      const granted = await systemPreferences.askForMediaAccess("microphone");
-      return granted ? "granted" : "denied";
-    }
-    if (process.platform === "win32") {
-      // Windows has no programmatic prompt; report the privacy-settings
-      // state so the UI can send the user to Settings when it's denied.
+    // IPC: expose the server port to the renderer
+    ipcMain.handle("server:port", () => serverPort);
+
+    // IPC: read the configured server URL ("" = use the local server).
+    ipcMain.handle("server:url", () => getServerUrl());
+
+    // IPC: persist the server URL. The local server keeps running regardless, so
+    // switching between local and a configured URL takes effect immediately —
+    // renderers re-point their clients on the "server:changed" broadcast and on
+    // the next transcription's refreshApiBase(). Invalid values are ignored.
+    ipcMain.handle("server:set-url", (_event, url: unknown) => {
+      const parsed = serverUrlSchema.safeParse(url);
+      if (parsed.success) {
+        writeSettings({ serverUrl: parsed.data });
+        broadcastServerChanged();
+      }
+      return getServerUrl();
+    });
+
+    // IPC: read/persist the optional bearer token for a configured server.
+    ipcMain.handle("server:token", () => getServerToken());
+    ipcMain.handle("server:set-token", (_event, token: unknown) => {
+      writeSettings({
+        serverToken: typeof token === "string" ? token.trim() : "",
+      });
+      broadcastServerChanged();
+      return getServerToken();
+    });
+
+    // IPC: reveal the diagnostic log folder so users can share freestyle.log.
+    ipcMain.handle("logs:open-folder", async () => {
+      if (!logsDir) return false;
+      try {
+        const result = await shell.openPath(logsDir);
+        if (result) {
+          log.error(`Failed to open logs folder: ${result}`);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        log.error(`Failed to open logs folder: ${String(err)}`);
+        return false;
+      }
+    });
+
+    ipcMain.handle("open:external", async (_event, url: unknown) => {
+      if (typeof url !== "string") return false;
+      try {
+        const parsed = new URL(url);
+        // mailto: is allowed for support/sales links (e.g. "Contact sales" in
+        // the upgrade modal); everything else must be http(s).
+        if (
+          parsed.protocol !== "https:" &&
+          parsed.protocol !== "http:" &&
+          parsed.protocol !== "mailto:"
+        ) {
+          return false;
+        }
+        await shell.openExternal(parsed.toString());
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+    ipcMain.handle("cloud:prompt-sign-in", async () => {
+      const { response } = await dialog.showMessageBox({
+        type: "info",
+        message: "Sign in to Cadence Transcribe",
+        detail:
+          "Cadence Transcribe needs you to sign in before it can transcribe or clean up text. Open Models settings to sign in or switch providers.",
+        buttons: ["Open Models", "Not Now"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response !== 0) return false;
+      showSettingsWindow("/settings/models");
+      return true;
+    });
+
+    // Shown when Cadence Cloud reports the free-tier usage limit is exhausted.
+    // "Upgrade" deep-links into the dashboard with `?upgrade=1`, which the
+    // renderer's UpgradeModalProvider reads to auto-open the Pro upsell modal.
+    ipcMain.handle("cloud:prompt-upgrade", async () => {
+      const { response } = await dialog.showMessageBox({
+        type: "info",
+        message: "Usage limit reached",
+        detail:
+          "You've used your free Cadence Cloud dictation for this week. Upgrade to Pro for unlimited dictation, or switch to a local or bring-your-own-key model in Settings > Models.",
+        buttons: ["Upgrade to Pro", "Not Now"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response !== 0) return false;
+      showSettingsWindow("/today?upgrade=1");
+      return true;
+    });
+
+    ipcMain.handle(
+      "dialog:show-error",
+      async (_event, title: string, detail: string) => {
+        await dialog.showMessageBox({
+          type: "error",
+          title,
+          message: title,
+          detail,
+          buttons: ["OK"],
+        });
+      },
+    );
+
+    // IPC: permission checks
+    ipcMain.handle("permissions:check-mic", async () => {
+      if (process.platform === "linux") {
+        // Linux has no OS-level mic permission API; the renderer resolves the
+        // real state with a getUserMedia probe (see lib/permissions.ts).
+        return "unknown";
+      }
+      // macOS and Windows both report the real privacy-settings state here.
       const { systemPreferences } = await import("electron");
       return systemPreferences.getMediaAccessStatus("microphone");
-    }
-    return "unknown"; // Linux: renderer probes getUserMedia instead
-  });
-
-  ipcMain.handle("permissions:check-accessibility", async () => {
-    if (process.platform === "darwin") {
-      const { systemPreferences } = await import("electron");
-      const trusted = systemPreferences.isTrustedAccessibilityClient(false);
-      return trusted || accessibilityConfirmed;
-    }
-    return true;
-  });
-
-  ipcMain.on("permissions:open-accessibility", async () => {
-    if (process.platform === "darwin") {
-      // Passing `true` pops the native "would like to control this computer"
-      // prompt and adds Freestyle to the Accessibility list automatically, so
-      // the user only has to flip the toggle (macOS never lets us flip it).
-      const { systemPreferences } = await import("electron");
-      systemPreferences.isTrustedAccessibilityClient(true);
-      shell.openExternal(
-        "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility",
-      );
-    }
-  });
-
-  ipcMain.on("permissions:open-mic-settings", () => {
-    if (process.platform === "darwin") {
-      shell.openExternal(
-        "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Microphone",
-      );
-    } else if (process.platform === "win32") {
-      shell.openExternal("ms-settings:privacy-microphone");
-    }
-  });
-
-  // IPC: Linux system setup (input-group access for the hotkey listener and
-  // the xdotool/wtype paste fallback). Returns null on other platforms.
-  ipcMain.handle("permissions:check-linux-setup", async () => {
-    if (process.platform !== "linux") return null;
-    return checkLinuxSetup();
-  });
-
-  ipcMain.handle("onboarding:complete", () => {
-    return readSettings().onboardingComplete === true;
-  });
-
-  ipcMain.on("onboarding:set-complete", () => {
-    writeSettings({ onboardingComplete: true });
-  });
-
-  // IPC: hotkey recording — global native listener + renderer DOM on macOS
-  ipcMain.on("hotkey-record:start", () => {
-    // Pause the active hotkey listeners so they don't fire during recording
-    if (keyListener) {
-      keyListener.stop();
-      keyListener = null;
-    }
-    if (magicEditKeyListener) {
-      magicEditKeyListener.stop();
-      magicEditKeyListener = null;
-    }
-    if (currentGlobalShortcutFallback) {
-      try {
-        globalShortcut.unregister(currentGlobalShortcutFallback);
-      } catch {}
-      currentGlobalShortcutFallback = null;
-    }
-    if (currentMagicEditGlobalShortcut) {
-      try {
-        globalShortcut.unregister(currentMagicEditGlobalShortcut);
-      } catch {}
-      currentMagicEditGlobalShortcut = null;
-    }
-
-    stopHotkeyRecorderProcess();
-    const target =
-      settingsWindow?.webContents ?? mainWindow?.webContents ?? null;
-    if (!target) return;
-
-    hotkeyRecorder = new HotkeyRecorder({
-      onModifiers: () => {},
-      onCaptured: () => {},
-      onCancel: () => {
-        stopHotkeyRecorderProcess();
-        scheduleHotkeyRegistration(currentHotkeyAccel ?? undefined);
-        scheduleMagicEditHotkeyRegistration(currentMagicEditAccel ?? undefined);
-      },
-      onError: (message) => {
-        hotkeyRecorderLog.warn(message);
-      },
-    });
-    hotkeyRecorder.start(target);
-  });
-
-  ipcMain.on("hotkey-record:pause-recorder", () => {
-    stopHotkeyRecorderProcess();
-  });
-
-  ipcMain.on("hotkey-record:stop", (_event, hotkey?: string) => {
-    stopHotkeyRecorderProcess();
-    scheduleHotkeyRegistration(
-      typeof hotkey === "string" && hotkey.length > 0
-        ? hotkey
-        : (currentHotkeyAccel ?? undefined),
-    );
-    scheduleMagicEditHotkeyRegistration(currentMagicEditAccel ?? undefined);
-  });
-
-  // Set database path for the server before any API calls
-  process.env.FREESTYLE_DB_PATH = join(app.getPath("userData"), "freestyle.db");
-
-  process.env.FREESTYLE_ENV = is.dev ? "development" : "production";
-  // Expose the app version to the in-process server so PostHog events
-  // (including autocaptured exceptions) carry the release they came from.
-  process.env.FREESTYLE_APP_VERSION = app.getVersion();
-  if (!is.dev) {
-    process.env.FREESTYLE_MLX_ASR_RELEASE_TAG ||= app.getVersion();
-  }
-
-  // Run non-critical server startup tasks now that the DB path is set. This is
-  // deferred off the boot critical path: reconcileUnsupportedMlxVoiceDefault can
-  // synchronously probe Python/MLX (execFileSync) on Apple Silicon without a
-  // managed runtime, which would otherwise block window creation. It is
-  // idempotent and also runs lazily via getDefaultModels() on first use, so
-  // deferring it by a tick is safe. Local ASR servers (whisper/mlx) are no
-  // longer pre-warmed at boot — they warm on recording start via the
-  // /api/transcribe/pre-warm endpoint, and start lazily at submission as a
-  // fallback.
-  setImmediate(() => {
-    reconcileUnsupportedMlxVoiceDefault();
-  });
-
-  // Start the Hono HTTP server with WebSocket support (or reuse an existing one)
-  const startServer = (port: number): void => {
-    startFreestyleServer({ port, host: "127.0.0.1" })
-      .then(({ server, port: boundPort }) => {
-        httpServer = server;
-        serverPort = boundPort;
-        log.info(`Server running on http://localhost:${boundPort}`);
-      })
-      .catch((err: NodeJS.ErrnoException) => {
-        if (err.code === "EADDRINUSE" && port === DEFAULT_PORT) {
-          log.warn(`Port ${DEFAULT_PORT} in use, falling back to random port`);
-          startServer(0);
-        } else {
-          log.error(`Server failed to start: ${err}`);
-        }
-      });
-  };
-
-  // Check if a Freestyle server is already running on the default port. The
-  // 1.5s bound matters: a normal cold start fast-fails with ECONNREFUSED, but
-  // without a timeout a half-open socket on the port could hang window/tray
-  // creation indefinitely.
-  const existingServer = await probeServerHealth(
-    `http://127.0.0.1:${DEFAULT_PORT}`,
-    1500,
-  );
-
-  if (existingServer) {
-    serverPort = DEFAULT_PORT;
-    log.info(
-      `Reusing existing Freestyle server on http://localhost:${DEFAULT_PORT}`,
-    );
-  } else {
-    startServer(DEFAULT_PORT);
-  }
-
-  if (!is.dev) {
-    void activateManagedMlxRuntimeForAppVersion(app.getVersion()).catch(
-      (err) => {
-        log.warn(
-          `Failed to activate MLX runtime for app ${app.getVersion()}: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
-        );
-      },
-    );
-  }
-
-  createTray();
-
-  createAppWindow();
-
-  // Clamp the pill to valid display bounds when monitors change.
-  const repositionPillForDisplayChange = (): void => {
-    if (!mainWindow) return;
-    const before = readSettings().pillPosition as string;
-    const { x, y } = getAppWindowPosition();
-    setProgrammaticPosition(mainWindow, x, y);
-    const after = (readSettings().pillPosition as string) ?? "bottom-center";
-    if (before !== after) {
-      mainWindow.webContents.send("settings:pill-position-changed", after);
-      settingsWindow?.webContents.send("settings:pill-position-changed", after);
-    }
-  };
-  screen.on("display-removed", repositionPillForDisplayChange);
-  screen.on("display-metrics-changed", repositionPillForDisplayChange);
-
-  if (readSettings().showDashboardOnLaunch !== false) {
-    showSettingsWindow();
-  }
-
-  // -- Auto-update helpers --
-  const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-  let updateCheckTimer: ReturnType<typeof setInterval> | null = null;
-
-  // With autoDownload on, checkForUpdates() also starts the asset download and
-  // exposes it as result.downloadPromise. Swallow that rejection so a transient
-  // download failure (e.g. an expired 403 from the release CDN) is handled by
-  // the "error" event rather than leaking as an unhandled rejection / false
-  // crash report. We avoid checkForUpdatesAndNotify(): it drops the same
-  // rejection internally in a way callers can't intercept, and our own
-  // "update-downloaded" handler already shows the completion notification.
-  function runUpdateCheck(): void {
-    autoUpdater
-      .checkForUpdates()
-      .then((result) => {
-        void result?.downloadPromise?.catch(() => {});
-      })
-      .catch((err) => {
-        log.warn(
-          `Update check failed: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
-        );
-      });
-  }
-
-  function startUpdateCheckInterval(): void {
-    if (updateCheckTimer) return;
-    updateCheckTimer = setInterval(runUpdateCheck, UPDATE_CHECK_INTERVAL_MS);
-  }
-
-  // -- Auto-updater with IPC notifications --
-  // Track versions we already notified about so periodic checks don't spam.
-  // Separate flags for "available" vs "downloaded" because both events fire
-  // for the same version and each deserves one notification.
-  let notifiedAvailableVersion: string | null = null;
-  let notifiedDownloadedVersion: string | null = null;
-
-  if (!is.dev) {
-    const autoUpdateEnabled = readSettings().autoUpdate !== false;
-    autoUpdater.autoDownload = autoUpdateEnabled;
-    autoUpdater.autoInstallOnAppQuit = true;
-    autoUpdater.logger = createAppLogger("updater");
-
-    autoUpdater.on("update-available", (info) => {
-      settingsWindow?.webContents.send("updater:available", {
-        version: info.version,
-      });
-      if (autoUpdater.autoDownload) {
-        updateDownloadState = "downloading";
-        settingsWindow?.webContents.send("updater:downloading");
-      }
-      // Only show a native notification once per discovered version
-      if (
-        Notification.isSupported() &&
-        notifiedAvailableVersion !== info.version
-      ) {
-        notifiedAvailableVersion = info.version;
-        const note = new Notification({
-          title: "Cadence Update Available",
-          body: autoUpdater.autoDownload
-            ? `Version ${info.version} is downloading…`
-            : `Version ${info.version} is available. Open settings to download.`,
-        });
-        note.on("click", () => showSettingsWindow("/settings"));
-        note.show();
-      }
     });
 
-    autoUpdater.on("update-downloaded", (info) => {
-      updateDownloadState = "downloaded";
-      settingsWindow?.webContents.send("updater:downloaded", {
-        version: info.version,
-      });
-      // Only show a native notification once per version
-      if (
-        Notification.isSupported() &&
-        notifiedDownloadedVersion !== info.version
-      ) {
-        notifiedDownloadedVersion = info.version;
-        const note = new Notification({
-          title: "Update Ready to Install",
-          body: `Version ${info.version} has been downloaded. Restart to update.`,
-        });
-        note.on("click", () => showSettingsWindow("/settings"));
-        note.show();
-      }
-      // No need to keep polling once the update is downloaded
-      if (updateCheckTimer) {
-        clearInterval(updateCheckTimer);
-        updateCheckTimer = null;
-      }
-      rebuildMenus();
-      void prefetchManagedMlxRuntimeForAppRelease(info.version).catch((err) => {
-        log.warn(
-          `Failed to stage MLX runtime for ${info.version}: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
-        );
-      });
-    });
-
-    autoUpdater.on("error", (err) => {
-      if (updateDownloadState === "downloading") {
-        updateDownloadState = "idle";
-      }
-      const msg = err?.message ?? "Update failed";
-      if (READ_ONLY_UPDATE_RE.test(msg) && isRunningFromReadOnlyLocation()) {
-        showMoveToApplicationsDialog();
-        settingsWindow?.webContents.send("updater:error", {
-          message:
-            "Cadence is running from a read-only location. Move it to Applications and relaunch.",
-        });
-      } else {
-        settingsWindow?.webContents.send("updater:error", { message: msg });
-      }
-    });
-
-    if (isRunningFromReadOnlyLocation()) {
-      if (Notification.isSupported()) {
-        const note = new Notification({
-          title: "Move Cadence to Applications",
-          body: "Cadence can\u2019t update from this location. Move it to your Applications folder and relaunch.",
-        });
-        note.on("click", () => showSettingsWindow("/settings"));
-        note.show();
-      }
-    } else {
-      runUpdateCheck();
-      startUpdateCheckInterval();
-    }
-  }
-
-  ipcMain.on("updater:download", () => {
-    triggerDownloadUpdate();
-  });
-
-  ipcMain.on("updater:install", () => {
-    restartAndUpdate();
-  });
-
-  ipcMain.handle("updater:check", async () => {
-    if (is.dev) return null;
-    try {
-      const result = await autoUpdater.checkForUpdates();
-      // Swallow the auto-download rejection (see runUpdateCheck).
-      void result?.downloadPromise?.catch(() => {});
-      const latest = result?.updateInfo?.version;
-      if (!latest) return null;
-      // Only report an update when the remote version is actually newer
-      if (latest === app.getVersion()) return null;
-      return { version: latest, downloadState: updateDownloadState };
-    } catch {
-      return null;
-    }
-  });
-
-  // -- Auto-update setting IPC --
-  ipcMain.handle("settings:auto-update", () => {
-    return readSettings().autoUpdate !== false;
-  });
-
-  ipcMain.on("settings:set-auto-update", (_event, enabled: boolean) => {
-    writeSettings({ autoUpdate: enabled });
-    if (!is.dev) {
-      autoUpdater.autoDownload = enabled;
-    }
-  });
-
-  // -- Launch at startup setting IPC --
-  ipcMain.handle("settings:launch-at-startup", () => {
-    if (process.platform === "linux") return linuxAutostart.isEnabled();
-    return app.getLoginItemSettings().openAtLogin;
-  });
-
-  ipcMain.on("settings:set-launch-at-startup", (_event, enabled: boolean) => {
-    if (process.platform === "linux") {
-      linuxAutostart.setEnabled(enabled);
-      return;
-    }
-    app.setLoginItemSettings({ openAtLogin: enabled });
-  });
-
-  // -- Show dashboard on launch setting IPC --
-  ipcMain.handle("settings:show-dashboard-on-launch", () => {
-    return readSettings().showDashboardOnLaunch !== false;
-  });
-
-  ipcMain.on(
-    "settings:set-show-dashboard-on-launch",
-    (_event, enabled: boolean) => {
-      writeSettings({ showDashboardOnLaunch: enabled });
-    },
-  );
-
-  // -- Context-aware dictation: get frontmost app + browser context --
-  ipcMain.handle("system:frontmost-app", async () => {
-    try {
+    ipcMain.handle("permissions:request-mic", async () => {
       if (process.platform === "darwin") {
-        return await getMacFrontmostApp();
+        const { systemPreferences } = await import("electron");
+        const granted = await systemPreferences.askForMediaAccess("microphone");
+        return granted ? "granted" : "denied";
       }
       if (process.platform === "win32") {
-        return await getWindowsFrontmostApp();
+        // Windows has no programmatic prompt; report the privacy-settings
+        // state so the UI can send the user to Settings when it's denied.
+        const { systemPreferences } = await import("electron");
+        return systemPreferences.getMediaAccessStatus("microphone");
       }
-      if (process.platform === "linux") {
-        return await getLinuxFrontmostApp();
+      return "unknown"; // Linux: renderer probes getUserMedia instead
+    });
+
+    ipcMain.handle("permissions:check-accessibility", async () => {
+      if (process.platform === "darwin") {
+        const { systemPreferences } = await import("electron");
+        const trusted = systemPreferences.isTrustedAccessibilityClient(false);
+        return trusted || accessibilityConfirmed;
       }
-    } catch {
-      // graceful fallback
+      return true;
+    });
+
+    ipcMain.on("permissions:open-accessibility", async () => {
+      if (process.platform === "darwin") {
+        // Passing `true` pops the native "would like to control this computer"
+        // prompt and adds Freestyle to the Accessibility list automatically, so
+        // the user only has to flip the toggle (macOS never lets us flip it).
+        const { systemPreferences } = await import("electron");
+        systemPreferences.isTrustedAccessibilityClient(true);
+        shell.openExternal(
+          "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility",
+        );
+      }
+    });
+
+    ipcMain.on("permissions:open-mic-settings", () => {
+      if (process.platform === "darwin") {
+        shell.openExternal(
+          "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Microphone",
+        );
+      } else if (process.platform === "win32") {
+        shell.openExternal("ms-settings:privacy-microphone");
+      }
+    });
+
+    // IPC: Linux system setup (input-group access for the hotkey listener and
+    // the xdotool/wtype paste fallback). Returns null on other platforms.
+    ipcMain.handle("permissions:check-linux-setup", async () => {
+      if (process.platform !== "linux") return null;
+      return checkLinuxSetup();
+    });
+
+    ipcMain.handle("onboarding:complete", () => {
+      return readSettings().onboardingComplete === true;
+    });
+
+    ipcMain.on("onboarding:set-complete", () => {
+      writeSettings({ onboardingComplete: true });
+    });
+
+    // IPC: hotkey recording — global native listener + renderer DOM on macOS
+    ipcMain.on("hotkey-record:start", () => {
+      // Pause the active hotkey listeners so they don't fire during recording
+      if (keyListener) {
+        keyListener.stop();
+        keyListener = null;
+      }
+      if (magicEditKeyListener) {
+        magicEditKeyListener.stop();
+        magicEditKeyListener = null;
+      }
+      if (currentGlobalShortcutFallback) {
+        try {
+          globalShortcut.unregister(currentGlobalShortcutFallback);
+        } catch {}
+        currentGlobalShortcutFallback = null;
+      }
+      if (currentMagicEditGlobalShortcut) {
+        try {
+          globalShortcut.unregister(currentMagicEditGlobalShortcut);
+        } catch {}
+        currentMagicEditGlobalShortcut = null;
+      }
+
+      stopHotkeyRecorderProcess();
+      const target =
+        settingsWindow?.webContents ?? mainWindow?.webContents ?? null;
+      if (!target) return;
+
+      hotkeyRecorder = new HotkeyRecorder({
+        onModifiers: () => {},
+        onCaptured: () => {},
+        onCancel: () => {
+          stopHotkeyRecorderProcess();
+          scheduleHotkeyRegistration(currentHotkeyAccel ?? undefined);
+          scheduleMagicEditHotkeyRegistration(
+            currentMagicEditAccel ?? undefined,
+          );
+        },
+        onError: (message) => {
+          hotkeyRecorderLog.warn(message);
+        },
+      });
+      hotkeyRecorder.start(target);
+    });
+
+    ipcMain.on("hotkey-record:pause-recorder", () => {
+      stopHotkeyRecorderProcess();
+    });
+
+    ipcMain.on("hotkey-record:stop", (_event, hotkey?: string) => {
+      stopHotkeyRecorderProcess();
+      scheduleHotkeyRegistration(
+        typeof hotkey === "string" && hotkey.length > 0
+          ? hotkey
+          : (currentHotkeyAccel ?? undefined),
+      );
+      scheduleMagicEditHotkeyRegistration(currentMagicEditAccel ?? undefined);
+    });
+
+    // Set database path for the server before any API calls
+    process.env.FREESTYLE_DB_PATH = join(
+      app.getPath("userData"),
+      "freestyle.db",
+    );
+
+    process.env.FREESTYLE_ENV = is.dev ? "development" : "production";
+    // Expose the app version to the in-process server so PostHog events
+    // (including autocaptured exceptions) carry the release they came from.
+    process.env.FREESTYLE_APP_VERSION = app.getVersion();
+    if (!is.dev) {
+      process.env.FREESTYLE_MLX_ASR_RELEASE_TAG ||= app.getVersion();
     }
-    return null;
-  });
 
-  ipcMain.handle("system:open-app-candidates", async () => {
-    try {
-      return await getOpenAppCandidates();
-    } catch {
-      return [];
-    }
-  });
+    // Run non-critical server startup tasks now that the DB path is set. This is
+    // deferred off the boot critical path: reconcileUnsupportedMlxVoiceDefault can
+    // synchronously probe Python/MLX (execFileSync) on Apple Silicon without a
+    // managed runtime, which would otherwise block window creation. It is
+    // idempotent and also runs lazily via getDefaultModels() on first use, so
+    // deferring it by a tick is safe. Local ASR servers (whisper/mlx) are no
+    // longer pre-warmed at boot — they warm on recording start via the
+    // /api/transcribe/pre-warm endpoint, and start lazily at submission as a
+    // fallback.
+    setImmediate(() => {
+      reconcileUnsupportedMlxVoiceDefault();
+    });
 
-  // -- Pill position setting --
-  ipcMain.handle("settings:pill-position", () => {
-    const pos = (readSettings().pillPosition as string) ?? "bottom-center";
-    // For a custom position, derive the correct top/bottom alignment token
-    // from the actual window position relative to its display.
-    if (pos === "custom") return getPillAlignmentForCustom();
-    return pos;
-  });
+    // Start the Hono HTTP server with WebSocket support (or reuse an existing one)
+    const startServer = (port: number): void => {
+      startFreestyleServer({ port, host: "127.0.0.1" })
+        .then(({ server, port: boundPort }) => {
+          httpServer = server;
+          serverPort = boundPort;
+          log.info(`Server running on http://localhost:${boundPort}`);
+        })
+        .catch((err: NodeJS.ErrnoException) => {
+          if (err.code === "EADDRINUSE" && port === DEFAULT_PORT) {
+            log.warn(
+              `Port ${DEFAULT_PORT} in use, falling back to random port`,
+            );
+            startServer(0);
+          } else {
+            log.error(`Server failed to start: ${err}`);
+          }
+        });
+    };
 
-  ipcMain.on("settings:set-pill-position", (_event, position: string) => {
-    if (position === "custom") {
-      writeSettings({ pillPosition: position });
+    // Check if a Freestyle server is already running on the default port. The
+    // 1.5s bound matters: a normal cold start fast-fails with ECONNREFUSED, but
+    // without a timeout a half-open socket on the port could hang window/tray
+    // creation indefinitely.
+    const existingServer = await probeServerHealth(
+      `http://127.0.0.1:${DEFAULT_PORT}`,
+      1500,
+    );
+
+    if (existingServer) {
+      serverPort = DEFAULT_PORT;
+      log.info(
+        `Reusing existing Freestyle server on http://localhost:${DEFAULT_PORT}`,
+      );
     } else {
-      writeSettings({ pillPosition: position, pillCustomPosition: undefined });
+      startServer(DEFAULT_PORT);
     }
-    // Reposition the window and notify the renderer for CSS alignment.
-    if (mainWindow) {
+
+    if (!is.dev) {
+      void activateManagedMlxRuntimeForAppVersion(app.getVersion()).catch(
+        (err) => {
+          log.warn(
+            `Failed to activate MLX runtime for app ${app.getVersion()}: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        },
+      );
+    }
+
+    createTray();
+
+    createAppWindow();
+
+    // Clamp the pill to valid display bounds when monitors change.
+    const repositionPillForDisplayChange = (): void => {
+      if (!mainWindow) return;
+      const before = readSettings().pillPosition as string;
       const { x, y } = getAppWindowPosition();
       setProgrammaticPosition(mainWindow, x, y);
+      const after = (readSettings().pillPosition as string) ?? "bottom-center";
+      if (before !== after) {
+        mainWindow.webContents.send("settings:pill-position-changed", after);
+        settingsWindow?.webContents.send(
+          "settings:pill-position-changed",
+          after,
+        );
+      }
+    };
+    screen.on("display-removed", repositionPillForDisplayChange);
+    screen.on("display-metrics-changed", repositionPillForDisplayChange);
+
+    if (readSettings().showDashboardOnLaunch !== false) {
+      showSettingsWindow();
     }
-    // For custom, resolve the live alignment; for presets, send as-is.
-    const broadcast =
-      position === "custom" ? getPillAlignmentForCustom() : position;
-    mainWindow?.webContents.send("settings:pill-position-changed", broadcast);
-    settingsWindow?.webContents.send(
-      "settings:pill-position-changed",
-      broadcast,
+
+    // -- Auto-update helpers --
+    const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    let updateCheckTimer: ReturnType<typeof setInterval> | null = null;
+
+    // With autoDownload on, checkForUpdates() also starts the asset download and
+    // exposes it as result.downloadPromise. Swallow that rejection so a transient
+    // download failure (e.g. an expired 403 from the release CDN) is handled by
+    // the "error" event rather than leaking as an unhandled rejection / false
+    // crash report. We avoid checkForUpdatesAndNotify(): it drops the same
+    // rejection internally in a way callers can't intercept, and our own
+    // "update-downloaded" handler already shows the completion notification.
+    function runUpdateCheck(): void {
+      autoUpdater
+        .checkForUpdates()
+        .then((result) => {
+          void result?.downloadPromise?.catch(() => {});
+        })
+        .catch((err) => {
+          log.warn(
+            `Update check failed: ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
+        });
+    }
+
+    function startUpdateCheckInterval(): void {
+      if (updateCheckTimer) return;
+      updateCheckTimer = setInterval(runUpdateCheck, UPDATE_CHECK_INTERVAL_MS);
+    }
+
+    // -- Auto-updater with IPC notifications --
+    // Track versions we already notified about so periodic checks don't spam.
+    // Separate flags for "available" vs "downloaded" because both events fire
+    // for the same version and each deserves one notification.
+    let notifiedAvailableVersion: string | null = null;
+    let notifiedDownloadedVersion: string | null = null;
+
+    if (!is.dev) {
+      const autoUpdateEnabled = readSettings().autoUpdate !== false;
+      autoUpdater.autoDownload = autoUpdateEnabled;
+      autoUpdater.autoInstallOnAppQuit = true;
+      autoUpdater.logger = createAppLogger("updater");
+
+      autoUpdater.on("update-available", (info) => {
+        settingsWindow?.webContents.send("updater:available", {
+          version: info.version,
+        });
+        if (autoUpdater.autoDownload) {
+          updateDownloadState = "downloading";
+          settingsWindow?.webContents.send("updater:downloading");
+        }
+        // Only show a native notification once per discovered version
+        if (
+          Notification.isSupported() &&
+          notifiedAvailableVersion !== info.version
+        ) {
+          notifiedAvailableVersion = info.version;
+          const note = new Notification({
+            title: "Cadence Update Available",
+            body: autoUpdater.autoDownload
+              ? `Version ${info.version} is downloading…`
+              : `Version ${info.version} is available. Open settings to download.`,
+          });
+          note.on("click", () => showSettingsWindow("/settings"));
+          note.show();
+        }
+      });
+
+      autoUpdater.on("update-downloaded", (info) => {
+        updateDownloadState = "downloaded";
+        settingsWindow?.webContents.send("updater:downloaded", {
+          version: info.version,
+        });
+        // Only show a native notification once per version
+        if (
+          Notification.isSupported() &&
+          notifiedDownloadedVersion !== info.version
+        ) {
+          notifiedDownloadedVersion = info.version;
+          const note = new Notification({
+            title: "Update Ready to Install",
+            body: `Version ${info.version} has been downloaded. Restart to update.`,
+          });
+          note.on("click", () => showSettingsWindow("/settings"));
+          note.show();
+        }
+        // No need to keep polling once the update is downloaded
+        if (updateCheckTimer) {
+          clearInterval(updateCheckTimer);
+          updateCheckTimer = null;
+        }
+        rebuildMenus();
+        void prefetchManagedMlxRuntimeForAppRelease(info.version).catch(
+          (err) => {
+            log.warn(
+              `Failed to stage MLX runtime for ${info.version}: ${
+                err instanceof Error ? err.message : String(err)
+              }`,
+            );
+          },
+        );
+      });
+
+      autoUpdater.on("error", (err) => {
+        if (updateDownloadState === "downloading") {
+          updateDownloadState = "idle";
+        }
+        const msg = err?.message ?? "Update failed";
+        if (READ_ONLY_UPDATE_RE.test(msg) && isRunningFromReadOnlyLocation()) {
+          showMoveToApplicationsDialog();
+          settingsWindow?.webContents.send("updater:error", {
+            message:
+              "Cadence is running from a read-only location. Move it to Applications and relaunch.",
+          });
+        } else {
+          settingsWindow?.webContents.send("updater:error", { message: msg });
+        }
+      });
+
+      if (isRunningFromReadOnlyLocation()) {
+        if (Notification.isSupported()) {
+          const note = new Notification({
+            title: "Move Cadence to Applications",
+            body: "Cadence can\u2019t update from this location. Move it to your Applications folder and relaunch.",
+          });
+          note.on("click", () => showSettingsWindow("/settings"));
+          note.show();
+        }
+      } else {
+        runUpdateCheck();
+        startUpdateCheckInterval();
+      }
+    }
+
+    ipcMain.on("updater:download", () => {
+      triggerDownloadUpdate();
+    });
+
+    ipcMain.on("updater:install", () => {
+      restartAndUpdate();
+    });
+
+    ipcMain.handle("updater:check", async () => {
+      if (is.dev) return null;
+      try {
+        const result = await autoUpdater.checkForUpdates();
+        // Swallow the auto-download rejection (see runUpdateCheck).
+        void result?.downloadPromise?.catch(() => {});
+        const latest = result?.updateInfo?.version;
+        if (!latest) return null;
+        // Only report an update when the remote version is actually newer
+        if (latest === app.getVersion()) return null;
+        return { version: latest, downloadState: updateDownloadState };
+      } catch {
+        return null;
+      }
+    });
+
+    // -- Auto-update setting IPC --
+    ipcMain.handle("settings:auto-update", () => {
+      return readSettings().autoUpdate !== false;
+    });
+
+    ipcMain.on("settings:set-auto-update", (_event, enabled: boolean) => {
+      writeSettings({ autoUpdate: enabled });
+      if (!is.dev) {
+        autoUpdater.autoDownload = enabled;
+      }
+    });
+
+    // -- Launch at startup setting IPC --
+    ipcMain.handle("settings:launch-at-startup", () => {
+      if (process.platform === "linux") return linuxAutostart.isEnabled();
+      return app.getLoginItemSettings().openAtLogin;
+    });
+
+    ipcMain.on("settings:set-launch-at-startup", (_event, enabled: boolean) => {
+      if (process.platform === "linux") {
+        linuxAutostart.setEnabled(enabled);
+        return;
+      }
+      app.setLoginItemSettings({ openAtLogin: enabled });
+    });
+
+    // -- Show dashboard on launch setting IPC --
+    ipcMain.handle("settings:show-dashboard-on-launch", () => {
+      return readSettings().showDashboardOnLaunch !== false;
+    });
+
+    ipcMain.on(
+      "settings:set-show-dashboard-on-launch",
+      (_event, enabled: boolean) => {
+        writeSettings({ showDashboardOnLaunch: enabled });
+      },
     );
-  });
 
-  // Register the hold-to-record hotkey immediately with the default accelerator
-  // so a press right after launch is never dropped. Pass DEFAULT_HOTKEY
-  // explicitly so this doesn't fire a settings request at the not-yet-ready
-  // server. Once the server answers, re-register with the configured
-  // accelerator + activation mode (only if they differ, to avoid a needless
-  // native-listener rebuild).
-  scheduleHotkeyRegistration(DEFAULT_HOTKEY);
-  scheduleMagicEditHotkeyRegistration(DEFAULT_MAGIC_EDIT_HOTKEY);
-  void waitForServerReady().then(async () => {
-    // One request for keys, instead of a read per key. Skip if the server
-    // never answered — the default registered above stands.
-    const settings = await getServerSettings();
-    if (!settings) return;
-    hotkeyActivationMode = hotkeyModeFromSettings(settings);
-    const configured = hotkeyFromSettings(settings);
-    const accel = configured
-      ? normalizeAccelerator(configured)
-      : DEFAULT_HOTKEY;
-    if (accel !== currentHotkeyAccel) scheduleHotkeyRegistration(configured);
+    // -- Context-aware dictation: get frontmost app + browser context --
+    ipcMain.handle("system:frontmost-app", async () => {
+      try {
+        if (process.platform === "darwin") {
+          return await getMacFrontmostApp();
+        }
+        if (process.platform === "win32") {
+          return await getWindowsFrontmostApp();
+        }
+        if (process.platform === "linux") {
+          return await getLinuxFrontmostApp();
+        }
+      } catch {
+        // graceful fallback
+      }
+      return null;
+    });
 
-    const configuredMagicEdit = settings[SETTINGS_KEYS.magicEditHotkey];
-    const magicEditAccel = configuredMagicEdit
-      ? normalizeAccelerator(configuredMagicEdit)
-      : DEFAULT_MAGIC_EDIT_HOTKEY;
-    if (magicEditAccel !== currentMagicEditAccel) {
-      scheduleMagicEditHotkeyRegistration(configuredMagicEdit);
-    }
-  });
+    ipcMain.handle("system:open-app-candidates", async () => {
+      try {
+        return await getOpenAppCandidates();
+      } catch {
+        return [];
+      }
+    });
 
-  // Start microphone activity monitoring
-  micListener = new MicListener({
-    excludePid: process.pid,
-    onStateChange: (state) => {
-      mainWindow?.webContents.send("mic:activity-changed", state);
-      settingsWindow?.webContents.send("mic:activity-changed", state);
-    },
-  });
-  micListener.start();
+    // -- Pill position setting --
+    ipcMain.handle("settings:pill-position", () => {
+      const pos = (readSettings().pillPosition as string) ?? "bottom-center";
+      // For a custom position, derive the correct top/bottom alignment token
+      // from the actual window position relative to its display.
+      if (pos === "custom") return getPillAlignmentForCustom();
+      return pos;
+    });
 
-  // Listen for hotkey changes from the settings UI
-  ipcMain.on("hotkey:update", (_event, newHotkey: string) => {
-    scheduleHotkeyRegistration(newHotkey);
-  });
-
-  ipcMain.on("magic-edit-hotkey:update", (_event, newHotkey: string) => {
-    scheduleMagicEditHotkeyRegistration(newHotkey);
-  });
-
-  ipcMain.on("hotkey:reload", () => {
-    void getServerSettings().then((settings) => {
-      // Server unreachable — keep last-known-good mode/hotkey rather than
-      // silently reverting to defaults on a transient blip.
-      if (!settings) return;
-      hotkeyActivationMode = hotkeyModeFromSettings(settings);
-      scheduleHotkeyRegistration(
-        hotkeyFromSettings(settings) ?? currentHotkeyAccel ?? undefined,
-      );
-      scheduleMagicEditHotkeyRegistration(
-        settings[SETTINGS_KEYS.magicEditHotkey] ?? undefined,
+    ipcMain.on("settings:set-pill-position", (_event, position: string) => {
+      if (position === "custom") {
+        writeSettings({ pillPosition: position });
+      } else {
+        writeSettings({
+          pillPosition: position,
+          pillCustomPosition: undefined,
+        });
+      }
+      // Reposition the window and notify the renderer for CSS alignment.
+      if (mainWindow) {
+        const { x, y } = getAppWindowPosition();
+        setProgrammaticPosition(mainWindow, x, y);
+      }
+      // For custom, resolve the live alignment; for presets, send as-is.
+      const broadcast =
+        position === "custom" ? getPillAlignmentForCustom() : position;
+      mainWindow?.webContents.send("settings:pill-position-changed", broadcast);
+      settingsWindow?.webContents.send(
+        "settings:pill-position-changed",
+        broadcast,
       );
     });
-  });
 
-  ipcMain.on("hotkey:set-mode", (_event, mode: string) => {
-    hotkeyActivationMode = mode === "toggle" ? "toggle" : "hold";
-    hotkeyPressed = false;
-    clearHotkeyStuckWatchdog();
-    scheduleHotkeyRegistration(currentHotkeyAccel ?? undefined);
+    // Register the hold-to-record hotkey immediately with the default accelerator
+    // so a press right after launch is never dropped. Pass DEFAULT_HOTKEY
+    // explicitly so this doesn't fire a settings request at the not-yet-ready
+    // server. Once the server answers, re-register with the configured
+    // accelerator + activation mode (only if they differ, to avoid a needless
+    // native-listener rebuild).
+    scheduleHotkeyRegistration(DEFAULT_HOTKEY);
+    scheduleMagicEditHotkeyRegistration(DEFAULT_MAGIC_EDIT_HOTKEY);
+    void waitForServerReady().then(async () => {
+      // One request for keys, instead of a read per key. Skip if the server
+      // never answered — the default registered above stands.
+      const settings = await getServerSettings();
+      if (!settings) return;
+      hotkeyActivationMode = hotkeyModeFromSettings(settings);
+      const configured = hotkeyFromSettings(settings);
+      const accel = configured
+        ? normalizeAccelerator(configured)
+        : DEFAULT_HOTKEY;
+      if (accel !== currentHotkeyAccel) scheduleHotkeyRegistration(configured);
+
+      const configuredMagicEdit = settings[SETTINGS_KEYS.magicEditHotkey];
+      const magicEditAccel = configuredMagicEdit
+        ? normalizeAccelerator(configuredMagicEdit)
+        : DEFAULT_MAGIC_EDIT_HOTKEY;
+      if (magicEditAccel !== currentMagicEditAccel) {
+        scheduleMagicEditHotkeyRegistration(configuredMagicEdit);
+      }
+    });
+
+    // Start microphone activity monitoring
+    micListener = new MicListener({
+      excludePid: process.pid,
+      onStateChange: (state) => {
+        mainWindow?.webContents.send("mic:activity-changed", state);
+        settingsWindow?.webContents.send("mic:activity-changed", state);
+      },
+    });
+    micListener.start();
+
+    // Listen for hotkey changes from the settings UI
+    ipcMain.on("hotkey:update", (_event, newHotkey: string) => {
+      scheduleHotkeyRegistration(newHotkey);
+    });
+
+    ipcMain.on("magic-edit-hotkey:update", (_event, newHotkey: string) => {
+      scheduleMagicEditHotkeyRegistration(newHotkey);
+    });
+
+    ipcMain.on("hotkey:reload", () => {
+      void getServerSettings().then((settings) => {
+        // Server unreachable — keep last-known-good mode/hotkey rather than
+        // silently reverting to defaults on a transient blip.
+        if (!settings) return;
+        hotkeyActivationMode = hotkeyModeFromSettings(settings);
+        scheduleHotkeyRegistration(
+          hotkeyFromSettings(settings) ?? currentHotkeyAccel ?? undefined,
+        );
+        scheduleMagicEditHotkeyRegistration(
+          settings[SETTINGS_KEYS.magicEditHotkey] ?? undefined,
+        );
+      });
+    });
+
+    ipcMain.on("hotkey:set-mode", (_event, mode: string) => {
+      hotkeyActivationMode = mode === "toggle" ? "toggle" : "hold";
+      hotkeyPressed = false;
+      clearHotkeyStuckWatchdog();
+      scheduleHotkeyRegistration(currentHotkeyAccel ?? undefined);
+    });
   });
-});
 }
 
 const DEFAULT_HOTKEY = getDefaultHotkey();
@@ -2934,9 +2955,13 @@ function registerMagicEditGlobalShortcutFallback(accel: string): void {
 
     if (globalShortcut.register(accel, onToggle)) {
       currentMagicEditGlobalShortcut = accel;
-      hotkeyLog.debug(`Magic Edit globalShortcut fallback registered: "${accel}"`);
+      hotkeyLog.debug(
+        `Magic Edit globalShortcut fallback registered: "${accel}"`,
+      );
     } else {
-      hotkeyLog.warn(`Failed to register Magic Edit globalShortcut fallback for "${accel}"`);
+      hotkeyLog.warn(
+        `Failed to register Magic Edit globalShortcut fallback for "${accel}"`,
+      );
     }
   } catch (err) {
     hotkeyLog.warn(
@@ -2974,11 +2999,14 @@ async function registerMagicEditHotkey(hotkey?: string): Promise<void> {
         );
         // Clear the bad value from the database so it doesn't keep loading
         try {
-          await fetch(`http://localhost:${serverPort}/api/settings/${SETTINGS_KEYS.magicEditHotkey}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ value: DEFAULT_MAGIC_EDIT_HOTKEY }),
-          });
+          await fetch(
+            `http://localhost:${serverPort}/api/settings/${SETTINGS_KEYS.magicEditHotkey}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ value: DEFAULT_MAGIC_EDIT_HOTKEY }),
+            },
+          );
         } catch {}
       }
       normalized = DEFAULT_MAGIC_EDIT_HOTKEY;
@@ -3025,7 +3053,9 @@ async function registerMagicEditHotkey(hotkey?: string): Promise<void> {
         hotkeyLog.warn(`Magic Edit native key listener error: ${error}`);
       },
       onReady: () => {
-        hotkeyLog.debug(`Magic Edit native key listener ready for "${normalized}"`);
+        hotkeyLog.debug(
+          `Magic Edit native key listener ready for "${normalized}"`,
+        );
       },
       onPermanentFailure: () => {
         if (magicEditKeyListener !== listener) return;
@@ -3051,7 +3081,9 @@ async function registerMagicEditHotkey(hotkey?: string): Promise<void> {
     }
 
     if (started) {
-      hotkeyLog.debug(`Magic Edit native key listener started for "${normalized}"`);
+      hotkeyLog.debug(
+        `Magic Edit native key listener started for "${normalized}"`,
+      );
     } else {
       listener.stop();
       magicEditKeyListener = null;

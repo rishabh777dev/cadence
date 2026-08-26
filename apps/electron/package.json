@@ -4,8 +4,8 @@
   "desktopName": "cadence.desktop",
   "version": "0.6.0",
   "description": "Voice-to-text that works everywhere",
-  "author": "freestyle-voice",
-  "homepage": "https://github.com/freestyle-voice/freestyle",
+  "author": "rishabh777dev",
+  "homepage": "https://github.com/rishabh777dev/cadence",
   "main": "./out/main/index.js",
   "scripts": {
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",

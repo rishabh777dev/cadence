@@ -1,7 +1,9 @@
 import { configureModelSchema } from "@freestyle-voice/validations";
 import { zValidator } from "@hono/zod-validator";
+import { generateText } from "ai";
 import { Hono } from "hono";
 import { getDb } from "../lib/db.js";
+import { getLiveProviderModels } from "../lib/fetch-provider-models.js";
 import {
   FREESTYLE_CLOUD_CLEANUP_MODEL_ID,
   FREESTYLE_CLOUD_PROVIDER_ID,
@@ -17,16 +19,14 @@ import { getMlxModelStatus } from "../lib/mlx-asr/models.js";
 import { reconcileUnsupportedMlxVoiceDefault } from "../lib/mlx-asr/reconcile.js";
 import { canRunMlxAsr } from "../lib/mlx-asr/server.js";
 import { capture } from "../lib/posthog.js";
+import { createChatModel } from "../lib/providers.js";
+import { getApiKeyForProvider } from "../lib/streaming-stt.js";
 import {
   LEGACY_WHISPER_MODELS,
   WHISPER_MODELS,
   WHISPER_PROVIDER_ID,
 } from "../lib/whisper/constants.js";
 import { getModelStatus } from "../lib/whisper/models.js";
-import { getLiveProviderModels } from "../lib/fetch-provider-models.js";
-import { generateText } from "ai";
-import { createChatModel } from "../lib/providers.js";
-import { getApiKeyForProvider } from "../lib/streaming-stt.js";
 
 interface AvailableModel {
   provider_id: string;
@@ -510,10 +510,13 @@ const models = new Hono()
             signal: AbortSignal.timeout(6000),
           });
           if (!res.ok) {
-            const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+            const err = (await res.json().catch(() => ({}))) as {
+              error?: { message?: string };
+            };
             return c.json({
               ok: false,
-              error: err?.error?.message || `Groq returned status ${res.status}`,
+              error:
+                err?.error?.message || `Groq returned status ${res.status}`,
             });
           }
         } else if (provider === "openai") {
@@ -522,10 +525,13 @@ const models = new Hono()
             signal: AbortSignal.timeout(6000),
           });
           if (!res.ok) {
-            const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+            const err = (await res.json().catch(() => ({}))) as {
+              error?: { message?: string };
+            };
             return c.json({
               ok: false,
-              error: err?.error?.message || `OpenAI returned status ${res.status}`,
+              error:
+                err?.error?.message || `OpenAI returned status ${res.status}`,
             });
           }
         } else if (provider === "deepgram") {
@@ -534,10 +540,13 @@ const models = new Hono()
             signal: AbortSignal.timeout(6000),
           });
           if (!res.ok) {
-            const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+            const err = (await res.json().catch(() => ({}))) as {
+              error?: { message?: string };
+            };
             return c.json({
               ok: false,
-              error: err?.error?.message || `Deepgram returned status ${res.status}`,
+              error:
+                err?.error?.message || `Deepgram returned status ${res.status}`,
             });
           }
         }

@@ -1,5 +1,7 @@
+import { KeyComboDisplay } from "@renderer/components/key-combo";
 import { Button } from "@renderer/components/ui/button";
 import { Input } from "@renderer/components/ui/input";
+import { SegmentedControl } from "@renderer/components/ui/segmented-control";
 import {
   Select,
   SelectContent,
@@ -7,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@renderer/components/ui/select";
-import { SegmentedControl } from "@renderer/components/ui/segmented-control";
 import { Textarea } from "@renderer/components/ui/textarea";
 import {
   comboDisplayKeys,
@@ -15,27 +16,27 @@ import {
   keyDisplayLabel,
   useHotkeyRecorder,
 } from "@renderer/hooks/use-hotkey-recorder";
-import { KeyComboDisplay } from "@renderer/components/key-combo";
-import { getClient, apiFetch } from "@renderer/lib/api";
+import { apiFetch, getClient } from "@renderer/lib/api";
 import type { AvailableModel } from "@renderer/lib/models";
-import { SETTINGS_KEYS } from "@shared/settings-keys";
-import { getDefaultMagicEditHotkey } from "@shared/hotkey-defaults";
 import { settingsQueryOptions } from "@renderer/lib/query";
+import { getDefaultMagicEditHotkey } from "@shared/hotkey-defaults";
+import { SETTINGS_KEYS } from "@shared/settings-keys";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
   Cpu,
   Key,
   Keyboard,
-  Mic,
-  Sparkles,
-  Sliders,
   Languages,
-  MessageSquareQuote,
-  RefreshCw,
   Loader2,
+  MessageSquareQuote,
+  Mic,
+  RefreshCw,
+  Sliders,
+  Sparkles,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { PageHeader, PageShell } from "./models/page-chrome";
 import type { ApiKeyEntry } from "./models/types";
@@ -223,11 +224,16 @@ export default function MagicEditPage(): React.JSX.Element {
         .catch(() => {});
 
       if (newProvider !== "auto") {
-        const modelsForProvider = dynamicModelsByProvider.get(newProvider) ?? [];
+        const modelsForProvider =
+          dynamicModelsByProvider.get(newProvider) ?? [];
         const isCurrentModelValid = modelsForProvider.some(
           (m) => m.model_id === model,
         );
-        if (!isCurrentModelValid && !isCustomModel && modelsForProvider.length > 0) {
+        if (
+          !isCurrentModelValid &&
+          !isCustomModel &&
+          modelsForProvider.length > 0
+        ) {
           const firstModel =
             modelsForProvider.find((m) => m.curated)?.model_id ??
             modelsForProvider[0]?.model_id ??
@@ -322,7 +328,8 @@ export default function MagicEditPage(): React.JSX.Element {
                 </h3>
               </div>
               <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed max-w-xl">
-                Global hotkey to trigger voice rewrites. Select text in any window, press your shortcut, and speak what to edit or rewrite.
+                Global hotkey to trigger voice rewrites. Select text in any
+                window, press your shortcut, and speak what to edit or rewrite.
               </p>
             </div>
 
@@ -385,7 +392,8 @@ export default function MagicEditPage(): React.JSX.Element {
               </h3>
             </div>
             <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-              Dynamically powered by your configured provider keys and local models. Choose which LLM executes in-place transformations.
+              Dynamically powered by your configured provider keys and local
+              models. Choose which LLM executes in-place transformations.
             </p>
           </div>
 
@@ -437,7 +445,8 @@ export default function MagicEditPage(): React.JSX.Element {
                       <span className="flex items-center gap-1 text-[10px] text-primary">
                         <Loader2 className="size-2.5 animate-spin" /> Live sync…
                       </span>
-                    ) : liveModelsQuery.data && liveModelsQuery.data.length > 0 ? (
+                    ) : liveModelsQuery.data &&
+                      liveModelsQuery.data.length > 0 ? (
                       <span className="text-[10px] px-1.5 py-0.5 rounded font-mono bg-emerald-500/10 text-emerald-400">
                         {liveModelsQuery.data.length} live models
                       </span>
@@ -492,7 +501,9 @@ export default function MagicEditPage(): React.JSX.Element {
                     {currentProviderModels.map((m) => (
                       <SelectItem key={m.model_id} value={m.model_id}>
                         <div className="flex items-center justify-between w-full gap-2">
-                          <span className="font-sans font-medium">{m.model_name}</span>
+                          <span className="font-sans font-medium">
+                            {m.model_name}
+                          </span>
                           <span className="text-[10px] text-muted-foreground font-mono bg-secondary/80 px-1.5 py-0.5 rounded">
                             {m.model_id}
                           </span>
@@ -507,7 +518,9 @@ export default function MagicEditPage(): React.JSX.Element {
 
                 {(isCustomModel ||
                   (model &&
-                    !currentProviderModels.some((m) => m.model_id === model))) && (
+                    !currentProviderModels.some(
+                      (m) => m.model_id === model,
+                    ))) && (
                   <Input
                     placeholder="Enter custom model identifier (e.g. gpt-4o-mini)"
                     value={model}
@@ -531,12 +544,16 @@ export default function MagicEditPage(): React.JSX.Element {
               </h3>
             </div>
             <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-              Speech recognition engine used to transcribe your spoken edit instructions.
+              Speech recognition engine used to transcribe your spoken edit
+              instructions.
             </p>
           </div>
 
           <div className="max-w-md">
-            <Select value={voiceProvider} onValueChange={handleVoiceProviderChange}>
+            <Select
+              value={voiceProvider}
+              onValueChange={handleVoiceProviderChange}
+            >
               <SelectTrigger className="w-full h-10 rounded-xl bg-background/80">
                 <SelectValue placeholder="Select Voice Engine" />
               </SelectTrigger>
@@ -561,7 +578,8 @@ export default function MagicEditPage(): React.JSX.Element {
               </h3>
             </div>
             <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-              Default style and phrasing tone applied to every in-place voice transformation.
+              Default style and phrasing tone applied to every in-place voice
+              transformation.
             </p>
           </div>
 
@@ -604,7 +622,8 @@ export default function MagicEditPage(): React.JSX.Element {
               </h3>
             </div>
             <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-              Controls whether Hinglish, Hindi, and multilingual output is rendered in the Latin alphabet or native Devanagari script.
+              Controls whether Hinglish, Hindi, and multilingual output is
+              rendered in the Latin alphabet or native Devanagari script.
             </p>
           </div>
 
@@ -614,7 +633,8 @@ export default function MagicEditPage(): React.JSX.Element {
             options={[
               {
                 value: "roman",
-                label: "Roman Script (English Alphabet - Recommended for Hinglish)",
+                label:
+                  "Roman Script (English Alphabet - Recommended for Hinglish)",
               },
               {
                 value: "native",
@@ -634,7 +654,8 @@ export default function MagicEditPage(): React.JSX.Element {
               </h3>
             </div>
             <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-              Appended to every Magic Edit prompt. Provide specific rules, custom formatting preferences, or vocabulary constraints.
+              Appended to every Magic Edit prompt. Provide specific rules,
+              custom formatting preferences, or vocabulary constraints.
             </p>
           </div>
 

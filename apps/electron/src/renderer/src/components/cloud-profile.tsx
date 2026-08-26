@@ -192,7 +192,10 @@ export function CloudProfileButton({
             Help
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onSelect={() => void signOut()}>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => void signOut()}
+          >
             <LogOut />
             Sign out
           </DropdownMenuItem>

@@ -46,15 +46,20 @@ export function buildMagicEditPrompt(params: {
 
   let toneInstruction = "";
   if (params.tone === "professional") {
-    toneInstruction = "\nTone requirement: Write in a polished, professional, business-appropriate tone.";
+    toneInstruction =
+      "\nTone requirement: Write in a polished, professional, business-appropriate tone.";
   } else if (params.tone === "casual") {
-    toneInstruction = "\nTone requirement: Write in a relaxed, friendly, conversational tone.";
+    toneInstruction =
+      "\nTone requirement: Write in a relaxed, friendly, conversational tone.";
   } else if (params.tone === "concise") {
-    toneInstruction = "\nTone requirement: Be extremely direct and concise. Eliminate any wordiness.";
+    toneInstruction =
+      "\nTone requirement: Be extremely direct and concise. Eliminate any wordiness.";
   } else if (params.tone === "academic") {
-    toneInstruction = "\nTone requirement: Use formal academic and articulate vocabulary.";
+    toneInstruction =
+      "\nTone requirement: Use formal academic and articulate vocabulary.";
   } else if (params.tone === "direct") {
-    toneInstruction = "\nTone requirement: Deliver the message in direct, crisp, high-impact phrasing.";
+    toneInstruction =
+      "\nTone requirement: Deliver the message in direct, crisp, high-impact phrasing.";
   }
 
   const customInstruction = params.customPrompt?.trim()
@@ -371,7 +376,10 @@ export async function transformWithMagicEdit(
       (editedText.startsWith('"') && editedText.endsWith('"')) ||
       (editedText.startsWith("'") && editedText.endsWith("'"))
     ) {
-      editedText = editedText.replace(/^(?:"""|"|')/, "").replace(/(?:"""|"|')$/, "").trim();
+      editedText = editedText
+        .replace(/^(?:"""|"|')/, "")
+        .replace(/(?:"""|"|')$/, "")
+        .trim();
     }
 
     // Strip conversational preambles (e.g. "Here's a more elaborate version of your text:\n---")

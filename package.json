@@ -1,6 +1,13 @@
 {
-  "name": "@freestyle-voice/workspace",
+  "name": "cadence",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rishabh777dev/cadence.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "turbo build --filter=!docs",
     "dev": "turbo dev --filter=!docs",

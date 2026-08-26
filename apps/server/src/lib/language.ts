@@ -56,7 +56,9 @@ export function parseLanguageCodes(raw: string | undefined | null): string[] {
     .filter(Boolean);
 }
 
-export function buildMultilingualWhisperPrompt(codes: string[]): string | undefined {
+export function buildMultilingualWhisperPrompt(
+  codes: string[],
+): string | undefined {
   if (codes.length === 0 || (codes.length === 1 && codes[0] === "auto")) {
     return undefined;
   }

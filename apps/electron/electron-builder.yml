@@ -68,5 +68,5 @@ deb:
 npmRebuild: false
 publish:
   provider: github
-  owner: freestyle-voice
-  repo: freestyle
+  owner: rishabh777dev
+  repo: cadence

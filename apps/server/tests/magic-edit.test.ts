@@ -10,15 +10,22 @@ describe("buildMagicEditPrompt", () => {
 
     expect(system).toContain("You are an expert, precise in-place text editor");
     expect(system).toContain("Return ONLY the final replacement text");
-    expect(prompt).toContain("<instruction>\nfix grammar and make it formal\n</instruction>");
-    expect(prompt).toContain("<selected_text>\ni thinks this is broken\n</selected_text>");
+    expect(prompt).toContain(
+      "<instruction>\nfix grammar and make it formal\n</instruction>",
+    );
+    expect(prompt).toContain(
+      "<selected_text>\ni thinks this is broken\n</selected_text>",
+    );
   });
 
   it("includes app context in the system prompt when provided", () => {
     const { system } = buildMagicEditPrompt({
       selectedText: "def foo(): pass",
       instruction: "add docstring",
-      appContext: JSON.stringify({ app: "VS Code", windowTitle: "main.py - Project" }),
+      appContext: JSON.stringify({
+        app: "VS Code",
+        windowTitle: "main.py - Project",
+      }),
     });
 
     expect(system).toContain("VS Code (main.py - Project)");
@@ -42,7 +49,9 @@ describe("buildMagicEditPrompt", () => {
       customPrompt: "Always use bullet points.",
     });
 
-    expect(system).toContain("polished, professional, business-appropriate tone");
+    expect(system).toContain(
+      "polished, professional, business-appropriate tone",
+    );
     expect(system).toContain("Always use bullet points.");
   });
 });

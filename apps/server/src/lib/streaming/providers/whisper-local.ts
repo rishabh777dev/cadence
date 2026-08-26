@@ -1,8 +1,8 @@
 import { collapseAsrLineBreaks } from "@freestyle-voice/stt";
 import { createAppLogger } from "@freestyle-voice/utils";
+import { parseLanguageCodes } from "../../language.js";
 import { isServerBinaryAvailable } from "../../whisper/binary.js";
 import { WHISPER_PROVIDER_ID } from "../../whisper/constants.js";
-import { parseLanguageCodes } from "../../language.js";
 import { ensureBinariesDownloaded } from "../../whisper/models.js";
 import {
   ensureServerRunning,

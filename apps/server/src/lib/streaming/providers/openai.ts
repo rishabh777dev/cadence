@@ -80,7 +80,11 @@ export class OpenAITranscriptionProvider implements TranscriptionProvider {
       const transcription: Record<string, unknown> = { model: short };
       const codes = parseLanguageCodes(language);
 
-      if (codes.length === 1 && codes[0] !== "auto" && codes[0] !== "hinglish") {
+      if (
+        codes.length === 1 &&
+        codes[0] !== "auto" &&
+        codes[0] !== "hinglish"
+      ) {
         transcription.language = codes[0];
       }
       if (bias?.kind === "prompt") {

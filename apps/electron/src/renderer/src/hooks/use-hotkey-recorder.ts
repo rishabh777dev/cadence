@@ -151,11 +151,21 @@ function modifierName(part: string): string | null {
 }
 
 const BLOCKED_SHORTCUTS = new Set([
-  "Control+C", "Command+C", "Ctrl+C",
-  "Control+V", "Command+V", "Ctrl+V",
-  "Control+X", "Command+X", "Ctrl+X",
-  "Control+Z", "Command+Z", "Ctrl+Z",
-  "Control+A", "Command+A", "Ctrl+A",
+  "Control+C",
+  "Command+C",
+  "Ctrl+C",
+  "Control+V",
+  "Command+V",
+  "Ctrl+V",
+  "Control+X",
+  "Command+X",
+  "Ctrl+X",
+  "Control+Z",
+  "Command+Z",
+  "Ctrl+Z",
+  "Control+A",
+  "Command+A",
+  "Ctrl+A",
 ]);
 
 export function comboToAccelerator(combo: HotkeyCombo): string | null {
@@ -179,7 +189,8 @@ export function isValidHotkeyCombo(combo: HotkeyCombo | null): boolean {
   // If there are at least two modifier keys together (e.g. Ctrl + Alt, Ctrl + Shift)
   if (!combo.key && combo.modifiers.length >= 2) return true;
   // Dedicated mouse buttons or Fn
-  if (combo.key && (MACRO_MOUSE_BUTTONS.has(combo.key) || combo.key === "Fn")) return true;
+  if (combo.key && (MACRO_MOUSE_BUTTONS.has(combo.key) || combo.key === "Fn"))
+    return true;
   // If there is a key and at least one modifier
   if (combo.key && combo.modifiers.length > 0) {
     const accel = combo.key

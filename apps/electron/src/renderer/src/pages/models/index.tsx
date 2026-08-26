@@ -337,10 +337,7 @@ export default function ModelsPage(): React.JSX.Element {
           }
         />
 
-        <ProviderManager
-          m={m}
-          onDeleteKey={setPendingProviderDelete}
-        />
+        <ProviderManager m={m} onDeleteKey={setPendingProviderDelete} />
       </div>
 
       {warmingOpen && (
@@ -515,4 +512,3 @@ function ModelsLoadingSkeleton(): React.JSX.Element {
 }
 
 // ---------------------------------------------------------------------------
-

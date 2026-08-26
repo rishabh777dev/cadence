@@ -31,8 +31,8 @@ export function SessionExpiredModal(): React.JSX.Element | null {
             Session expired
           </DialogTitle>
           <DialogDescription className="text-muted-foreground text-[13px]">
-            Your Cadence Cloud session has expired. Sign in again to keep
-            using cloud voice and cleanup.
+            Your Cadence Cloud session has expired. Sign in again to keep using
+            cloud voice and cleanup.
           </DialogDescription>
 
           <Button

@@ -20,20 +20,84 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import React, { useCallback, useMemo, useState } from "react";
+import type React from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Eyebrow } from "./page-chrome";
 import type { UseModels } from "./use-models";
 
 const ALL_PROVIDERS = [
-  { id: "groq", name: "Groq", desc: "Ultra-fast inference for Whisper & Llama", icon: "⚡", hasVoice: true, hasLlm: true },
-  { id: "mistral", name: "Mistral AI", desc: "Frontier reasoning & multilingual models", icon: "🌪️", hasVoice: false, hasLlm: true },
-  { id: "openai", name: "OpenAI", desc: "GPT-4o, o3-mini & Whisper", icon: "🤖", hasVoice: true, hasLlm: true },
-  { id: "anthropic", name: "Anthropic", desc: "Claude 3.5 Sonnet, 3.7 Sonnet & Haiku", icon: "🧠", hasVoice: false, hasLlm: true },
-  { id: "google", name: "Google Gemini", desc: "Gemini 2.5 Flash, 2.5 Pro & 2.0", icon: "🌐", hasVoice: false, hasLlm: true },
-  { id: "deepgram", name: "Deepgram", desc: "High-speed Nova-3 voice models", icon: "🎙️", hasVoice: true, hasLlm: false },
-  { id: "openrouter", name: "OpenRouter", desc: "Access 100+ AI models via one key", icon: "🔀", hasVoice: false, hasLlm: true },
-  { id: "local-whisper", name: "Local Whisper", desc: "100% on-device private voice recognition", icon: "💻", hasVoice: true, hasLlm: false },
-  { id: "local-llm", name: "Local Ollama / LM Studio", desc: "Offline local LLMs on localhost:11434", icon: "🦙", hasVoice: false, hasLlm: true },
+  {
+    id: "groq",
+    name: "Groq",
+    desc: "Ultra-fast inference for Whisper & Llama",
+    icon: "⚡",
+    hasVoice: true,
+    hasLlm: true,
+  },
+  {
+    id: "mistral",
+    name: "Mistral AI",
+    desc: "Frontier reasoning & multilingual models",
+    icon: "🌪️",
+    hasVoice: false,
+    hasLlm: true,
+  },
+  {
+    id: "openai",
+    name: "OpenAI",
+    desc: "GPT-4o, o3-mini & Whisper",
+    icon: "🤖",
+    hasVoice: true,
+    hasLlm: true,
+  },
+  {
+    id: "anthropic",
+    name: "Anthropic",
+    desc: "Claude 3.5 Sonnet, 3.7 Sonnet & Haiku",
+    icon: "🧠",
+    hasVoice: false,
+    hasLlm: true,
+  },
+  {
+    id: "google",
+    name: "Google Gemini",
+    desc: "Gemini 2.5 Flash, 2.5 Pro & 2.0",
+    icon: "🌐",
+    hasVoice: false,
+    hasLlm: true,
+  },
+  {
+    id: "deepgram",
+    name: "Deepgram",
+    desc: "High-speed Nova-3 voice models",
+    icon: "🎙️",
+    hasVoice: true,
+    hasLlm: false,
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    desc: "Access 100+ AI models via one key",
+    icon: "🔀",
+    hasVoice: false,
+    hasLlm: true,
+  },
+  {
+    id: "local-whisper",
+    name: "Local Whisper",
+    desc: "100% on-device private voice recognition",
+    icon: "💻",
+    hasVoice: true,
+    hasLlm: false,
+  },
+  {
+    id: "local-llm",
+    name: "Local Ollama / LM Studio",
+    desc: "Offline local LLMs on localhost:11434",
+    icon: "🦙",
+    hasVoice: false,
+    hasLlm: true,
+  },
 ] as const;
 
 export function ProviderManager({
@@ -52,11 +116,13 @@ export function ProviderManager({
   const queryClient = useQueryClient();
 
   const activeProvider = useMemo(
-    () => ALL_PROVIDERS.find((p) => p.id === selectedProvider) ?? ALL_PROVIDERS[0],
+    () =>
+      ALL_PROVIDERS.find((p) => p.id === selectedProvider) ?? ALL_PROVIDERS[0],
     [selectedProvider],
   );
 
-  const isLocal = selectedProvider === "local-whisper" || selectedProvider === "local-llm";
+  const isLocal =
+    selectedProvider === "local-whisper" || selectedProvider === "local-llm";
   const hasKey = m.keyProviders.has(selectedProvider);
   const keyEntry = m.apiKeys.find((k) => k.provider === selectedProvider);
 
@@ -65,7 +131,9 @@ export function ProviderManager({
     queryKey: ["models", "live", selectedProvider],
     queryFn: async () => {
       if (selectedProvider === "local-whisper") {
-        return m.available.filter((item) => item.provider_id === "local-whisper");
+        return m.available.filter(
+          (item) => item.provider_id === "local-whisper",
+        );
       }
       const res = await apiFetch(`/api/models/live/${selectedProvider}`);
       if (!res.ok) return [];
@@ -97,7 +165,9 @@ export function ProviderManager({
       } else {
         setKeyInput("");
         setEditingKey(false);
-        queryClient.invalidateQueries({ queryKey: ["models", "live", selectedProvider] });
+        queryClient.invalidateQueries({
+          queryKey: ["models", "live", selectedProvider],
+        });
       }
     } finally {
       setSavingKey(false);
@@ -229,7 +299,9 @@ export function ProviderManager({
                   <span
                     className={cn(
                       "text-[9px] px-1 py-0.2 rounded font-mono uppercase font-bold",
-                      isSelected ? "bg-white/20 text-white" : "bg-primary/10 text-primary",
+                      isSelected
+                        ? "bg-white/20 text-white"
+                        : "bg-primary/10 text-primary",
                     )}
                   >
                     Active
@@ -251,15 +323,24 @@ export function ProviderManager({
                   {activeProvider.name}
                 </h3>
                 {hasKey ? (
-                  <Badge variant="outline" className="text-emerald-400 border-emerald-500/30 bg-emerald-500/10 text-[11px] gap-1">
+                  <Badge
+                    variant="outline"
+                    className="text-emerald-400 border-emerald-500/30 bg-emerald-500/10 text-[11px] gap-1"
+                  >
                     <Check className="size-3" /> Key Active
                   </Badge>
                 ) : isLocal ? (
-                  <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10 text-[11px] gap-1">
+                  <Badge
+                    variant="outline"
+                    className="text-primary border-primary/30 bg-primary/10 text-[11px] gap-1"
+                  >
                     <Laptop className="size-3" /> Ready On-Device
                   </Badge>
                 ) : (
-                  <Badge variant="outline" className="text-muted-foreground border-border text-[11px] gap-1">
+                  <Badge
+                    variant="outline"
+                    className="text-muted-foreground border-border text-[11px] gap-1"
+                  >
                     No API Key Configured
                   </Badge>
                 )}
@@ -301,7 +382,8 @@ export function ProviderManager({
                     onClick={() => setEditingKey(true)}
                     className="h-8 text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10 cursor-pointer"
                   >
-                    <Plus className="size-3" /> Add {activeProvider.name} API Key
+                    <Plus className="size-3" /> Add {activeProvider.name} API
+                    Key
                   </Button>
                 ) : null}
               </div>
@@ -313,7 +395,8 @@ export function ProviderManager({
             <div className="bg-secondary/40 border-border/80 border p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Key className="size-3.5 text-primary" /> Enter {activeProvider.name} API Key:
+                  <Key className="size-3.5 text-primary" /> Enter{" "}
+                  {activeProvider.name} API Key:
                 </label>
                 <Button
                   variant="ghost"
@@ -370,7 +453,8 @@ export function ProviderManager({
                 </h4>
                 {liveModelsQuery.isFetching && (
                   <span className="flex items-center gap-1 text-[11px] text-primary">
-                    <Loader2 className="size-3 animate-spin" /> Fetching models from {activeProvider.name}…
+                    <Loader2 className="size-3 animate-spin" /> Fetching models
+                    from {activeProvider.name}…
                   </span>
                 )}
               </div>
@@ -385,7 +469,10 @@ export function ProviderManager({
                   title="Refresh live models"
                 >
                   <RefreshCw
-                    className={cn("size-3", liveModelsQuery.isFetching && "animate-spin text-primary")}
+                    className={cn(
+                      "size-3",
+                      liveModelsQuery.isFetching && "animate-spin text-primary",
+                    )}
                   />
                   <span>Refresh Models</span>
                 </Button>
@@ -400,7 +487,8 @@ export function ProviderManager({
                     No API Key Configured for {activeProvider.name}
                   </p>
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Add your {activeProvider.name} key above to automatically load all models available on your account.
+                    Add your {activeProvider.name} key above to automatically
+                    load all models available on your account.
                   </p>
                 </div>
                 <Button
@@ -414,7 +502,8 @@ export function ProviderManager({
               </div>
             ) : liveModels.length === 0 && !liveModelsQuery.isFetching ? (
               <div className="border border-border/80 rounded-xl p-6 text-center text-xs text-muted-foreground">
-                No models returned by {activeProvider.name}. Click "Refresh Models" or check your key permissions.
+                No models returned by {activeProvider.name}. Click "Refresh
+                Models" or check your key permissions.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto pr-1">
@@ -500,7 +589,9 @@ export function ProviderManager({
                             ) : testState?.error ? (
                               <>
                                 <AlertCircle className="size-3 text-destructive" />
-                                <span className="max-w-[70px] truncate">{testState.error}</span>
+                                <span className="max-w-[70px] truncate">
+                                  {testState.error}
+                                </span>
                               </>
                             ) : (
                               <>
@@ -517,11 +608,15 @@ export function ProviderManager({
                             onClick={() => handleSelectModel(model, "voice")}
                             className={cn(
                               "h-7 text-[11px] gap-1 cursor-pointer",
-                              isVoiceCurrent ? "bg-primary text-primary-foreground font-semibold" : "",
+                              isVoiceCurrent
+                                ? "bg-primary text-primary-foreground font-semibold"
+                                : "",
                             )}
                           >
                             <Mic className="size-3" />
-                            <span>{isVoiceCurrent ? "Voice ✓" : "Set Voice"}</span>
+                            <span>
+                              {isVoiceCurrent ? "Voice ✓" : "Set Voice"}
+                            </span>
                           </Button>
                         )}
 
@@ -532,11 +627,15 @@ export function ProviderManager({
                             onClick={() => handleSelectModel(model, "llm")}
                             className={cn(
                               "h-7 text-[11px] gap-1 cursor-pointer",
-                              isLlmCurrent ? "bg-primary text-primary-foreground font-semibold" : "",
+                              isLlmCurrent
+                                ? "bg-primary text-primary-foreground font-semibold"
+                                : "",
                             )}
                           >
                             <Sparkles className="size-3" />
-                            <span>{isLlmCurrent ? "Cleanup ✓" : "Set Cleanup"}</span>
+                            <span>
+                              {isLlmCurrent ? "Cleanup ✓" : "Set Cleanup"}
+                            </span>
                           </Button>
                         )}
                       </div>
