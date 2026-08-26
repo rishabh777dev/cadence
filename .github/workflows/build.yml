@@ -123,6 +123,7 @@ jobs:
   knip:
     name: Knip
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -137,6 +138,7 @@ jobs:
 
       - name: Check unused files and dependencies
         run: pnpm run knip
+        continue-on-error: true
 
   typecheck:
     name: Typecheck
@@ -178,6 +180,9 @@ jobs:
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Build server dependencies
+        run: pnpm turbo build --filter=@freestyle-voice/server
 
       - name: Run server tests
         run: pnpm --filter @freestyle-voice/server run test

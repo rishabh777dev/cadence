@@ -8,13 +8,13 @@ describe("buildMagicEditPrompt", () => {
       instruction: "fix grammar and make it formal",
     });
 
-    expect(system).toContain("You are an expert, precise in-place text editor");
-    expect(system).toContain("Return ONLY the final replacement text");
+    expect(system).toContain("You are an elite, direct in-place text editor");
+    expect(system).toContain("Return ONLY the final rewritten text");
     expect(prompt).toContain(
-      "<instruction>\nfix grammar and make it formal\n</instruction>",
+      "<instruction_how_to_rewrite>\nfix grammar and make it formal\n</instruction_how_to_rewrite>",
     );
     expect(prompt).toContain(
-      "<selected_text>\ni thinks this is broken\n</selected_text>",
+      "<original_text_to_be_replaced>\ni thinks this is broken\n</original_text_to_be_replaced>",
     );
   });
 

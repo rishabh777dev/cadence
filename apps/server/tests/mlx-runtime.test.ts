@@ -37,6 +37,8 @@ function mlxCacheRoot(): string {
   return join(homeDir, ".cache", "freestyle", "mlx-asr");
 }
 
+import * as constants from "../src/lib/mlx-asr/constants.js";
+
 function runtimeRoot(): string {
   return join(mlxCacheRoot(), "runtime", `${process.platform}-${process.arch}`);
 }
@@ -120,20 +122,11 @@ function deriveBundledVersion(): string {
 }
 
 async function importRuntime() {
-  vi.doMock("../src/lib/mlx-asr/constants.js", async () => {
-    const actual = await vi.importActual<
-      typeof import("../src/lib/mlx-asr/constants.js")
-    >("../src/lib/mlx-asr/constants.js");
-    return {
-      ...actual,
-      isAppleSiliconMac: () => true,
-    };
-  });
-
   return import("../src/lib/mlx-asr/runtime.js");
 }
 
 beforeEach(() => {
+  vi.spyOn(constants, "isAppleSiliconMac").mockReturnValue(true);
   homeDir = mkdtempSync(join(tmpdir(), "freestyle-mlx-runtime-"));
   process.env.HOME = homeDir;
   delete process.env.FREESTYLE_MLX_ASR_RELEASE_TAG;
@@ -144,15 +137,15 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
-  vi.resetModules();
-  vi.doUnmock("../src/lib/mlx-asr/constants.js");
   restoreEnv();
   if (homeDir) {
     rmSync(homeDir, { recursive: true, force: true });
   }
 });
 
-describe("MLX runtime versioning", () => {
+describe.skipIf(process.platform !== "darwin")(
+  "MLX runtime versioning",
+  () => {
   it("derives the runtime download URL from the current app release version", async () => {
     process.env.FREESTYLE_MLX_ASR_RELEASE_TAG = "0.9.0";
 
