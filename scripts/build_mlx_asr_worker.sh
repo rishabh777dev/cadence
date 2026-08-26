@@ -6,24 +6,23 @@ VENV_DIR="${ROOT_DIR}/.venv-mlx-asr"
 DIST_DIR="${ROOT_DIR}/dist"
 ARCHIVE_NAME="mlx_asr_worker-darwin-arm64.tar.gz"
 
-PYTHON_BIN="${PYTHON_BIN:-python3.12}"
+if [ -z "${PYTHON_BIN:-}" ]; then
+  if command -v python3.12 >/dev/null 2>&1; then
+    PYTHON_BIN="python3.12"
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+  else
+    echo "Python (3.12 recommended) is required to build the MLX ASR worker." >&2
+    exit 1
+  fi
+fi
+
 PYINSTALLER_VERSION="${PYINSTALLER_VERSION:-6.20.0}"
 MLX_AUDIO_VERSION="${MLX_AUDIO_VERSION:-0.4.3}"
 HUGGINGFACE_HUB_VERSION="${HUGGINGFACE_HUB_VERSION:-1.17.0}"
-# transformers 5.13.0 rewrote AutoTokenizer.register() to require a config class; mlx-lm still
-# registers with a string at import time, so any mlx-lm import raises
-# "AttributeError: 'str' object has no attribute '__module__'" and the worker exits code 1.
-# Pin below 5.13 until mlx-lm's fix ships. Working band: transformers>=5.7,<5.13.
-# Refs: freestyle-voice/freestyle#403, ml-explore/mlx-lm#1458.
-# Any dependency change here must also update MLX_WORKER_BUILD_SPEC in
-# apps/server/src/lib/mlx-asr/runtime.ts, or installed workers never re-download.
 TRANSFORMERS_SPEC="${TRANSFORMERS_SPEC:->=5.7,<5.13}"
-
-if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
-  echo "Python 3.12 is required to build the MLX ASR worker." >&2
-  echo "Install it or set PYTHON_BIN=/path/to/python3.12." >&2
-  exit 1
-fi
 
 "${PYTHON_BIN}" -m venv "${VENV_DIR}"
 "${VENV_DIR}/bin/python" -m pip install -U pip
