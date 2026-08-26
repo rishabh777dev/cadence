@@ -229,10 +229,11 @@ function authClientErrorStatus(error: unknown): number | undefined {
 }
 
 export function freestyleCloudUrl(): string {
-  return (process.env.FREESTYLE_CLOUD_URL || DEFAULT_CLOUD_URL).replace(
-    /\/+$/,
-    "",
-  );
+  return (
+    process.env.CADENCE_CLOUD_URL ||
+    process.env.FREESTYLE_CLOUD_URL ||
+    DEFAULT_CLOUD_URL
+  ).replace(/\/+$/, "");
 }
 
 /** WebSocket URL for the cloud streaming endpoint (`/v2/stream`). */

@@ -4,18 +4,21 @@ import { getDb } from "./db.js";
 
 let _client: PostHog | null = null;
 
-const POSTHOG_API_KEY = "phc_mDhFafyLK3Safsrrehi7rnH2X9jVMMGNAwKWuJsEN54w";
-const POSTHOG_HOST = "https://us.i.posthog.com";
+const POSTHOG_API_KEY =
+  process.env.CADENCE_POSTHOG_KEY || process.env.POSTHOG_API_KEY || "";
+const POSTHOG_HOST =
+  process.env.CADENCE_POSTHOG_HOST ||
+  process.env.POSTHOG_HOST ||
+  "https://us.i.posthog.com";
 
 function getEnvironment(): string {
-  return process.env.FREESTYLE_ENV === "production"
-    ? "production"
-    : "development";
+  return process.env.NODE_ENV === "production" ? "production" : "development";
 }
 
 function isEnabled(): boolean {
+  if (!POSTHOG_API_KEY) return false;
   if (process.env.DO_NOT_TRACK === "1") return false;
-  const devOptIn = process.env.FREESTYLE_ANALYTICS_DEV === "1";
+  const devOptIn = process.env.CADENCE_ANALYTICS_DEV === "1";
   if (getEnvironment() !== "production" && !devOptIn) return false;
 
   try {
@@ -25,7 +28,7 @@ function isEnabled(): boolean {
       .get() as { value: string } | undefined;
     if (row?.value === "false") return false;
   } catch {
-    // DB not ready yet — default to enabled
+    return false;
   }
 
   return true;

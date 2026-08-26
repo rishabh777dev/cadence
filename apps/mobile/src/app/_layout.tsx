@@ -22,26 +22,24 @@ import { Colors } from "@/constants/theme";
 import { ColorModeProvider, useColorMode } from "@/lib/color-mode";
 import { queryClient } from "@/lib/query";
 
-Sentry.init({
-  dsn: "https://51fcf17635446e0a220b3ff41b266821@o4509750817325057.ingest.us.sentry.io/4511780563124224",
-
-  sendDefaultPii: true,
-
-  // Tracing
-  tracesSampleRate: 1.0,
-
-  integrations: [
-    Sentry.reactNavigationIntegration({
-      enableTimeToInitialDisplay: !isRunningInExpoGo(),
-    }),
-    Sentry.mobileReplayIntegration({
-      maskAllText: true,
-      maskAllImages: true,
-      maskAllVectors: true,
-    }),
-  ],
-
-  enableNativeFramesTracking: !isRunningInExpoGo(),
+if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    sendDefaultPii: false,
+    tracesSampleRate: 1.0,
+    integrations: [
+      Sentry.reactNavigationIntegration({
+        enableTimeToInitialDisplay: !isRunningInExpoGo(),
+      }),
+      Sentry.mobileReplayIntegration({
+        maskAllText: true,
+        maskAllImages: true,
+        maskAllVectors: true,
+      }),
+    ],
+    enableNativeFramesTracking: !isRunningInExpoGo(),
+  });
+}
 
   // Session Replay
   replaysOnErrorSampleRate: 1.0,

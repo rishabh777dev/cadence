@@ -1,59 +1,198 @@
-# Release workflow using Craft
-# https://craft.sentry.dev/
+name: Build & Release
 
-name: Release
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to release (semver, "auto", "major", "minor", "patch")'
+      tag_name:
+        description: "Release tag (e.g. v1.0.0)"
         required: false
-        default: "auto"
-      force:
-        description: Force a release even when there are release-blockers
-        required: false
-      merge_target:
-        description: Target branch to merge into
-        required: false
-        default: "main"
+        default: ""
 
 permissions:
   contents: write
-  issues: write
-
-concurrency:
-  group: release
-  cancel-in-progress: false
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    name: Release a new version
+  build-windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
     steps:
-      - name: Generate GitHub App token
-        id: token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ steps.token.outputs.token }}
 
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
+          node-version: 22
           cache: "pnpm"
 
-      - uses: getsentry/craft@v2
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build server
+        run: pnpm turbo build --filter=@freestyle-voice/server
+
+      - name: Download whisper.cpp binary
+        working-directory: apps/electron
+        run: node scripts/download-whisper-cpp.mjs --target win32-x64
+
+      - name: Build Windows Installer
+        working-directory: apps/electron
+        run: pnpm run build:win
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          version: ${{ inputs.version }}
-          force: ${{ inputs.force }}
-          merge_target: ${{ inputs.merge_target }}
-          publish_repo: self
+          name: windows-installer
+          path: apps/electron/dist/*.exe
+          if-no-files-found: error
+
+  build-macos:
+    name: Build macOS (.dmg & .zip)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Python build tools for MLX worker
+        run: pip3 install pyinstaller mlx-audio huggingface_hub "transformers>=5.7,<5.13"
+
+      - name: Build MLX ASR worker
+        working-directory: apps/electron
+        run: pnpm run build:mlx-asr-worker
+
+      - name: Download whisper.cpp binaries
+        working-directory: apps/electron
+        run: |
+          node scripts/download-whisper-cpp.mjs --target darwin-arm64
+          node scripts/download-whisper-cpp.mjs --target darwin-x64
+
+      - name: Build server
+        run: pnpm turbo build --filter=@freestyle-voice/server
+
+      - name: Build macOS App
+        working-directory: apps/electron
+        run: pnpm run build:mac
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: |
+            apps/electron/dist/*.dmg
+            apps/electron/dist/*.zip
+          if-no-files-found: error
+
+  build-linux:
+    name: Build Linux (.AppImage & .deb)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev cmake libx11-xcb-dev libx11-dev libxtst-dev libxext-dev
+
+      - name: Build server
+        run: pnpm turbo build --filter=@freestyle-voice/server
+
+      - name: Download whisper.cpp binary
+        working-directory: apps/electron
+        run: node scripts/download-whisper-cpp.mjs --target linux-x64
+
+      - name: Build Linux Package
+        working-directory: apps/electron
+        run: pnpm run build:linux
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-package
+          path: |
+            apps/electron/dist/*.AppImage
+            apps/electron/dist/*.deb
+          if-no-files-found: error
+
+  build-android:
+    name: Build Android (.apk)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 17
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Generate native Android project
+        working-directory: apps/mobile
+        run: pnpm exec expo prebuild --platform android --clean --no-install
+
+      - name: Build Android APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+        continue-on-error: true
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+        continue-on-error: true
+
+  publish-release:
+    name: Publish to GitHub Releases
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all installer artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist-release
+
+      - name: Publish Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name != 'main' && github.ref_name || inputs.tag_name }}
+          files: |
+            dist-release/windows-installer/*
+            dist-release/macos-installer/*
+            dist-release/linux-package/*
+            dist-release/android-apk/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
