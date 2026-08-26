@@ -1,150 +1,16 @@
-# Build workflow: produces artifacts for Craft releases
-# Triggered on push to main/release branches and PRs
+name: Test & Build
 
-name: Build & Test
 on:
   push:
     branches:
       - main
-      - "release/**"
   pull_request:
-    branches: [main]
-
-concurrency:
-  group: build-${{ github.ref_name }}
-  cancel-in-progress: true
+    branches:
+      - main
 
 jobs:
-  changes:
-    name: Detect changed areas
-    runs-on: ubuntu-latest
-    outputs:
-      run_quality: ${{ steps.paths.outputs.run_quality }}
-      run_electron: ${{ steps.paths.outputs.run_electron }}
-      run_server_image: ${{ steps.paths.outputs.run_server_image }}
-      run_plugins: ${{ steps.paths.outputs.run_plugins }}
-      run_mobile: ${{ steps.paths.outputs.run_mobile }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Classify changed paths
-        id: paths
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ "${{ github.event_name }}" != "pull_request" ]]; then
-            {
-              echo "run_quality=true"
-              echo "run_electron=true"
-              echo "run_server_image=true"
-              echo "run_plugins=true"
-              echo "run_mobile=true"
-            } >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          git diff --name-only \
-            "${{ github.event.pull_request.base.sha }}...HEAD" > changed-files.txt
-
-          run_quality=false
-          run_electron=false
-          run_server_image=false
-          run_plugins=false
-          run_mobile=false
-
-          echo "Changed files:"
-          while IFS= read -r file; do
-            echo "- $file"
-
-            case "$file" in
-              docs/*|apps/docs/*|*.md)
-                ;;
-              *)
-                run_quality=true
-                ;;
-            esac
-
-            case "$file" in
-              apps/electron/*|apps/server/*|packages/*|scripts/*|.npmrc|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|turbo.json|.github/workflows/build.yml)
-                run_electron=true
-                ;;
-            esac
-
-            case "$file" in
-              apps/server/*|packages/sdk/*|packages/stt/*|packages/utils/*|packages/validations/*|.npmrc|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|turbo.json|.github/workflows/build.yml)
-                run_server_image=true
-                ;;
-            esac
-
-            case "$file" in
-              plugins/*|packages/sdk/*|.npmrc|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|turbo.json|.github/workflows/build.yml)
-                run_plugins=true
-                ;;
-            esac
-
-            case "$file" in
-              apps/mobile/*|.npmrc|package.json|pnpm-lock.yaml|pnpm-workspace.yaml|turbo.json|.github/workflows/build.yml)
-                run_mobile=true
-                ;;
-            esac
-          done < changed-files.txt
-
-          {
-            echo "run_quality=$run_quality"
-            echo "run_electron=$run_electron"
-            echo "run_server_image=$run_server_image"
-            echo "run_plugins=$run_plugins"
-            echo "run_mobile=$run_mobile"
-          } >> "$GITHUB_OUTPUT"
-
-  lint:
-    name: Lint
-    needs: [changes]
-    if: needs.changes.outputs.run_quality == 'true'
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: "package.json"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Biome check
-        run: pnpm biome check .
-
-  knip:
-    name: Knip
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: "package.json"
-          cache: "pnpm"
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Check unused files and dependencies
-        run: pnpm run knip
-        continue-on-error: true
-
   typecheck:
     name: Typecheck
-    needs: [changes]
-    if: needs.changes.outputs.run_electron == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -153,7 +19,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
+          node-version: 22
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
@@ -167,8 +33,6 @@ jobs:
 
   test-server:
     name: Test (Server API)
-    needs: [changes]
-    if: needs.changes.outputs.run_electron == 'true' || needs.changes.outputs.run_server_image == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -177,7 +41,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
+          node-version: 22
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
@@ -190,8 +54,6 @@ jobs:
 
   build-plugins:
     name: Build plugins
-    needs: [changes, lint]
-    if: needs.changes.outputs.run_plugins == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -200,25 +62,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: "package.json"
+          node-version: 22
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
 
       - name: Build plugin packages
         run: pnpm turbo build --filter=@freestyle-voice/plugin-audio-transcription --filter=@freestyle-voice/profanity-filter --filter=@freestyle-voice/plugin-emoji
-
-  ci-status:
-    name: CI Status
-    if: always()
-    needs:
-      - typecheck
-      - test-server
-      - build-plugins
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check CI result
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
-        run: |
-          echo "Core CI validation failed"
-          exit 1
