@@ -1,0 +1,29 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
+  "include": [
+    "src/renderer/src/env.d.ts",
+    "src/renderer/src/**/*",
+    "src/renderer/src/**/*.tsx",
+    "src/preload/*.d.ts",
+    "src/shared/**/*",
+    "../server/src/**/*",
+    "../../packages/sdk/src/**/*",
+    "../../packages/utils/src/**/*",
+    "../../packages/validations/src/**/*"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@renderer/*": ["src/renderer/src/*"],
+      "@shared/*": ["src/shared/*"],
+      "freestyle-voice": ["../../packages/sdk/src/index.ts"],
+      "@freestyle-voice/server": ["../server/src/index.ts"],
+      "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
+      "@freestyle-voice/validations": [
+        "../../packages/validations/src/index.ts"
+      ]
+    }
+  }
+}

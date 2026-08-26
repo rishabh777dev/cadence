@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": true,
+    "paths": {
+      "freestyle-voice": ["../../packages/sdk/src/index.ts"],
+      "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
+      "@freestyle-voice/validations": [
+        "../../packages/validations/src/index.ts"
+      ],
+      "@freestyle-voice/stt": ["../../packages/stt/src/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "../../packages/sdk/src/**/*",
+    "../../packages/utils/src/**/*",
+    "../../packages/validations/src/**/*",
+    "../../packages/stt/src/**/*"
+  ]
+}

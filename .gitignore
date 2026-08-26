@@ -1,0 +1,64 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+dist
+tmp
+/out-tsc
+
+# dependencies
+node_modules
+/.pnpm-store/
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.turbo
+apps/electron/tsconfig.web.tsbuildinfo
+apps/electron/tsconfig.node.tsbuildinfo
+
+# Compiled native binaries (built locally and in CI)
+apps/electron/resources/bin/
+
+# Local MLX ASR worker build artifacts
+/.venv-mlx-asr/
+/build/mlx_asr_worker/
+**/mlx_asr_worker.spec
+
+# Downloaded whisper.cpp binaries
+apps/electron/resources/whisper/
+
+# Test artifacts
+test-results/
+
+# Local-only env files (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+!.env.example

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "rules": {
+    // Export cleanup is a larger existing backlog. Keep the initial CI gate
+    // focused on unused files, dependencies, unresolved imports, and binaries.
+    "exports": "off",
+    "types": "off",
+    "enumMembers": "off",
+    "namespaceMembers": "off"
+  },
+  "ignoreBinaries": [
+    "cmake",
+    "install_name_tool",
+    "objdump",
+    "pactl",
+    "pkg-config",
+    "powershell",
+    "powershell.exe",
+    "python3"
+  ],
+  "ignoreFiles": [
+    "apps/electron/src/preload/*.d.ts",
+    // Existing unused shadcn-style components kept as design-system inventory.
+    "apps/electron/src/renderer/src/components/ui/bar-visualizer.tsx",
+    "apps/electron/src/renderer/src/components/ui/card.tsx",
+    "apps/electron/src/renderer/src/env.d.ts",
+    "plugins/*/ui/vite-env.d.ts",
+    "plugins/audio-transcription/ui/src/styles.css",
+    // Templates are standalone starter projects downloaded by create-freestyle-plugin,
+    // not workspace code. They are never imported or built within the monorepo.
+    "templates/**",
+    // Docs site is a standalone Mintlify project, not a pnpm workspace member.
+    "apps/docs/**"
+  ],
+  "workspaces": {
+    "apps/electron": {
+      "entry": [
+        "electron.vite.config.ts",
+        "src/main/index.ts",
+        "src/preload/index.ts",
+        "src/preload/plugin-bridge.ts",
+        "src/renderer/src/dashboard.tsx",
+        "src/renderer/src/components/pill.tsx",
+        "tests/**/*.ts",
+        "scripts/**/*.{js,mjs}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx,d.ts,css}",
+        "scripts/**/*.{js,mjs,ts}",
+        "tests/**/*.ts",
+        "*.config.ts"
+      ],
+      "paths": {
+        "@renderer/*": ["src/renderer/src/*"],
+        "@shared/*": ["src/shared/*"],
+        "freestyle-voice": ["../../packages/sdk/src/index.ts"],
+        "@freestyle-voice/server": ["../server/src/index.ts"],
+        "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
+        "@freestyle-voice/validations": [
+          "../../packages/validations/src/index.ts"
+        ]
+      },
+      "ignoreDependencies": [
+        "@hono/node-server",
+        "@types/ws",
+        "playwright",
+        "react-hotkeys-hook",
+        "ws"
+      ]
+    },
+    "apps/server": {
+      "entry": [
+        "src/startup.ts",
+        "scripts/benchmark-post-process.ts",
+        "scripts/tone-benchmark.ts",
+        "tests/**/*.test.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "scripts/**/*.ts",
+        "tests/**/*.ts",
+        "*.config.ts"
+      ],
+      "paths": {
+        "freestyle-voice": ["../../packages/sdk/src/index.ts"],
+        "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
+        "@freestyle-voice/validations": [
+          "../../packages/validations/src/index.ts"
+        ],
+        "@freestyle-voice/stt": ["../../packages/stt/src/index.ts"]
+      },
+      "vitest": {
+        "entry": ["tests/**/*.test.ts", "tests/setup.ts"]
+      },
+      "ignoreDependencies": ["@types/json-schema", "node:sqlite"]
+    },
+    "apps/mobile": {
+      // expo-router uses file-based routing under src/app plus the config
+      // plugin entry, so treat those as roots and scan all app source.
+      "entry": ["src/app/**/*.{ts,tsx}", "app.json"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "paths": {
+        "@/*": ["./src/*"]
+      },
+      // knip's Expo plugin infers expo-updates from the app config even when
+      // OTA updates aren't configured; it isn't a real dependency here.
+      "ignoreDependencies": ["expo-updates"]
+    },
+    "packages/create-freestyle-plugin": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "plugins/*": {
+      "entry": ["src/index.ts", "ui/src/main.{ts,tsx}"],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "ui/src/**/*.{ts,tsx,css}",
+        "ui/vite-env.d.ts"
+      ]
+    }
+  }
+}

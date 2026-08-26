@@ -1,0 +1,258 @@
+import { encodeWavFromFloat32 } from "./wav";
+
+const TARGET_RATE = 16000;
+
+export class Recorder {
+  private stream: MediaStream | null = null;
+  private mediaRecorder: MediaRecorder | null = null;
+  private chunks: Blob[] = [];
+  private mimeType = "";
+
+  private hasLiveStream(): boolean {
+    return (
+      this.stream?.getTracks().every((t) => t.readyState === "live") ?? false
+    );
+  }
+
+  /**
+   * Acquire the microphone stream without starting a MediaRecorder.
+   *
+   * Reuses the existing stream when its tracks are still live to
+   * avoid the costly getUserMedia() round-trip on repeated calls.
+   */
+  async acquireStream(deviceId?: string | null): Promise<MediaStream> {
+    this.chunks = [];
+    this.mediaRecorder = null;
+
+    if (this.hasLiveStream()) return this.stream!;
+
+    const processing = {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      googEchoCancellation: true,
+      googNoiseSuppression: true,
+      googHighpassFilter: true,
+      googAutoGainControl: true,
+    };
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: deviceId
+          ? { deviceId: { exact: deviceId }, ...processing }
+          : processing,
+      });
+    } catch (e) {
+      const name = e instanceof Error ? e.name : "";
+      if (
+        deviceId &&
+        (name === "OverconstrainedError" || name === "NotFoundError")
+      ) {
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          audio: processing,
+        });
+      } else {
+        throw e;
+      }
+    }
+    return this.stream;
+  }
+
+  /** Acquire the mic AND start a MediaRecorder to capture the recording. */
+  async start(deviceId?: string | null): Promise<MediaStream> {
+    this.chunks = [];
+    const stream = await this.acquireStream(deviceId);
+    this.mimeType = pickSupportedMime();
+    this.mediaRecorder = new MediaRecorder(
+      stream,
+      this.mimeType ? { mimeType: this.mimeType } : undefined,
+    );
+    this.mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) this.chunks.push(e.data);
+    };
+    this.mediaRecorder.start();
+    return stream;
+  }
+
+  getStream(): MediaStream | null {
+    return this.stream;
+  }
+
+  isRecording(): boolean {
+    return this.mediaRecorder?.state === "recording";
+  }
+
+  async stop(): Promise<Blob> {
+    const mr = this.mediaRecorder;
+    if (!mr) throw new Error("Recorder not started");
+
+    const done = new Promise<void>((resolve) => {
+      mr.onstop = (): void => resolve();
+    });
+    mr.stop();
+    await done;
+
+    this.mediaRecorder = null;
+
+    const blob = new Blob(this.chunks, {
+      type: this.mimeType || "audio/webm",
+    });
+    const wav = await blobToWav16k(blob);
+    return wav;
+  }
+
+  /** Stop the MediaRecorder but keep the mic stream alive for reuse. */
+  cancel(): void {
+    if (this.mediaRecorder?.state === "recording") {
+      this.mediaRecorder.stop();
+    }
+    this.mediaRecorder = null;
+    this.chunks = [];
+  }
+
+  /** Stop all mic tracks so the OS mic indicator turns off. */
+  releaseStream(): void {
+    for (const t of this.stream?.getTracks() ?? []) t.stop();
+    this.stream = null;
+  }
+
+  /** Full cleanup — release the mic stream. Call on unmount only. */
+  destroy(): void {
+    this.cancel();
+    this.releaseStream();
+  }
+}
+
+function pickSupportedMime(): string {
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4",
+    "audio/ogg;codecs=opus",
+  ];
+  for (const c of candidates) {
+    if (
+      typeof MediaRecorder !== "undefined" &&
+      MediaRecorder.isTypeSupported(c)
+    ) {
+      return c;
+    }
+  }
+  return "";
+}
+
+async function blobToWav16k(blob: Blob): Promise<Blob> {
+  if (blob.size < 100) {
+    return new Blob([encodeWavFromFloat32(new Float32Array(0), TARGET_RATE)], {
+      type: "audio/wav",
+    });
+  }
+  const arrayBuf = await blob.arrayBuffer();
+  const audioCtx = new AudioContext();
+  let decoded: AudioBuffer | null = null;
+  try {
+    decoded = await audioCtx.decodeAudioData(arrayBuf.slice(0));
+  } catch {
+    return new Blob([encodeWavFromFloat32(new Float32Array(0), TARGET_RATE)], {
+      type: "audio/wav",
+    });
+  } finally {
+    try {
+      await audioCtx.close();
+    } catch {}
+  }
+
+  if (!decoded) {
+    return new Blob([encodeWavFromFloat32(new Float32Array(0), TARGET_RATE)], {
+      type: "audio/wav",
+    });
+  }
+
+  const mono = mixToMono(decoded);
+  const resampled = await resample(mono, decoded.sampleRate, TARGET_RATE);
+  const normalized = normalizeAudio(resampled);
+  return new Blob([encodeWavFromFloat32(normalized, TARGET_RATE)], {
+    type: "audio/wav",
+  });
+}
+
+function normalizeAudio(data: Float32Array): Float32Array {
+  if (data.length === 0) return data;
+
+  let sumSquares = 0;
+  let maxPeak = 0;
+  for (let i = 0; i < data.length; i++) {
+    const abs = Math.abs(data[i]);
+    if (abs > maxPeak) maxPeak = abs;
+    sumSquares += data[i] * data[i];
+  }
+
+  const rms = Math.sqrt(sumSquares / data.length);
+
+  // Pure silence or empty noise floor: preserve as-is
+  if (maxPeak < 0.002 || rms < 0.0005) {
+    return data;
+  }
+
+  // Adaptive Whisper & Speech AGC (Automatic Gain Control)
+  // Target RMS for optimal Whisper acoustic decoding is ~0.08 to 0.10 (-22 to -20 dBFS)
+  const targetRms = 0.08;
+  let gain = targetRms / Math.max(rms, 0.005);
+
+  // Limit maximum gain boost to 8x (+18 dB) to avoid over-amplifying background white noise
+  if (gain > 8.0) gain = 8.0;
+  if (gain < 1.0) gain = 1.0;
+
+  // Check if linear scaling would exceed 0.90 peak
+  if (maxPeak * gain > 0.90) {
+    gain = 0.90 / maxPeak;
+  }
+
+  if (gain <= 1.05 && maxPeak >= 0.80) {
+    return data;
+  }
+
+  const out = new Float32Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    // Apply soft-knee limiter for smooth natural dynamics without harsh digital clipping
+    const scaled = data[i] * gain;
+    if (scaled > 0.95) {
+      out[i] = 0.95 + 0.05 * Math.tanh((scaled - 0.95) / 0.05);
+    } else if (scaled < -0.95) {
+      out[i] = -0.95 + 0.05 * Math.tanh((scaled + 0.95) / 0.05);
+    } else {
+      out[i] = scaled;
+    }
+  }
+
+  return out;
+}
+
+function mixToMono(buf: AudioBuffer): Float32Array {
+  if (buf.numberOfChannels === 1) return buf.getChannelData(0);
+  const len = buf.length;
+  const out = new Float32Array(len);
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) out[i] += data[i] / buf.numberOfChannels;
+  }
+  return out;
+}
+
+async function resample(
+  data: Float32Array,
+  fromRate: number,
+  toRate: number,
+): Promise<Float32Array> {
+  if (fromRate === toRate) return data;
+  const ratio = toRate / fromRate;
+  const outLen = Math.round(data.length * ratio);
+  const offline = new OfflineAudioContext(1, outLen, toRate);
+  const src = offline.createBuffer(1, data.length, fromRate);
+  src.getChannelData(0).set(data);
+  const node = offline.createBufferSource();
+  node.buffer = src;
+  node.connect(offline.destination);
+  node.start(0);
+  const rendered = await offline.startRendering();
+  return rendered.getChannelData(0);
+}

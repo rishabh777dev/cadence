@@ -1,0 +1,72 @@
+appId: com.cadence.app
+productName: Cadence
+directories:
+  buildResources: build
+files:
+  - "out/**/*"
+  - "resources/**/*"
+  - "package.json"
+extraResources:
+  - from: "resources/bin/${platform}-${arch}"
+    to: "bin"
+    filter:
+      - "**/*"
+win:
+  executableName: Cadence
+  icon: build/icon.ico
+  forceCodeSigning: false
+  extraResources:
+    - from: "resources/whisper/win32-x64"
+      to: "whisper/win32-x64"
+      filter:
+        - "**/*"
+nsis:
+  artifactName: ${productName}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+mac:
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  extendInfo:
+    NSCameraUsageDescription: Application requests access to the device's camera.
+    NSMicrophoneUsageDescription: Application requests access to the device's microphone.
+    NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
+    NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    NSAppleEventsUsageDescription: Cadence uses Apple Events to paste transcribed text into the focused application.
+  notarize: true
+  extraResources:
+    - from: "resources/whisper/darwin-${arch}"
+      to: "whisper/darwin-${arch}"
+      filter:
+        - "**/*"
+    - from: "../../scripts/mlx_asr_server.py"
+      to: "mlx-asr/mlx_asr_server.py"
+dmg:
+  artifactName: ${productName}-${version}.${ext}
+linux:
+  executableName: cadence
+  icon: icons
+  desktop:
+    entry:
+      StartupWMClass: cadence
+  target:
+    - AppImage
+    - deb
+  maintainer: cadence
+  category: Utility
+  extraResources:
+    - from: "resources/whisper/linux-x64"
+      to: "whisper/linux-x64"
+      filter:
+        - "**/*"
+appImage:
+  artifactName: ${productName}-${version}.${ext}
+deb:
+  artifactName: ${productName}-${version}.${ext}
+npmRebuild: false
+publish:
+  provider: github
+  owner: freestyle-voice
+  repo: freestyle
