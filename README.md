@@ -2,51 +2,94 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="media/cadence-logo-full-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="media/cadence-logo-full-light.png">
-    <img alt="Cadence" src="media/cadence-logo-full-light.png" width="420">
+    <img alt="Cadence" src="media/cadence-logo-full-light.png" width="460">
   </picture>
 </p>
 
 <p align="center">
-  <a href="https://github.com/cadence-voice/cadence/releases/latest"><img src="https://img.shields.io/github/v/release/cadence-voice/cadence?style=for-the-badge&sort=semver&color=blue" alt="Release" /></a>
-  <a href="https://github.com/cadence-voice/cadence/releases/latest"><img src="https://img.shields.io/badge/Download-Latest-brightgreen.svg?style=for-the-badge" alt="Download" /></a>
-  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey?style=for-the-badge" alt="Platform" />
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License" /></a>
-  <a href="https://discord.gg/Fmgt5yZCDu"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2.svg?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
+  <strong>Local-first AI voice dictation & text transformation for macOS, Windows, and Linux.</strong>
 </p>
-
-Cadence is the dictation app that converts your voice into text. Hold down a hotkey, talk, and clean text will appear wherever your cursor is. Speak 4X faster than you type. 
-
-Cadence is free, open source, and local-first. Run a local model and your dictations never leave your device, or bring your own API key when you'd rather use a cloud provider.
-
-### Features
-
-- **Voice dictation** — hold the hotkey, speak, release to paste at your cursor in milliseconds.
-- **Magic Edit** — select text, speak instructions, and transform it instantly in-place.
-- **Choose your model provider** — OpenAI, Groq, Anthropic, Google, Deepgram, ElevenLabs, or local Whisper / MLX models. Bring your own API key. 
-- **Transcription cleaning** — grammar and punctuation cleanup via post-processing. No more "um, oh, but".
-- **Dictionary** — custom phrase replacements applied after transcription (e.g. `"type script"` → `TypeScript`).
-- **Contextual correction** — reformat your text based on where you're typing. Automatically format emails into email format.
-- **Plugin ecosystem** — extend Cadence with custom voice hooks, transformations, and UI pages.
 
 <p align="center">
-  <img src="media/home-page-demo.png" alt="Cadence" width="800" />
+  <a href="https://github.com/rishabh777dev/cadence"><img src="https://img.shields.io/badge/Version-v0.6.0-2563EB?style=for-the-badge" alt="Version" /></a>
+  <a href="https://github.com/rishabh777dev/cadence/releases"><img src="https://img.shields.io/badge/Download-Latest-10B981.svg?style=for-the-badge" alt="Download" /></a>
+  <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-475569?style=for-the-badge" alt="Platform" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1.svg?style=for-the-badge" alt="License" /></a>
+  <a href="https://discord.gg/Fmgt5yZCDu"><img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2.svg?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
 </p>
 
-## Download
+---
 
-| Platform | Download |
-|----------|----------|
-| macOS (Apple Silicon) | [`.dmg`](https://github.com/cadence-voice/cadence/releases/latest) |
-| macOS (Intel) | [`.dmg`](https://github.com/cadence-voice/cadence/releases/latest) |
-| Windows | [`.exe`](https://github.com/cadence-voice/cadence/releases/latest) |
-| Linux | [`.AppImage`](https://github.com/cadence-voice/cadence/releases/latest) / [`.deb`](https://github.com/cadence-voice/cadence/releases/latest) |
+**Cadence** is a lightning-fast voice dictation and text-refinement desktop application. Hold down a hotkey, speak naturally, and clean, punctuated text instantly pastes wherever your cursor is. 
 
-## Contributing
+Speak 4X faster than you type — with complete privacy, local-first processing, and seamless multi-model intelligence.
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, local development, and opening up a PR. 
+<p align="center">
+  <img src="media/home-page-demo.png" alt="Cadence Dashboard" width="850" />
+</p>
 
-Consider joining our [Discord server](https://discord.gg/Fmgt5yZCDu)! That's where project contributors communicate.
+---
 
-## License
+## ✨ Features
 
-[MIT](LICENSE)
+- 🎙️ **Voice Dictation** — Hold your hotkey, speak, and release. Fast audio processing transcribes and pastes into any application in milliseconds.
+- ✨ **Magic Edit** — Highlight any text anywhere, hold your hotkey, give spoken instructions (e.g. *"make this bullet points"* or *"translate to Spanish"*), and watch it rewrite in-place.
+- 🔒 **Local-First & Private** — Run embedded Whisper (`whisper.cpp`) or Apple MLX local models directly on your hardware. Your voice and transcripts never leave your machine.
+- ⚡ **Bring Your Own Cloud Model** — Connect your preferred cloud API keys when desired: OpenAI, Groq, Anthropic, Google Gemini, Deepgram, and ElevenLabs.
+- 🧹 **Intelligent Post-Processing** — Automatically strips verbal filler (*"um"*, *"ah"*, *"like"*) and applies context-aware grammar, casing, and punctuation cleanup.
+- 📖 **Custom Dictionary & Tone Tuning** — Define custom word replacements (e.g. `"type script"` → `TypeScript`) and set app-specific tones (e.g. Code style for VS Code, Casual for Slack).
+- 🧩 **Extensible Plugin Ecosystem** — Customize your pipeline with first-party and community plugins via the Cadence Voice Plugin SDK.
+
+---
+
+## ⌨️ Default Shortcuts
+
+| Action | Shortcut | Description |
+|---|---|---|
+| **Voice Dictation** | `Control + Space` | Hold to speak, release to paste transcription |
+| **Magic Edit** | `Alt + X` | Select text, hold and speak instructions to edit |
+| **Cancel Dictation** | `Escape` | Cancel the current listening / transcription session |
+
+*All shortcuts can be customized in the **Settings** tab.*
+
+---
+
+## 📥 Download & Installation
+
+| Platform | Architecture | Package |
+|---|---|---|
+| **Windows** | x64 | [`.exe Installer`](https://github.com/rishabh777dev/cadence/releases/latest) |
+| **macOS** | Apple Silicon (M-series) | [`.dmg (arm64)`](https://github.com/rishabh777dev/cadence/releases/latest) |
+| **macOS** | Intel | [`.dmg (x64)`](https://github.com/rishabh777dev/cadence/releases/latest) |
+| **Linux** | x64 | [`.AppImage`](https://github.com/rishabh777dev/cadence/releases/latest) / [`.deb`](https://github.com/rishabh777dev/cadence/releases/latest) |
+
+---
+
+## 🛠️ Quick Start for Developers
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/rishabh777dev/cadence.git
+cd cadence
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Start development mode with hot-reload
+pnpm dev
+```
+
+For building packages, contributing guidelines, and architecture details, see [**CONTRIBUTING.md**](CONTRIBUTING.md).
+
+---
+
+## 🤝 Community & Support
+
+- 💬 **Discord**: Join our [Cadence Discord Server](https://discord.gg/Fmgt5yZCDu) for questions, discussions, and updates.
+- 🐛 **Issues**: Report bugs or suggest features on [GitHub Issues](https://github.com/rishabh777dev/cadence/issues).
+
+---
+
+## 📄 License
+
+Distributed under the [MIT License](LICENSE).
