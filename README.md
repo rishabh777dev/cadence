@@ -15,7 +15,6 @@
   <a href="https://github.com/rishabh777dev/cadence/releases"><img src="https://img.shields.io/badge/Download-Latest-10B981.svg?style=for-the-badge" alt="Download" /></a>
   <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-475569?style=for-the-badge" alt="Platform" />
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-6366F1.svg?style=for-the-badge" alt="License" /></a>
-  <a href="https://discord.gg/Fmgt5yZCDu"><img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2.svg?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
 </p>
 
 ---
@@ -83,10 +82,10 @@ For building packages, contributing guidelines, and architecture details, see [*
 
 ---
 
-## 🤝 Community & Support
+## 🤝 Contributing & Issues
 
-- 💬 **Discord**: Join our [Cadence Discord Server](https://discord.gg/Fmgt5yZCDu) for questions, discussions, and updates.
-- 🐛 **Issues**: Report bugs or suggest features on [GitHub Issues](https://github.com/rishabh777dev/cadence/issues).
+- 🐛 **Issues & Feedback**: Report bugs or suggest features on [GitHub Issues](https://github.com/rishabh777dev/cadence/issues).
+- 💡 **Discussions**: Start a discussion on [GitHub Discussions](https://github.com/rishabh777dev/cadence/discussions).
 
 ---
 

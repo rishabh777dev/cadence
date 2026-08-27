@@ -78,11 +78,7 @@
     "links": [
       {
         "type": "github",
-        "href": "https://github.com/freestyle-voice/freestyle"
-      },
-      {
-        "type": "discord",
-        "href": "https://discord.gg/Fmgt5yZCDu"
+        "href": "https://github.com/rishabh777dev/cadence"
       }
     ]
   },
@@ -100,9 +96,7 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/FreestyleVoice",
-      "github": "https://github.com/freestyle-voice/freestyle",
-      "discord": "https://discord.gg/Fmgt5yZCDu"
+      "github": "https://github.com/rishabh777dev/cadence"
     }
   }
 }

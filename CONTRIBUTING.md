@@ -8,17 +8,7 @@
 
 # Contributing
 
-First, thank you so much for considering contributing to the project. Contributors mean a lot to us, it's people like you that grow our community and make this project so fun to work on. 
-
-## Join our Discord
-
-<p align="left">
-  <a href="https://discord.gg/Fmgt5yZCDu"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2.svg?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
-</p>
-
-Please consider joining our Discord server. This is where contributors communicate. We have all project discussions there. 
-
-If you have any questions, our Discord server is the place to ask. 
+First, thank you so much for considering contributing to Cadence. Contributors mean a lot to us, and it's people like you that make this project so rewarding to build.
 
 ## Prerequisites
 
@@ -30,7 +20,7 @@ If you have any questions, our Discord server is the place to ask.
 1. Fork and clone the repo
 
    ```bash
-   git clone https://github.com/cadence-voice/cadence.git
+   git clone https://github.com/rishabh777dev/cadence.git
    cd cadence
    ```
 

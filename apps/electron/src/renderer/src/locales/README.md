@@ -27,6 +27,4 @@ The engine uses these to inject dynamic data into the application interface at r
 * **Incorrect:** `"connect": "接続する {{プロバイダー}}"`
 * **Correct:** `"connect": "{{provider}} に接続"`
 
----
-
-If you have any doubts, please feel free to [open an issue](https://github.com/cadence-voice/cadence/issues) or ask us directly in our [Discord server](https://discord.gg/Fmgt5yZCDu)!
+If you have any questions or suggestions, please feel free to [open an issue](https://github.com/rishabh777dev/cadence/issues)!
