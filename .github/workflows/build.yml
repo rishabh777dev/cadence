@@ -25,7 +25,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build server (generates type declarations)
-        run: pnpm turbo build --filter=@freestyle-voice/server
+        run: pnpm turbo build --filter=@cadence-voice/server
 
       - name: Typecheck electron (web)
         working-directory: apps/electron
@@ -47,10 +47,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build server dependencies
-        run: pnpm turbo build --filter=@freestyle-voice/server
+        run: pnpm turbo build --filter=@cadence-voice/server
 
       - name: Run server tests
-        run: pnpm --filter @freestyle-voice/server run test
+        run: pnpm --filter @cadence-voice/server run test
 
   build-plugins:
     name: Build plugins
@@ -68,4 +68,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build plugin packages
-        run: pnpm turbo build --filter=@freestyle-voice/plugin-audio-transcription --filter=@freestyle-voice/profanity-filter --filter=@freestyle-voice/plugin-emoji
+        run: pnpm turbo build --filter=@cadence-voice/plugin-audio-transcription --filter=@cadence-voice/profanity-filter --filter=@cadence-voice/plugin-emoji

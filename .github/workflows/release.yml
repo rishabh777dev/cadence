@@ -31,7 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Build server
-        run: pnpm turbo build --filter=@freestyle-voice/server
+        run: pnpm turbo build --filter=@cadence-voice/server
 
       - name: Download whisper.cpp binary
         working-directory: apps/electron
@@ -76,7 +76,7 @@ jobs:
           node scripts/download-whisper-cpp.mjs --target darwin-x64
 
       - name: Build server
-        run: pnpm turbo build --filter=@freestyle-voice/server
+        run: pnpm turbo build --filter=@cadence-voice/server
 
       - name: Build macOS App
         working-directory: apps/electron
@@ -110,7 +110,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev cmake libx11-xcb-dev libx11-dev libxtst-dev libxext-dev
 
       - name: Build server
-        run: pnpm turbo build --filter=@freestyle-voice/server
+        run: pnpm turbo build --filter=@cadence-voice/server
 
       - name: Download whisper.cpp binary
         working-directory: apps/electron
