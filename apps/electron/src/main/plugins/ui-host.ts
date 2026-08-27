@@ -1,6 +1,6 @@
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { createAppLogger } from "@cadence-voice/utils";
+import type { HostActions } from "cadence-voice";
 import { type BrowserWindow, ipcMain } from "electron";
-import type { HostActions } from "freestyle-voice";
 import {
   PluginViewManager,
   pluginBridgePreloadPath,

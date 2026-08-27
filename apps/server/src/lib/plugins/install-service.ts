@@ -1,8 +1,8 @@
-import {
+﻿import {
   parsePluginsSetting,
   pluginEntryParts,
-} from "@freestyle-voice/validations";
-import { defaultLocalPluginsDir } from "freestyle-voice";
+} from "@cadence-voice/validations";
+import { defaultLocalPluginsDir } from "cadence-voice";
 import { readSetting, writeSetting } from "../db.js";
 import { reloadServerPlugins } from "./index.js";
 import {

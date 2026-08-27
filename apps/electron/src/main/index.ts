@@ -40,10 +40,10 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 import { execFile } from "node:child_process";
+import { copyFileSync, existsSync, statSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import {
   type AppType,
   activateManagedMlxRuntimeForAppVersion,
@@ -56,9 +56,10 @@ import {
   startServer as startFreestyleServer,
   stopMlxServer,
   stopWhisperServer,
-} from "@freestyle-voice/server";
-import { createAppLogger, enableFileLogging } from "@freestyle-voice/utils";
-import { serverUrlSchema } from "@freestyle-voice/validations";
+} from "@cadence-voice/server";
+import { createAppLogger, enableFileLogging } from "@cadence-voice/utils";
+import { serverUrlSchema } from "@cadence-voice/validations";
+import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import {
   app,
   BrowserWindow,
@@ -602,6 +603,23 @@ function createAppWindow(): void {
     mainWindow = null;
   });
 
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (_event, errorCode, errorDescription, validatedURL) => {
+      log.error(
+        `[pill] failed to load ${validatedURL}: ${errorDescription} (${errorCode})`,
+      );
+    },
+  );
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    log.error(
+      `[pill] renderer process gone: ${details.reason} (exitCode: ${details.exitCode})`,
+    );
+  });
+  mainWindow.webContents.on("did-finish-load", () => {
+    log.info(`[pill] successfully finished loading ${getPillURL()}`);
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: "deny" };
@@ -710,7 +728,7 @@ async function buildSettingsWindow(initialPath?: string): Promise<void> {
 
 /** Perform a host action requested by a plugin UI page over the bridge. */
 function handlePluginAction(
-  channel: keyof import("freestyle-voice").HostActions,
+  channel: keyof import("cadence-voice").HostActions,
   payload: unknown,
 ): void {
   switch (channel) {
@@ -828,6 +846,58 @@ function getFreestyleAppExclusions(): Set<string> {
   );
 }
 
+const FRIENDLY_APP_NAMES: Record<string, string> = {
+  antigravity: "Antigravity",
+  "antigravity ide": "Antigravity IDE",
+  brave: "Brave Browser",
+  chatgpt: "ChatGPT",
+  chrome: "Google Chrome",
+  clion: "CLion",
+  clion64: "CLion",
+  cmd: "Command Prompt",
+  "command prompt": "Command Prompt",
+  code: "Visual Studio Code",
+  codex: "Codex",
+  cursor: "Cursor",
+  discord: "Discord",
+  "docker desktop": "Docker Desktop",
+  firefox: "Firefox",
+  github: "GitHub",
+  "github desktop": "GitHub Desktop",
+  goland: "GoLand",
+  goland64: "GoLand",
+  "google chrome": "Google Chrome",
+  idea: "IntelliJ IDEA",
+  idea64: "IntelliJ IDEA",
+  "microsoft edge": "Microsoft Edge",
+  "microsoft teams": "Microsoft Teams",
+  msedge: "Microsoft Edge",
+  notepad: "Notepad",
+  outlook: "Outlook",
+  postman: "Postman",
+  powershell: "Windows PowerShell",
+  pycharm: "PyCharm",
+  pycharm64: "PyCharm",
+  rider: "Rider",
+  rider64: "Rider",
+  slack: "Slack",
+  spotify: "Spotify",
+  sublime_text: "Sublime Text",
+  "sublime text": "Sublime Text",
+  teams: "Microsoft Teams",
+  telegram: "Telegram",
+  "visual studio code": "Visual Studio Code",
+  warp: "Warp",
+  webstorm: "WebStorm",
+  webstorm64: "WebStorm",
+  whatsapp: "WhatsApp",
+  windsurf: "Windsurf",
+  "windows powershell": "Windows PowerShell",
+  "windows terminal": "Windows Terminal",
+  windowsterminal: "Windows Terminal",
+  zed: "Zed",
+};
+
 function normalizeOpenAppCandidates(
   rawLabels: readonly string[],
 ): OpenAppCandidate[] {
@@ -835,11 +905,15 @@ function normalizeOpenAppCandidates(
   const deduped = new Map<string, OpenAppCandidate>();
 
   for (const rawLabel of rawLabels) {
-    const label = rawLabel.replace(/\s+/g, " ").trim();
+    let label = rawLabel.replace(/\s+/g, " ").trim();
     if (!label) continue;
 
     const match = label.toLowerCase();
     if (exclusions.has(match)) continue;
+
+    if (FRIENDLY_APP_NAMES[match]) {
+      label = FRIENDLY_APP_NAMES[match]!;
+    }
 
     if (!deduped.has(match)) {
       deduped.set(match, { label, match });
@@ -890,14 +964,12 @@ async function getMacFrontmostApp(): Promise<string | null> {
           ],
           2000,
         );
-        const idx = result.indexOf(", ");
-        if (idx > 0) {
-          return JSON.stringify({
-            app: appName,
-            url: result.substring(0, idx),
-            title: result.substring(idx + 2),
-          });
-        }
+        const [url, title] = result.split(", ");
+        return JSON.stringify({
+          app: "Safari",
+          url: url?.trim(),
+          title: title?.trim(),
+        });
       } else if (appName === "Firefox") {
         const title = await execAsync(
           "osascript",
@@ -917,17 +989,15 @@ async function getMacFrontmostApp(): Promise<string | null> {
           ],
           2000,
         );
-        const idx = result.indexOf(", ");
-        if (idx > 0) {
-          return JSON.stringify({
-            app: appName,
-            url: result.substring(0, idx),
-            title: result.substring(idx + 2),
-          });
-        }
+        const [url, title] = result.split(", ");
+        return JSON.stringify({
+          app: appName,
+          url: url?.trim(),
+          title: title?.trim(),
+        });
       }
     } catch {
-      // Browser tab access failed — fall back to app name only
+      // Fall through to returning just the app name if browser scripting fails
     }
 
     return JSON.stringify({ app: appName });
@@ -953,7 +1023,7 @@ async function getMacOpenAppCandidates(): Promise<OpenAppCandidate[]> {
   }
 }
 
-// -- Windows: Get foreground window process name + title via PowerShell --
+// Windows: Get active window process name + title via PowerShell
 async function getWindowsFrontmostApp(): Promise<string | null> {
   try {
     const script = `
@@ -961,34 +1031,39 @@ async function getWindowsFrontmostApp(): Promise<string | null> {
         using System;
         using System.Runtime.InteropServices;
         using System.Text;
-        public class Win32 {
-          [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-          [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
-          [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+        public class WinApi {
+          [DllImport("user32.dll")]
+          public static extern IntPtr GetForegroundWindow();
+          [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+          public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+          [DllImport("user32.dll", SetLastError = true)]
+          public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
         }
 "@
-      $hwnd = [Win32]::GetForegroundWindow()
-      $sb = New-Object System.Text.StringBuilder 256
-      [Win32]::GetWindowText($hwnd, $sb, 256) | Out-Null
-      $title = $sb.ToString()
+      $hwnd = [WinApi]::GetForegroundWindow()
+      if ($hwnd -eq [IntPtr]::Zero) { exit 1 }
+
       $pid = 0
-      [Win32]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
-      $proc = Get-Process -Id $pid -ErrorAction SilentlyContinue
-      "$($proc.ProcessName)|$title"
+      [WinApi]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
+      $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+      if (-not $process) { exit 1 }
+
+      $sb = New-Object System.Text.StringBuilder 512
+      [WinApi]::GetWindowText($hwnd, $sb, $sb.Capacity) | Out-Null
+      $title = $sb.ToString()
+
+      @{
+        app = $process.ProcessName
+        windowTitle = $title
+      } | ConvertTo-Json -Compress
     `;
+
     const result = await execAsync(
       "powershell",
       ["-NoProfile", "-Command", script],
-      3000,
+      2000,
     );
-
-    const pipeIdx = result.indexOf("|");
-    if (pipeIdx > 0) {
-      const processName = result.substring(0, pipeIdx);
-      const windowTitle = result.substring(pipeIdx + 1);
-      return JSON.stringify({ app: processName, windowTitle });
-    }
-    return JSON.stringify({ app: result });
+    return result;
   } catch {
     return null;
   }
@@ -997,27 +1072,56 @@ async function getWindowsFrontmostApp(): Promise<string | null> {
 async function getWindowsOpenAppCandidates(): Promise<OpenAppCandidate[]> {
   try {
     const script = `
-      $apps = Get-Process |
-        Where-Object { $_.MainWindowTitle -and $_.ProcessName } |
-        Select-Object -Property ProcessName |
-        Sort-Object ProcessName -Unique |
-        ConvertTo-Json -Compress
-      $apps
+      $names = [System.Collections.Generic.List[string]]::new()
+
+      try {
+        $processes = Get-Process -ErrorAction SilentlyContinue |
+          Where-Object { $_.MainWindowTitle -or $_.ProcessName } |
+          Select-Object -Property ProcessName, MainWindowTitle
+
+        foreach ($p in $processes) {
+          if ($p.ProcessName) { $names.Add($p.ProcessName) }
+        }
+      } catch {}
+
+      try {
+        $startDirs = @(
+          "$env:ProgramData\\Microsoft\\Windows\\Start Menu\\Programs",
+          "$env:AppData\\Microsoft\\Windows\\Start Menu\\Programs"
+        )
+        foreach ($dir in $startDirs) {
+          if (Test-Path $dir) {
+            $links = Get-ChildItem -Path $dir -Recurse -Filter *.lnk -ErrorAction SilentlyContinue
+            foreach ($lnk in $links) {
+              $base = $lnk.BaseName
+              if ($base -and $base -notmatch '(?i)(uninstall|setup|installer|help|documentation|license|manual|readme|release notes|dfrgui|updater)') {
+                $names.Add($base)
+              }
+            }
+          }
+        }
+      } catch {}
+
+      $knownApps = @("Antigravity", "Cursor", "Codex", "Visual Studio Code", "Windows Terminal", "Warp", "Windsurf", "Zed", "PyCharm", "WebStorm", "IntelliJ IDEA", "Postman", "Docker Desktop", "Slack", "Discord", "WhatsApp", "Telegram", "ChatGPT")
+      foreach ($app in $knownApps) {
+        $names.Add($app)
+      }
+
+      $unique = $names | Sort-Object -Unique
+      $unique | ConvertTo-Json -Compress
     `;
     const result = await execAsync(
       "powershell",
       ["-NoProfile", "-Command", script],
-      3000,
+      5000,
     );
 
-    const parsed = JSON.parse(result) as
-      | { ProcessName?: string }
-      | Array<{ ProcessName?: string }>;
+    const parsed = JSON.parse(result) as string | string[];
     const apps = Array.isArray(parsed) ? parsed : [parsed];
 
     return normalizeOpenAppCandidates(
       apps
-        .map((entry) => entry.ProcessName?.trim())
+        .map((entry) => (typeof entry === "string" ? entry.trim() : ""))
         .filter((entry): entry is string => Boolean(entry)),
     );
   } catch {
@@ -1762,7 +1866,9 @@ function rebuildMenus(): void {
 }
 
 const gotTheLock = app.requestSingleInstanceLock();
+log.info(`[app] requestSingleInstanceLock returned: gotTheLock=${gotTheLock}`);
 if (!gotTheLock) {
+  log.warn("[app] failed to acquire single instance lock, quitting.");
   app.quit();
 } else {
   app.on("second-instance", () => {
@@ -2123,16 +2229,39 @@ if (!gotTheLock) {
     });
 
     // Set database path for the server before any API calls
-    process.env.FREESTYLE_DB_PATH = join(
-      app.getPath("userData"),
-      "freestyle.db",
-    );
+    const cadenceDbPath = join(app.getPath("userData"), "cadence.db");
+    const legacyDbPath = join(app.getPath("userData"), "freestyle.db");
 
-    process.env.FREESTYLE_ENV = is.dev ? "development" : "production";
+    let resolvedDbPath = cadenceDbPath;
+    try {
+      const hasCadenceDb =
+        existsSync(cadenceDbPath) && statSync(cadenceDbPath).size > 0;
+      const hasLegacyDb =
+        existsSync(legacyDbPath) && statSync(legacyDbPath).size > 0;
+
+      if (!hasCadenceDb && hasLegacyDb) {
+        copyFileSync(legacyDbPath, cadenceDbPath);
+        resolvedDbPath = cadenceDbPath;
+      } else if (hasCadenceDb) {
+        resolvedDbPath = cadenceDbPath;
+      } else if (hasLegacyDb) {
+        resolvedDbPath = legacyDbPath;
+      }
+    } catch {
+      resolvedDbPath = cadenceDbPath;
+    }
+
+    process.env.CADENCE_DB_PATH = resolvedDbPath;
+    process.env.FREESTYLE_DB_PATH = resolvedDbPath;
+
+    process.env.CADENCE_ENV = is.dev ? "development" : "production";
+    process.env.FREESTYLE_ENV = process.env.CADENCE_ENV;
     // Expose the app version to the in-process server so PostHog events
     // (including autocaptured exceptions) carry the release they came from.
+    process.env.CADENCE_APP_VERSION = app.getVersion();
     process.env.FREESTYLE_APP_VERSION = app.getVersion();
     if (!is.dev) {
+      process.env.CADENCE_MLX_ASR_RELEASE_TAG ||= app.getVersion();
       process.env.FREESTYLE_MLX_ASR_RELEASE_TAG ||= app.getVersion();
     }
 
@@ -2642,6 +2771,9 @@ function hotkeyModeFromSettings(
 }
 
 function sendHotkeyDown(): void {
+  hotkeyLog.info(
+    `sendHotkeyDown triggered, showing pill (mainWindow=${!!mainWindow})`,
+  );
   showPill();
   relayServerEvent({ type: FreestyleEventType.RecordingStarted });
   if (pillReadyPromise) {
@@ -2657,6 +2789,7 @@ function sendHotkeyDown(): void {
 }
 
 function sendHotkeyUp(): void {
+  hotkeyLog.info("sendHotkeyUp triggered");
   if (pillReadyPromise) {
     // Preserve IPC ordering: hotkey:up must arrive after hotkey:down.
     void pillReadyPromise.then(() => {
@@ -2693,6 +2826,9 @@ function armHotkeyStuckWatchdog(): void {
 }
 
 function handleNativeHotkeyDown(): void {
+  hotkeyLog.info(
+    `Native hotkey KEY_DOWN detected (activationMode=${hotkeyActivationMode}, currentlyPressed=${hotkeyPressed})`,
+  );
   if (hotkeyActivationMode === "toggle") {
     if (!hotkeyPressed) {
       hotkeyPressed = true;
@@ -2712,6 +2848,9 @@ function handleNativeHotkeyDown(): void {
 }
 
 function handleNativeHotkeyUp(): void {
+  hotkeyLog.info(
+    `Native hotkey KEY_UP detected (activationMode=${hotkeyActivationMode}, currentlyPressed=${hotkeyPressed})`,
+  );
   if (hotkeyActivationMode === "toggle") return;
 
   if (hotkeyPressed) {
@@ -2858,7 +2997,7 @@ async function registerHotkey(hotkey?: string): Promise<void> {
         hotkeyLog.error(`Native key listener error: ${error}`);
       },
       onReady: () => {
-        hotkeyLog.debug(`Native key listener ready for "${accel}"`);
+        hotkeyLog.info(`Native key listener ready for "${accel}"`);
       },
       onPermanentFailure: () => {
         if (keyListener !== listener) return;
@@ -3053,7 +3192,7 @@ async function registerMagicEditHotkey(hotkey?: string): Promise<void> {
         hotkeyLog.warn(`Magic Edit native key listener error: ${error}`);
       },
       onReady: () => {
-        hotkeyLog.debug(
+        hotkeyLog.info(
           `Magic Edit native key listener ready for "${normalized}"`,
         );
       },

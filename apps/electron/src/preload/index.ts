@@ -313,19 +313,13 @@ const api = {
   },
 };
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld("electron", electronAPI);
-    contextBridge.exposeInMainWorld("api", api);
-  } catch (error) {
-    console.error(error);
-  }
-} else {
-  // @ts-expect-error (define in dts)
-  window.electron = electronAPI;
-  // @ts-expect-error (define in dts)
-  window.api = api;
+// Use `contextBridge` APIs to expose Electron APIs to renderer.
+// Each BrowserWindow gets its own preload script instance, so
+// exposeInMainWorld() is only called once per window — no duplicate
+// registration errors can occur.
+try {
+  contextBridge.exposeInMainWorld("electron", electronAPI);
+  contextBridge.exposeInMainWorld("api", api);
+} catch (error) {
+  console.error("[preload] contextBridge.exposeInMainWorld failed:", error);
 }

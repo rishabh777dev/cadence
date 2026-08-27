@@ -59,11 +59,11 @@ export function discoverLocalPlugins(dir: string): string[] {
 
 /**
  * The default local plugins directory: `<userData>/plugins/`, derived from the
- * `FREESTYLE_DB_PATH` the host sets at startup. Returns `null` when the path is
+ * `CADENCE_DB_PATH` the host sets at startup. Returns `null` when the path is
  * unset (e.g. a remote-server configuration with no local database).
  */
 export function defaultLocalPluginsDir(): string | null {
-  const dbPath = process.env.FREESTYLE_DB_PATH;
+  const dbPath = process.env.CADENCE_DB_PATH || process.env.FREESTYLE_DB_PATH;
   if (!dbPath) return null;
   return path.join(path.dirname(dbPath), "plugins");
 }

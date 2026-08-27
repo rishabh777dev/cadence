@@ -1,4 +1,4 @@
----
+﻿---
 title: "Your first plugin"
 description: "Build a plugin by walking through the profanity filter example."
 ---
@@ -23,7 +23,7 @@ Freestyle reads the `freestyle` field in `package.json`. `main` points at the bu
 
 ```json
 {
-  "name": "@freestyle-voice/profanity-filter",
+  "name": "@cadence-voice/profanity-filter",
   "type": "module",
   "main": "dist/index.js",
   "files": ["dist"],
@@ -36,7 +36,7 @@ Freestyle reads the `freestyle` field in `package.json`. `main` points at the bu
     }
   },
   "scripts": { "build": "pkgroll --minify && vite build" },
-  "dependencies": { "freestyle-voice": "workspace:*" }
+  "dependencies": { "cadence-voice": "workspace:*" }
 }
 ```
 
@@ -45,7 +45,7 @@ Freestyle reads the `freestyle` field in `package.json`. `main` points at the bu
 `src/index.ts` exports a factory that returns a `Plugin`. The factory reads user `options`, keeps its word list in a closure, and returns a `setup` hook (which loads the list from persistent storage), server `middleware` (a small CRUD API), and an `afterCleanup` hook that does the actual swapping.
 
 ```ts
-import type { Plugin, PluginOptions, PluginStorage } from "freestyle-voice";
+import type { Plugin, PluginOptions, PluginStorage } from "cadence-voice";
 import { buildMatchers, clean, DEFAULT_REPLACEMENTS } from "./replacements.js";
 
 const STORAGE_KEY = "replacements";
@@ -60,7 +60,7 @@ export default function profanityFilter(options?: PluginOptions): Plugin {
   let storage: PluginStorage | null = null;
 
   return {
-    name: "@freestyle-voice/profanity-filter",
+    name: "@cadence-voice/profanity-filter",
 
     async setup(ctx) {
       storage = ctx.storage;
@@ -84,7 +84,7 @@ export default function profanityFilter(options?: PluginOptions): Plugin {
 <Tip>
   Need a one-liner instead? The `transform` helper wraps a plain string function into an `afterCleanup` hook:
   ```ts
-  import { transform } from "freestyle-voice";
+  import { transform } from "cadence-voice";
   // afterCleanup: transform((text) => text.replace(/\s+$/, "")),
   ```
 </Tip>
@@ -178,7 +178,7 @@ Once it's working, publish the package to npm (`npm publish`) and users can inst
 Options come from the `plugins` setting as `[specifier, options]`. The profanity filter takes a single option, `preserveCase` (default `true`), which mirrors the matched word's casing onto its replacement:
 
 ```json
-["@freestyle-voice/profanity-filter", { "preserveCase": true }]
+["@cadence-voice/profanity-filter", { "preserveCase": true }]
 ```
 
 The word list itself isn't a static option — it's managed from the plugin's UI page (add, edit, delete, reset) and persisted with `storage`.
@@ -196,7 +196,7 @@ It does three things:
 Always guard for the bridge first, since the page can be opened outside the host during development:
 
 ```ts
-import type { FreestyleBridge } from "freestyle-voice";
+import type { FreestyleBridge } from "cadence-voice";
 
 const bridge: FreestyleBridge | undefined = window.freestyle;
 if (!bridge) throw new Error("Host bridge unavailable.");

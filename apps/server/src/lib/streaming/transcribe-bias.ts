@@ -1,5 +1,5 @@
-import { Buffer } from "node:buffer";
-import { parseAppContext } from "freestyle-voice";
+﻿import { Buffer } from "node:buffer";
+import { parseAppContext } from "cadence-voice";
 import type { AsrVocabularyBias } from "../vocabulary-bias.js";
 import type { TranscribeResult } from "./types.js";
 import { CLOUD_TRANSCRIBE_TIMEOUT_MS, stripProviderPrefix } from "./types.js";

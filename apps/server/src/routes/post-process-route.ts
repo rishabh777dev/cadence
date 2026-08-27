@@ -1,10 +1,10 @@
-import { postProcessSchema } from "@freestyle-voice/validations";
+﻿import { postProcessSchema } from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import {
   FreestyleCloudAuthError,
   FreestyleCloudUsageError,
-} from "../lib/freestyle-cloud.js";
+} from "../lib/cadence-cloud.js";
 import { getLanguageSetting } from "../lib/language.js";
 import { PipelineStage } from "../lib/plugins/index.js";
 import {

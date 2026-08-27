@@ -1,4 +1,4 @@
-import {
+﻿import {
   type ChildProcessWithoutNullStreams,
   exec,
   execFile,
@@ -6,7 +6,7 @@ import {
 } from "node:child_process";
 import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { app, clipboard } from "electron";
 import { isLinuxTerminalFocused } from "./linux-terminal-focus";
 import { getNativeBinaryPath } from "./native-binary";

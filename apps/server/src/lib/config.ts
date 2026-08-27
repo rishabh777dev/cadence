@@ -17,14 +17,16 @@
  * ```
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { z } from "zod";
 
 const log = createAppLogger("config");
 
-const CONFIG_FILENAME = "config.freestyle.json";
+const CADENCE_CONFIG_FILENAME = "config.cadence.json";
+const LEGACY_CONFIG_FILENAME = "config.freestyle.json";
+const CONFIG_FILENAME = CADENCE_CONFIG_FILENAME;
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -32,29 +34,40 @@ const CONFIG_FILENAME = "config.freestyle.json";
 
 export const CONFIG_VERSION = 1;
 
-export const freestyleConfigSchema = z.object({
+export const cadenceConfigSchema = z.object({
   version: z.number().int().min(1),
   flags: z.record(z.string(), z.boolean()).default({}),
 });
 
-export type FreestyleConfig = z.infer<typeof freestyleConfigSchema>;
+export type CadenceConfig = z.infer<typeof cadenceConfigSchema>;
+export const freestyleConfigSchema = cadenceConfigSchema;
+export type FreestyleConfig = CadenceConfig;
 
 // ---------------------------------------------------------------------------
 // Internal state
 // ---------------------------------------------------------------------------
 
-let cachedConfig: FreestyleConfig | null = null;
+let cachedConfig: CadenceConfig | null = null;
 let configPath: string | null = null;
 
 function resolveConfigPath(): string | null {
   if (configPath) return configPath;
-  const dbPath = process.env.FREESTYLE_DB_PATH;
+  const dbPath = process.env.CADENCE_DB_PATH || process.env.FREESTYLE_DB_PATH;
   if (!dbPath) return null;
-  configPath = join(dirname(dbPath), CONFIG_FILENAME);
+  const dir = dirname(dbPath);
+  const cadenceFile = join(dir, CADENCE_CONFIG_FILENAME);
+  const legacyFile = join(dir, LEGACY_CONFIG_FILENAME);
+  if (existsSync(cadenceFile)) {
+    configPath = cadenceFile;
+  } else if (existsSync(legacyFile)) {
+    configPath = legacyFile;
+  } else {
+    configPath = cadenceFile;
+  }
   return configPath;
 }
 
-function defaultConfig(): FreestyleConfig {
+function defaultConfig(): CadenceConfig {
   return { version: CONFIG_VERSION, flags: {} };
 }
 

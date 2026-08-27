@@ -1,12 +1,12 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import {
   parseDisabledPlugins,
   parsePluginsSetting,
   pluginEntryParts,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import {
   defaultLocalPluginsDir,
   type PluginUIPage,
@@ -14,7 +14,7 @@ import {
   parsePluginIcon,
   parsePluginPages,
   pluginSlug,
-} from "freestyle-voice";
+} from "cadence-voice";
 import { readSetting } from "../db.js";
 
 const log = createAppLogger("plugins-ui");

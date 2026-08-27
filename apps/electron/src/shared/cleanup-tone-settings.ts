@@ -1,6 +1,8 @@
-export {
+﻿export {
+  DEFAULT_CLEANUP_DEVELOPER_TAGS,
+  DEFAULT_CLEANUP_DEVELOPER_TONE,
   DEFAULT_CLEANUP_EMAIL_TONE,
   DEFAULT_CLEANUP_OVERALL_TONE,
   DEFAULT_CLEANUP_PERSONAL_TONE,
   DEFAULT_CLEANUP_WORK_TONE,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";

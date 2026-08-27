@@ -1,18 +1,20 @@
-import type { FreestyleBridge } from "freestyle-voice";
+import type { CadenceBridge } from "cadence-voice";
 
 declare global {
   interface Window {
-    freestyle?: FreestyleBridge;
+    cadence?: CadenceBridge;
+    freestyle?: CadenceBridge;
   }
 }
 
 export function App() {
+  const bridge = window.cadence || window.freestyle;
   return (
     <div className="page">
       <button
         type="button"
         className="back-btn"
-        onClick={() => window.freestyle?.invoke("navigate", { to: "/plugins" })}
+        onClick={() => bridge?.invoke("navigate", { to: "/plugins" })}
       >
         &larr; Back
       </button>
@@ -22,8 +24,8 @@ export function App() {
         Edit <code>ui/src/App.tsx</code> to build your plugin UI.
       </p>
       <p>
-        Use <code>window.freestyle.api()</code> to call the Freestyle server, or
-        add custom API routes via <code>middleware</code> in your plugin.
+        Use <code>window.cadence.api()</code> to call the Cadence server, or add
+        custom API routes via <code>middleware</code> in your plugin.
       </p>
 
       <style>{`

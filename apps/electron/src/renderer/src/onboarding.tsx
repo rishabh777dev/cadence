@@ -1,4 +1,4 @@
-import { apiKeySchema } from "@freestyle-voice/validations";
+﻿import { apiKeySchema } from "@cadence-voice/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import markDark from "@renderer/assets/mark-dark.svg";
 import markLight from "@renderer/assets/mark-light.svg";

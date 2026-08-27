@@ -1,6 +1,11 @@
-import type { CleanupAppAssignment } from "@freestyle-voice/validations";
+﻿import type { CleanupAppAssignment } from "@cadence-voice/validations";
+import antigravityIcon from "@renderer/assets/route-icons/antigravity.png";
 import appleMailIcon from "@renderer/assets/route-icons/apple-mail.svg";
+import claudeIcon from "@renderer/assets/route-icons/claude.svg";
+import codexIcon from "@renderer/assets/route-icons/codex.svg";
+import cursorIcon from "@renderer/assets/route-icons/cursor.svg";
 import discordIcon from "@renderer/assets/route-icons/discord.svg";
+import githubIcon from "@renderer/assets/route-icons/github.svg";
 import gmailIcon from "@renderer/assets/route-icons/gmail.svg";
 import linkedinIcon from "@renderer/assets/route-icons/linkedin.svg";
 import messagesIcon from "@renderer/assets/route-icons/messages.svg";
@@ -9,6 +14,8 @@ import protonIcon from "@renderer/assets/route-icons/proton.svg";
 import slackIcon from "@renderer/assets/route-icons/slack.svg";
 import teamsIcon from "@renderer/assets/route-icons/teams.svg";
 import telegramIcon from "@renderer/assets/route-icons/telegram.svg";
+import terminalIcon from "@renderer/assets/route-icons/terminal.svg";
+import vscodeIcon from "@renderer/assets/route-icons/vscode.svg";
 import whatsappIcon from "@renderer/assets/route-icons/whatsapp.svg";
 import { cn } from "@renderer/lib/utils";
 import { Globe, Mail, MonitorSmartphone } from "lucide-react";
@@ -41,28 +48,72 @@ type RouteMarkDescriptor =
   | { kind: "site"; label: string; host: string };
 
 const APP_MARK_ALIASES: Record<string, AppMarkId> = {
+  alacritty: "terminal",
+  antigravity: "antigravity",
+  "antigravity ide": "antigravity",
   "apple mail": "apple_mail",
   "apple messages": "messages",
+  chatgpt: "chatgpt",
+  "chatgpt desktop": "chatgpt",
+  claude: "claude",
+  "claude ai": "claude",
+  "claude desktop": "claude",
+  cmd: "terminal",
+  code: "vscode",
+  codex: "codex",
+  cursor: "cursor",
   discord: "discord",
+  "git bash": "terminal",
+  github: "github",
+  "github desktop": "github",
+  gitlab: "github",
   gmail: "gmail",
+  intellij: "vscode",
+  "intellij idea": "vscode",
+  iterm: "terminal",
+  iterm2: "terminal",
+  linear: "terminal",
   linkedin: "linkedin",
   messages: "messages",
   "microsoft teams": "work_chat",
+  neovim: "terminal",
+  nvim: "terminal",
+  openai: "chatgpt",
+  "openai chatgpt": "chatgpt",
   outlook: "outlook",
+  powershell: "terminal",
   proton: "proton",
   "proton mail": "proton",
+  pwsh: "terminal",
+  pycharm: "vscode",
   slack: "slack",
+  "sublime text": "vscode",
   telegram: "telegram",
+  terminal: "terminal",
   teams: "work_chat",
+  vim: "terminal",
+  "visual studio code": "vscode",
+  vscode: "vscode",
+  warp: "terminal",
+  webstorm: "vscode",
   whatsapp: "whatsapp",
+  windsurf: "cursor",
+  "windows terminal": "terminal",
+  zed: "vscode",
 };
 
 const SITE_MARK_ALIASES: Record<string, AppMarkId> = {
+  "chatgpt.com": "chatgpt",
+  "claude.ai": "claude",
   "discord.com": "discord",
+  "github.com": "github",
+  "gitlab.com": "github",
   "gmail.com": "gmail",
+  "linear.app": "terminal",
   "linkedin.com": "linkedin",
   "mail.google.com": "gmail",
   "messages.apple.com": "messages",
+  "openai.com": "chatgpt",
   "outlook.com": "outlook",
   "proton.me": "proton",
   "protonmail.com": "proton",
@@ -140,6 +191,54 @@ const APP_MARKS: Record<AppMarkId, Mark> = {
     bg: "transparent",
     src: protonIcon,
     imageClassName: "size-[94%] rounded-[8px] object-contain",
+  },
+  vscode: {
+    label: "VS Code",
+    bg: "transparent",
+    src: vscodeIcon,
+    imageClassName: "size-[94%] rounded-[8px] object-contain",
+  },
+  terminal: {
+    label: "Terminal",
+    bg: "transparent",
+    src: terminalIcon,
+    imageClassName: "size-[94%] rounded-[8px] object-contain",
+  },
+  github: {
+    label: "GitHub",
+    bg: "#181717",
+    src: githubIcon,
+    imageClassName: "size-[60%] object-contain",
+  },
+  cursor: {
+    label: "Cursor",
+    bg: "transparent",
+    src: cursorIcon,
+    imageClassName: "size-[94%] rounded-[8px] object-contain",
+  },
+  antigravity: {
+    label: "Antigravity",
+    bg: "#FFFFFF",
+    src: antigravityIcon,
+    imageClassName: "size-[80%] object-contain rounded-[6px]",
+  },
+  codex: {
+    label: "Codex",
+    bg: "#10A37F",
+    src: codexIcon,
+    imageClassName: "size-[60%] object-contain",
+  },
+  chatgpt: {
+    label: "ChatGPT",
+    bg: "#10A37F",
+    src: codexIcon,
+    imageClassName: "size-[60%] object-contain",
+  },
+  claude: {
+    label: "Claude",
+    bg: "#D97706",
+    src: claudeIcon,
+    imageClassName: "size-[60%] object-contain",
   },
 };
 

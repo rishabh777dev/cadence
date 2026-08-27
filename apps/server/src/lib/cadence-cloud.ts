@@ -4,38 +4,39 @@ import type {
   CleanupOverallTone,
   CleanupPersonalTone,
   CleanupWorkTone,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { createAuthClient } from "better-auth/client";
 import { deviceAuthorizationClient } from "better-auth/client/plugins";
 import type { CloudUser } from "./sessions.js";
 import { CLOUD_TRANSCRIBE_TIMEOUT_MS } from "./streaming/types.js";
 import type { CloudVocabularyBias } from "./vocabulary.js";
 
-export const FREESTYLE_CLOUD_PROVIDER_ID = "freestyle-cloud";
-export const FREESTYLE_CLOUD_TRANSCRIBE_MODEL_ID = "freestyle-cloud/stt";
-export const FREESTYLE_CLOUD_CLEANUP_MODEL_ID = "freestyle-cloud/post-process";
+export const CADENCE_CLOUD_PROVIDER_ID = "cadence-cloud";
+export const CADENCE_CLOUD_TRANSCRIBE_MODEL_ID = "cadence-cloud/stt";
+export const CADENCE_CLOUD_CLEANUP_MODEL_ID = "cadence-cloud/post-process";
 
-const DEFAULT_CLOUD_URL = "https://service.freestylevoice.com";
-const CLIENT_ID = "freestyle-desktop";
+// Aliases for compatibility
+export const FREESTYLE_CLOUD_PROVIDER_ID = CADENCE_CLOUD_PROVIDER_ID;
+export const FREESTYLE_CLOUD_TRANSCRIBE_MODEL_ID =
+  CADENCE_CLOUD_TRANSCRIBE_MODEL_ID;
+export const FREESTYLE_CLOUD_CLEANUP_MODEL_ID = CADENCE_CLOUD_CLEANUP_MODEL_ID;
+
+const DEFAULT_CLOUD_URL = "https://api.cadencevoice.com";
+const CLIENT_ID = "cadence-desktop";
 const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 
 /**
- * The lifetime Freestyle Cloud grants a session token, in milliseconds (7 days).
- *
- * The cloud issues no refresh token; instead better-auth slides the expiry
- * forward by this amount whenever the session is validated after its 24h
- * `updateAge` window. We mirror that here when renewing locally: a successful
- * `get-session` call means the cloud extended the window, so we recompute the
- * local `expiresAt` from now. See `renewSession()`.
+ * The lifetime Cadence Cloud grants a session token, in milliseconds (7 days).
  */
 export const SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
-export class FreestyleCloudAuthError extends Error {
-  constructor(message = "Freestyle Cloud sign-in required") {
+export class CadenceCloudAuthError extends Error {
+  constructor(message = "Cadence Cloud sign-in required") {
     super(message);
-    this.name = "FreestyleCloudAuthError";
+    this.name = "CadenceCloudAuthError";
   }
 }
+export const FreestyleCloudAuthError = CadenceCloudAuthError;
 
 export class DeviceFlowError extends Error {
   constructor(
@@ -48,17 +49,17 @@ export class DeviceFlowError extends Error {
 }
 
 /**
- * Thrown when Freestyle Cloud rejects a request because the user exhausted
+ * Thrown when Cadence Cloud rejects a request because the user exhausted
  * their usage allowance (HTTP 429). Distinct from a generic request failure so
- * callers can surface an actionable "limit reached" message instead of a 500,
- * and so it is never reported to error tracking as an app defect.
+ * callers can surface an actionable "limit reached" message instead of a 500.
  */
-export class FreestyleCloudUsageError extends Error {
+export class CadenceCloudUsageError extends Error {
   constructor(readonly resetsAt: string | null = null) {
-    super("Freestyle Cloud usage limit reached");
-    this.name = "FreestyleCloudUsageError";
+    super("Cadence Cloud usage limit reached");
+    this.name = "CadenceCloudUsageError";
   }
 }
+export const FreestyleCloudUsageError = CadenceCloudUsageError;
 
 /**
  * Thrown when Freestyle Cloud returns a non-OK response that isn't an auth
@@ -228,18 +229,20 @@ function authClientErrorStatus(error: unknown): number | undefined {
   return typeof e.status === "number" ? e.status : undefined;
 }
 
-export function freestyleCloudUrl(): string {
+export function cadenceCloudUrl(): string {
   return (
     process.env.CADENCE_CLOUD_URL ||
     process.env.FREESTYLE_CLOUD_URL ||
     DEFAULT_CLOUD_URL
   ).replace(/\/+$/, "");
 }
+export const freestyleCloudUrl = cadenceCloudUrl;
 
 /** WebSocket URL for the cloud streaming endpoint (`/v2/stream`). */
-export function freestyleCloudStreamWsUrl(): string {
-  return `${freestyleCloudUrl().replace(/^http/, "ws")}/v2/stream`;
+export function cadenceCloudStreamWsUrl(): string {
+  return `${cadenceCloudUrl().replace(/^http/, "ws")}/v2/stream`;
 }
+export const freestyleCloudStreamWsUrl = cadenceCloudStreamWsUrl;
 
 function createCloudAuthClient() {
   return createAuthClient({
@@ -495,7 +498,7 @@ export async function fetchCloudUsage(
 ): Promise<CloudUsageBalance> {
   return cloudJson<CloudUsageBalance>("/usage", token, {
     method: "GET",
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(3_000),
   });
 }
 
@@ -508,14 +511,14 @@ export async function fetchCloudUsage(
  * on the marketing site — the desktop app detects the upgrade by polling
  * `/usage` until `plan` flips to "pro", not via a redirect back into the app.
  */
-const CHECKOUT_SUCCESS_URL = "https://freestylevoice.com/checkout/success";
-const CHECKOUT_CANCEL_URL = "https://freestylevoice.com/checkout/cancel";
-const BILLING_PORTAL_RETURN_URL = "https://freestylevoice.com";
+const CHECKOUT_SUCCESS_URL = "https://cadencevoice.com/checkout/success";
+const CHECKOUT_CANCEL_URL = "https://cadencevoice.com/checkout/cancel";
+const BILLING_PORTAL_RETURN_URL = "https://cadencevoice.com";
 const BILLING_REQUEST_TIMEOUT_MS = 15_000;
 
 function assertBillingUrl(url: unknown): asserts url is string {
   if (typeof url !== "string" || !url) {
-    throw new Error("Freestyle Cloud billing response did not include a URL");
+    throw new Error("Cadence Cloud billing response did not include a URL");
   }
 }
 
@@ -577,18 +580,18 @@ const CLOUD_PREWARM_TIMEOUT_MS = 5_000;
 let cloudPrewarmPromise: Promise<void> | null = null;
 
 /**
- * Warm the TLS connection to Freestyle Cloud while the user is still speaking,
+ * Warm the TLS connection to Cadence Cloud while the user is still speaking,
  * so the transcribe/cleanup POST on commit reuses a hot socket instead of
  * paying the DNS+TCP+TLS handshake on the critical path. A cheap authenticated
  * GET to `/usage` opens the connection, which undici then pools by origin for
  * the real request. Fire-and-forget: concurrent calls dedupe and failures are
  * swallowed — the lazy connect on the actual request remains the fallback.
  */
-export function prewarmFreestyleCloudConnection(token: string): void {
+export function prewarmCadenceCloudConnection(token: string): void {
   if (cloudPrewarmPromise) return;
   cloudPrewarmPromise = (async () => {
     try {
-      await fetch(`${freestyleCloudUrl()}/usage`, {
+      await fetch(`${cadenceCloudUrl()}/usage`, {
         method: "GET",
         headers: { authorization: `Bearer ${token}` },
         keepalive: true,
@@ -601,3 +604,5 @@ export function prewarmFreestyleCloudConnection(token: string): void {
     }
   })();
 }
+
+export const prewarmFreestyleCloudConnection = prewarmCadenceCloudConnection;

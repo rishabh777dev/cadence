@@ -6,9 +6,9 @@ import { clearSession, getSession, setSession } from "../src/lib/sessions.js";
 
 const app = createApp();
 
-vi.mock("../src/lib/freestyle-cloud.js", async (importOriginal) => {
+vi.mock("../src/lib/cadence-cloud.js", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../src/lib/freestyle-cloud.js")>();
+    await importOriginal<typeof import("../src/lib/cadence-cloud.js")>();
   return {
     ...actual,
     fetchCloudUser: vi.fn(async () => ({
@@ -71,7 +71,7 @@ describe("/api/auth", () => {
   });
 
   it("maps authorization_pending without treating it as a server error", async () => {
-    const cloud = await import("../src/lib/freestyle-cloud.js");
+    const cloud = await import("../src/lib/cadence-cloud.js");
     vi.mocked(cloud.pollDeviceToken).mockRejectedValueOnce(
       new cloud.DeviceFlowError("authorization_pending"),
     );
@@ -89,7 +89,7 @@ describe("/api/auth", () => {
   });
 
   it("maps denied device flow to a client error", async () => {
-    const cloud = await import("../src/lib/freestyle-cloud.js");
+    const cloud = await import("../src/lib/cadence-cloud.js");
     vi.mocked(cloud.pollDeviceToken).mockRejectedValueOnce(
       new cloud.DeviceFlowError("access_denied"),
     );
@@ -107,7 +107,7 @@ describe("/api/auth", () => {
 
 describe("Freestyle Transcribe default on sign-in", () => {
   async function signIn(): Promise<Response> {
-    const cloud = await import("../src/lib/freestyle-cloud.js");
+    const cloud = await import("../src/lib/cadence-cloud.js");
     vi.mocked(cloud.pollDeviceToken).mockResolvedValueOnce({
       access_token: "access-token",
       refresh_token: "refresh-token",
@@ -143,10 +143,10 @@ describe("Freestyle Transcribe default on sign-in", () => {
     expect(res.status).toBe(200);
 
     const defaults = getDefaultModels();
-    expect(defaults.voice?.provider).toBe("freestyle-cloud");
-    expect(defaults.voice?.model_id).toBe("freestyle-cloud/stt");
-    expect(defaults.llm?.provider).toBe("freestyle-cloud");
-    expect(defaults.llm?.model_id).toBe("freestyle-cloud/post-process");
+    expect(defaults.voice?.provider).toBe("cadence-cloud");
+    expect(defaults.voice?.model_id).toBe("cadence-cloud/stt");
+    expect(defaults.llm?.provider).toBe("cadence-cloud");
+    expect(defaults.llm?.model_id).toBe("cadence-cloud/post-process");
     expect(readSetting("llm_cleanup")).toBe("true");
   });
 
@@ -161,8 +161,8 @@ describe("Freestyle Transcribe default on sign-in", () => {
     await signIn();
 
     const defaults = getDefaultModels();
-    expect(defaults.voice?.provider).toBe("freestyle-cloud");
-    expect(defaults.llm?.provider).toBe("freestyle-cloud");
+    expect(defaults.voice?.provider).toBe("cadence-cloud");
+    expect(defaults.llm?.provider).toBe("cadence-cloud");
     expect(readSetting("llm_cleanup")).toBe("true");
   });
 
@@ -188,7 +188,7 @@ describe("Freestyle Transcribe default on sign-in", () => {
   it("reverts to a local model and disables cleanup on sign-out", async () => {
     insertLocalVoiceDefault();
     await signIn();
-    expect(getDefaultModels().voice?.provider).toBe("freestyle-cloud");
+    expect(getDefaultModels().voice?.provider).toBe("cadence-cloud");
 
     const res = await app.request("/api/auth/sign-out", { method: "POST" });
     expect(res.status).toBe(200);
@@ -206,8 +206,8 @@ describe("Freestyle Transcribe default on sign-in", () => {
     await signIn();
 
     const defaults = getDefaultModels();
-    expect(defaults.voice?.provider).toBe("freestyle-cloud");
-    expect(defaults.llm?.provider).toBe("freestyle-cloud");
+    expect(defaults.voice?.provider).toBe("cadence-cloud");
+    expect(defaults.llm?.provider).toBe("cadence-cloud");
     expect(readSetting("llm_cleanup")).toBe("true");
   });
 });

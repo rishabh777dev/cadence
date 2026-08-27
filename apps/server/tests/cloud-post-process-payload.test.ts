@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { postProcessWithFreestyleCloud } from "../src/lib/freestyle-cloud.js";
+﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { postProcessWithFreestyleCloud } from "../src/lib/cadence-cloud.js";
 
 /**
  * Regression guard for the Mode 2 (local voice + Freestyle Cloud cleanup) path.

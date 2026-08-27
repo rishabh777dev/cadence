@@ -1,10 +1,10 @@
-import {
+﻿import {
   dictionarySchema,
   exportSchema,
   importDictionarySchema,
   querySchema,
   updateDictionarySchema,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getDb } from "../lib/db.js";

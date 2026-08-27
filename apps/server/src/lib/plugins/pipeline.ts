@@ -1,10 +1,10 @@
-import {
+﻿import {
   FreestyleEventType,
   type HookApi,
   type PipelineControlState,
   type PipelineStage,
   createHookApi as sdkCreateHookApi,
-} from "freestyle-voice";
+} from "cadence-voice";
 import { plugins } from "./index.js";
 import { buildPluginLlm } from "./llm.js";
 

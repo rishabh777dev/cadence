@@ -1,5 +1,5 @@
-import type { Plugin } from "freestyle-voice";
-import { PluginRegistry } from "freestyle-voice";
+﻿import type { Plugin } from "cadence-voice";
+import { PluginRegistry } from "cadence-voice";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // The middleware dispatcher reads the *live* registry via `plugins()` on every
@@ -27,7 +27,7 @@ const app = createApp();
 const ROUTE = "/api/plugins/freestyle-voice-reload-mw-fixture/ping";
 
 const fixture: Plugin = {
-  name: "@freestyle-voice/reload-mw-fixture",
+  name: "@cadence-voice/reload-mw-fixture",
   middleware: [
     async (c, next) => {
       if (c.req.path === ROUTE) return c.json({ pong: true });
@@ -65,7 +65,7 @@ describe("plugin middleware takes effect on runtime reload", () => {
 
   it("falls through to the next plugin when the first defers", async () => {
     const passthrough: Plugin = {
-      name: "@freestyle-voice/passthrough",
+      name: "@cadence-voice/passthrough",
       middleware: [async (_c, next) => next()],
     };
     registryHolder.current = new PluginRegistry([passthrough, fixture]);

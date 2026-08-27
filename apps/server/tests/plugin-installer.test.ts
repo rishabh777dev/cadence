@@ -1,9 +1,9 @@
-import { createHash } from "node:crypto";
+﻿import { createHash } from "node:crypto";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { pluginSlug } from "freestyle-voice";
+import { pluginSlug } from "cadence-voice";
 import * as tar from "tar";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -51,7 +51,7 @@ describe("installPackage", () => {
   it("downloads, verifies, and extracts into <pluginsDir>/<slug> with package/ stripped", async () => {
     const bytes = await buildTarball({
       "package.json": JSON.stringify({
-        name: "@freestyle-voice/plugin-x",
+        name: "@cadence-voice/plugin-x",
         main: "index.js",
       }),
       "index.js": "export default () => ({ name: 'x' });",
@@ -60,7 +60,7 @@ describe("installPackage", () => {
 
     const integrity = `sha512-${createHash("sha512").update(bytes).digest("base64")}`;
     const resolved: ResolvedPackage = {
-      name: "@freestyle-voice/plugin-x",
+      name: "@cadence-voice/plugin-x",
       version: "1.0.0",
       tarball: "https://registry.npmjs.org/x/-/x-1.0.0.tgz",
       integrity,
@@ -68,7 +68,7 @@ describe("installPackage", () => {
 
     const installed = await installPackage(pluginsDir, resolved);
 
-    const dest = path.join(pluginsDir, pluginSlug("@freestyle-voice/plugin-x"));
+    const dest = path.join(pluginsDir, pluginSlug("@cadence-voice/plugin-x"));
     expect(installed.dir).toBe(dest);
     expect(fs.existsSync(path.join(dest, "package.json"))).toBe(true);
     expect(fs.existsSync(path.join(dest, "index.js"))).toBe(true);
@@ -78,12 +78,12 @@ describe("installPackage", () => {
 
   it("rejects on an integrity mismatch", async () => {
     const bytes = await buildTarball({
-      "package.json": JSON.stringify({ name: "@freestyle-voice/plugin-x" }),
+      "package.json": JSON.stringify({ name: "@cadence-voice/plugin-x" }),
     });
     mockFetchOnce(bytes);
 
     const resolved: ResolvedPackage = {
-      name: "@freestyle-voice/plugin-x",
+      name: "@cadence-voice/plugin-x",
       version: "1.0.0",
       tarball: "https://registry.npmjs.org/x/-/x-1.0.0.tgz",
       integrity: "sha512-deadbeef",

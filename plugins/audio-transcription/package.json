@@ -1,18 +1,18 @@
 {
-  "name": "@freestyle-voice/plugin-audio-transcription",
+  "name": "@cadence-voice/plugin-audio-transcription",
   "version": "0.3.0",
   "type": "module",
-  "description": "Transcribe audio files by dropping them into Freestyle.",
+  "description": "Transcribe audio files by dropping them into Cadence.",
   "license": "MIT",
-  "homepage": "https://github.com/freestyle-voice/freestyle/tree/main/plugins/audio-transcription#readme",
+  "homepage": "https://github.com/rishabh777dev/cadence/tree/main/plugins/audio-transcription#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freestyle-voice/freestyle.git",
+    "url": "git+https://github.com/rishabh777dev/cadence.git",
     "directory": "plugins/audio-transcription"
   },
   "keywords": [
-    "freestyle",
-    "freestyle-plugin",
+    "cadence",
+    "cadence-plugin",
     "voice",
     "dictation",
     "transcription"
@@ -24,7 +24,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "freestyle": {
+  "cadence": {
     "icon": "FileMusic",
     "contributes": {
       "pages": [
@@ -43,7 +43,7 @@
     "unlink": "node ../../scripts/link-plugin.mjs --unlink"
   },
   "dependencies": {
-    "freestyle-voice": "workspace:*"
+    "cadence-voice": "workspace:*"
   },
   "devDependencies": {
     "pkgroll": "^2.27.0",

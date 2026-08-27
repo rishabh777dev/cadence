@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Cleanup-prompt configuration: the *content* of the cleanup prompts (intensity
  * preset bodies, destination tone blocks, language constraints, and app/site
  * routing tables), plus a fetcher that overrides the bundled copy with the
@@ -22,16 +22,17 @@
  * correctness — but a synced copy keeps offline behavior identical to online.
  */
 
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import {
   CLEANUP_PRESET_PROMPTS,
+  type CleanupDeveloperTone,
   type CleanupEmailTone,
   type CleanupOverallTone,
   type CleanupPersonalTone,
   type CleanupToneDestination,
   type CleanupWorkTone,
-} from "@freestyle-voice/validations";
-import { freestyleCloudUrl } from "../freestyle-cloud.js";
+} from "@cadence-voice/validations";
+import { freestyleCloudUrl } from "../cadence-cloud.js";
 
 const log = createAppLogger("prompt-config");
 
@@ -79,9 +80,11 @@ export interface CleanupRoutingConfig {
   emailAppNames: string[];
   workAppNames: string[];
   personalAppNames: string[];
+  developerAppNames: string[];
   emailPatterns: string[];
   workPatterns: string[];
   personalPatterns: string[];
+  developerPatterns: string[];
   discordPatterns: string[];
 }
 
@@ -103,6 +106,45 @@ export const CLEANUP_ROUTING: CleanupRoutingConfig = {
   ],
   workAppNames: ["slack", "linkedin", "teams", "microsoft teams"],
   personalAppNames: ["messages", "imessage", "whatsapp", "telegram", "discord"],
+  developerAppNames: [
+    "code",
+    "visual studio code",
+    "cursor",
+    "windsurf",
+    "zed",
+    "intellij idea",
+    "pycharm",
+    "webstorm",
+    "clion",
+    "rider",
+    "goland",
+    "rubymine",
+    "android studio",
+    "xcode",
+    "sublime text",
+    "neovim",
+    "nvim",
+    "vim",
+    "emacs",
+    "windows terminal",
+    "windowsterminal",
+    "powershell",
+    "pwsh",
+    "cmd",
+    "command prompt",
+    "conhost",
+    "warp",
+    "alacritty",
+    "iterm",
+    "iterm2",
+    "kitty",
+    "ghostty",
+    "hyper",
+    "tabby",
+    "git bash",
+    "mintty",
+    "wezterm",
+  ],
   emailPatterns: [
     "mail.google.com",
     "workspace.google.com/mail",
@@ -148,6 +190,23 @@ export const CLEANUP_ROUTING: CleanupRoutingConfig = {
     "discord.com",
     "discord",
   ],
+  developerPatterns: [
+    "github.com",
+    "gitlab.com",
+    "linear.app",
+    "jira",
+    "atlassian.net",
+    "stackoverflow.com",
+    "bitbucket.org",
+    "vscode",
+    "visual studio",
+    "cursor",
+    "windsurf",
+    "terminal",
+    "powershell",
+    "bash",
+    "zsh",
+  ],
   discordPatterns: ["discord.com", "discord"],
 };
 
@@ -173,6 +232,7 @@ export interface CleanupToneBlocks {
   discordCasualOverlay: string;
   work: Record<Exclude<CleanupWorkTone, "off">, string>;
   email: Record<Exclude<CleanupEmailTone, "off">, string>;
+  developer: Record<Exclude<CleanupDeveloperTone, "off">, string>;
   overall: Record<Exclude<CleanupOverallTone, "off">, string>;
   /** Email layout instructions appended after any (non-off) email tone. */
   emailStructure: string;
@@ -198,6 +258,24 @@ export const CLEANUP_TONE_BLOCKS: CleanupToneBlocks = {
     formal:
       "\n\nDestination tone: email, formal. Keep the writing polished, professional, and conventionally businesslike. Lightly normalize casual shorthand when needed. Do not make the voice grandiose, stiff, or more deferential than the speaker intended. Keep greeting and sign-off (when present) on their own lines as required by the destination structure below.",
     warm: "\n\nDestination tone: email, warm. Keep the writing professional, clear, and personable. Preserve friendliness and tact while maintaining clean structure and standard punctuation. Keep greeting and sign-off (when present) on their own lines as required by the destination structure below.",
+  },
+  developer: {
+    commits: `\n\nDestination tone: developer, conventional commits & git messages. Format the transcript into standard, professional git conventional commit syntax.
+- Structure: Start with a conventional prefix and optional scope (e.g. "feat:", "fix:", "refactor:", "docs:", "test:", "perf:", "chore:", "style:").
+- Imperative Phrasing: Use lowercase imperative mood ("add user auth middleware", "fix memory leak in audio stream", "refactor database indices", "update README"), never past tense or conversational words ("added", "i fixed", "hey please commit").
+- Clean: Strip all spoken filler, greetings, or meta-comments.
+- Target texture example: "hey i added jwt token verification to the auth route" -> "feat(auth): add JWT token verification"`,
+    docstrings: `\n\nDestination tone: developer, technical markdown & docstrings. Structure the transcript for technical documentation, code comments, and markdown.
+- Symbols & Identifiers: Automatically wrap variable names, function names, types, HTTP methods, and file paths in inline backticks (e.g. \`handleSubmit()\`, \`userId\`, \`UserProfile\`, \`POST\`, \`src/index.ts\`).
+- Precision: Preserve camelCase, snake_case, PascalCase, kebab-case, and exact technical naming.
+- Flow: Write crisp, accurate technical prose suitable for READMEs, JSDoc, docstrings, or code reviews.`,
+    terminal: `\n\nDestination tone: developer, shell & terminal command line. Extract and format clean, executable CLI commands, shell syntax, flags, and paths.
+- Commands: Remove all conversational filler and spoken greetings.
+- Syntax: Accurately format flags (e.g. "--save-dev", "-p 8080", "-rf", "-m"), environment variables, package managers (pnpm, npm, yarn, cargo, pip, brew), and shell commands.
+- Target texture example: "please run git push origin main with force with lease" -> "git push origin main --force-with-lease"`,
+    technical: `\n\nDestination tone: developer, concise technical notes. High-density, engineer-to-engineer communication.
+- Focus: Direct, fact-dense explanations, architectural rationale, and root-cause summaries.
+- Formatting: Use bullet points for multiple items, backtick technical terms, and eliminate unnecessary fluff.`,
   },
   overall: {
     casual:
@@ -297,10 +375,6 @@ let refreshPromise: Promise<void> | null = null;
  * The active cleanup-prompt config. Returns the last-fetched cloud copy when we
  * have one (fresh OR stale), otherwise the bundled fallback. Synchronous and
  * never throws — prompt assembly calls this on every request.
- *
- * This does NOT trigger a fetch; call `refreshCleanupPromptConfig()` on startup
- * and on a timer (or rely on `ensureCleanupPromptConfigFresh()`) to keep the
- * cloud copy warm.
  */
 export function getCleanupPromptConfig(): CleanupPromptConfig {
   return cloudConfig ?? BUNDLED_CLEANUP_PROMPT_CONFIG;
@@ -377,11 +451,38 @@ function isValidConfig(value: unknown): value is CleanupPromptConfig {
 
 /** App version used to select version-specific content on the cloud. */
 function appVersion(): string {
-  return process.env.FREESTYLE_APP_VERSION || "latest";
+  return (
+    process.env.CADENCE_APP_VERSION ||
+    process.env.FREESTYLE_APP_VERSION ||
+    "latest"
+  );
 }
 
 /**
- * Fetch the latest cleanup-prompt config from Freestyle Cloud and adopt it.
+ * Normalizes an incoming cloud prompt configuration so any missing fields (e.g. developer tone)
+ * are seamlessly backfilled from bundled defaults.
+ */
+function normalizeCloudConfig(raw: CleanupPromptConfig): CleanupPromptConfig {
+  return {
+    ...raw,
+    toneBlocks: {
+      ...raw.toneBlocks,
+      developer:
+        raw.toneBlocks?.developer ??
+        BUNDLED_CLEANUP_PROMPT_CONFIG.toneBlocks.developer,
+    },
+    routing: {
+      ...raw.routing,
+      developerAppNames:
+        raw.routing?.developerAppNames ?? CLEANUP_ROUTING.developerAppNames,
+      developerPatterns:
+        raw.routing?.developerPatterns ?? CLEANUP_ROUTING.developerPatterns,
+    },
+  };
+}
+
+/**
+ * Fetch the latest cleanup-prompt config from Cadence Cloud and adopt it.
  * Deduped so concurrent callers share one request. On any failure (offline,
  * timeout, non-2xx, malformed body) the last-good copy is kept — this function
  * never throws and never clears an existing cloud copy.
@@ -406,9 +507,9 @@ export function refreshCleanupPromptConfig(): Promise<void> {
         );
         return;
       }
-      cloudConfig = body;
+      cloudConfig = normalizeCloudConfig(body);
       cloudConfigFetchedAt = Date.now();
-      log.info("Cleanup prompt config refreshed from Freestyle Cloud");
+      log.info("Cleanup prompt config refreshed from cloud");
     } catch (err) {
       // Offline / timeout / DNS — expected; keep the last-good or bundled copy.
       log.debug(

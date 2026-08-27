@@ -143,9 +143,7 @@ afterEach(() => {
   }
 });
 
-describe.skipIf(process.platform !== "darwin")(
-  "MLX runtime versioning",
-  () => {
+describe.skipIf(process.platform !== "darwin")("MLX runtime versioning", () => {
   it("derives the runtime download URL from the current app release version", async () => {
     process.env.FREESTYLE_MLX_ASR_RELEASE_TAG = "0.9.0";
 

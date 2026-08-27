@@ -1,13 +1,13 @@
 import type { OutputMode } from "./output.js";
 
 /**
- * The kinds of events emitted across the Freestyle dictation pipeline. A const
+ * The kinds of events emitted across the Cadence dictation pipeline. A const
  * object (not a TS `enum`) so it has both a runtime value and a derived type,
  * stays tree-shakeable, and matches the convention used elsewhere in the
  * workspace (see {@link OutputMode}). Plugins may match either the constant
- * (`FreestyleEventType.Transcribed`) or the literal (`"transcribed"`).
+ * (`CadenceEventType.Transcribed`) or the literal (`"transcribed"`).
  */
-export const FreestyleEventType = {
+export const CadenceEventType = {
   RecordingStarted: "recordingStarted",
   RecordingCommitted: "recordingCommitted",
   RecordingCancelled: "recordingCancelled",
@@ -17,12 +17,14 @@ export const FreestyleEventType = {
   PipelineError: "pipelineError",
 } as const;
 
-export type FreestyleEventType =
-  (typeof FreestyleEventType)[keyof typeof FreestyleEventType];
+export type CadenceEventType =
+  (typeof CadenceEventType)[keyof typeof CadenceEventType];
+export const FreestyleEventType = CadenceEventType;
+export type FreestyleEventType = CadenceEventType;
 
 /**
- * The pipeline stage a {@link FreestyleEventType.PipelineError} occurred in.
- * A const object for the same reasons as {@link FreestyleEventType}.
+ * The pipeline stage a {@link CadenceEventType.PipelineError} occurred in.
+ * A const object for the same reasons as {@link CadenceEventType}.
  */
 export const PipelineStage = {
   Capture: "capture",
@@ -35,7 +37,7 @@ export const PipelineStage = {
 export type PipelineStage = (typeof PipelineStage)[keyof typeof PipelineStage];
 
 /**
- * Discriminated union of events emitted across the Freestyle dictation
+ * Discriminated union of events emitted across the Cadence dictation
  * pipeline. Plugins observe these through the read-only `event` hook; they
  * cannot influence behavior here — use the mutating hooks for that.
  *
@@ -44,26 +46,28 @@ export type PipelineStage = (typeof PipelineStage)[keyof typeof PipelineStage];
  * the server — so an `event` handler is delivered each event exactly once even
  * when the plugin is loaded in both processes.
  */
-export type FreestyleEvent =
-  | { type: typeof FreestyleEventType.RecordingStarted }
-  | { type: typeof FreestyleEventType.RecordingCommitted }
-  | { type: typeof FreestyleEventType.RecordingCancelled }
+export type CadenceEvent =
+  | { type: typeof CadenceEventType.RecordingStarted }
+  | { type: typeof CadenceEventType.RecordingCommitted }
+  | { type: typeof CadenceEventType.RecordingCancelled }
   | {
-      type: typeof FreestyleEventType.Transcribed;
+      type: typeof CadenceEventType.Transcribed;
       text: string;
       durationInSeconds?: number;
     }
-  | { type: typeof FreestyleEventType.Cleaned; before: string; after: string }
+  | { type: typeof CadenceEventType.Cleaned; before: string; after: string }
   | {
-      type: typeof FreestyleEventType.OutputDelivered;
+      type: typeof CadenceEventType.OutputDelivered;
       text: string;
       mode: OutputMode;
     }
   | {
-      type: typeof FreestyleEventType.PipelineError;
+      type: typeof CadenceEventType.PipelineError;
       stage: PipelineStage;
       message: string;
     };
+
+export type FreestyleEvent = CadenceEvent;
 
 /**
  * Best-effort description of the application the user was dictating into,

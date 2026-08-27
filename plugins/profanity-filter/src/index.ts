@@ -1,4 +1,4 @@
-import type { Plugin, PluginOptions, PluginStorage } from "freestyle-voice";
+import type { Plugin, PluginOptions, PluginStorage } from "cadence-voice";
 import type { MiddlewareHandler } from "hono";
 import {
   buildMatchers,
@@ -7,7 +7,10 @@ import {
   type ReplacementMap,
 } from "./replacements.js";
 
-const ROUTE_BASE = "/api/plugins/freestyle-voice-profanity-filter/replacements";
+const ROUTE_BASE =
+  "/api/plugins/cadence-voice-plugin-profanity-filter/replacements";
+const LEGACY_ROUTE_BASE =
+  "/api/plugins/freestyle-voice-profanity-filter/replacements";
 
 interface ProfanityOptions {
   preserveCase?: boolean;
@@ -50,9 +53,16 @@ export default function profanityFilter(options?: PluginOptions): Plugin {
 
   const handler: MiddlewareHandler = async (c, next) => {
     const path = c.req.path;
-    if (!path.startsWith(ROUTE_BASE)) return next();
+    let base = ROUTE_BASE;
+    if (path.startsWith(ROUTE_BASE)) {
+      base = ROUTE_BASE;
+    } else if (path.startsWith(LEGACY_ROUTE_BASE)) {
+      base = LEGACY_ROUTE_BASE;
+    } else {
+      return next();
+    }
 
-    const sub = path.slice(ROUTE_BASE.length);
+    const sub = path.slice(base.length);
     const method = c.req.method;
 
     // GET /replacements — list all
@@ -127,7 +137,7 @@ export default function profanityFilter(options?: PluginOptions): Plugin {
   };
 
   return {
-    name: "@freestyle-voice/profanity-filter",
+    name: "@cadence-voice/profanity-filter",
     middleware: [handler],
 
     async setup(ctx) {

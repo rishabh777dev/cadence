@@ -15,7 +15,7 @@ const require = createRequire(import.meta.url);
 const { version } = require("../package.json") as { version: string };
 
 const config = {
-  user: "freestyle-voice",
+  user: "cadence-voice",
   repository: "freestyle",
   directory: "templates",
   ref: "main",
@@ -214,19 +214,21 @@ async function main(targetDir: string | undefined, options: Options) {
     pkg.name = pkgName;
 
     // Update the plugin's display name and page title to match
-    if (pkg.freestyle) {
-      if (pkg.freestyle.displayName === "My Plugin") {
-        pkg.freestyle.displayName = projectName;
+    const manifest = pkg.cadence || pkg.freestyle;
+    if (manifest) {
+      if (manifest.displayName === "My Plugin") {
+        manifest.displayName = projectName;
       }
-      if (pkg.freestyle.contributes?.pages?.[0]?.title === "My Plugin") {
-        pkg.freestyle.contributes.pages[0].title = projectName;
+      if (manifest.contributes?.pages?.[0]?.title === "My Plugin") {
+        manifest.contributes.pages[0].title = projectName;
+      }
+      if (pkg.freestyle && !pkg.cadence) {
+        pkg.cadence = manifest;
       }
     }
 
     fs.writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
-    console.log(
-      `${pc.green("\u2714")} Package name set to ${pc.bold(pkgName)}`,
-    );
+    console.log(`${pc.green("✔")} Package name set to ${pc.bold(pkgName)}`);
   }
 
   // Also update the plugin name in src/index.ts
@@ -234,7 +236,7 @@ async function main(targetDir: string | undefined, options: Options) {
   if (fs.existsSync(srcIndexPath)) {
     let src = fs.readFileSync(srcIndexPath, "utf-8");
     src = src.replace(
-      /name: "freestyle-plugin-starter"/,
+      /name: "(?:cadence|freestyle)-plugin-starter"/,
       `name: "${toPackageName(projectName)}"`,
     );
     fs.writeFileSync(srcIndexPath, src);
@@ -244,14 +246,14 @@ async function main(targetDir: string | undefined, options: Options) {
   if (shouldInstall) {
     console.log();
     console.log(
-      `${pc.cyan("\u25B6")} Installing dependencies with ${pc.bold(packageManager)}\u2026`,
+      `${pc.cyan("▶")} Installing dependencies with ${pc.bold(packageManager)}…`,
     );
     try {
       execSync(`${packageManager} install`, {
         cwd: targetPath,
         stdio: "inherit",
       });
-      console.log(`${pc.green("\u2714")} Dependencies installed`);
+      console.log(`${pc.green("✔")} Dependencies installed`);
     } catch {
       console.log(pc.yellow("Could not install dependencies. Try manually:"));
       console.log(pc.gray(`  cd ${target} && ${packageManager} install`));
@@ -260,7 +262,7 @@ async function main(targetDir: string | undefined, options: Options) {
 
   // 9. Done!
   console.log();
-  console.log(pc.green(`${pc.bold("Done!")} Your Freestyle plugin is ready.`));
+  console.log(pc.green(`${pc.bold("Done!")} Your Cadence plugin is ready.`));
   console.log();
 
   const resolvedTarget = path.resolve(target);
@@ -277,7 +279,7 @@ async function main(targetDir: string | undefined, options: Options) {
   const run = `${packageManager} run`;
   console.log(`  ${pc.gray(run)} build`);
   console.log(
-    `  ${pc.gray(run)} link    ${pc.gray("# symlink into Freestyle for testing")}`,
+    `  ${pc.gray(run)} link    ${pc.gray("# symlink into Cadence for testing")}`,
   );
   console.log();
 }

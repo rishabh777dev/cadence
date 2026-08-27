@@ -1,16 +1,16 @@
 {
-  "name": "freestyle-voice",
+  "name": "cadence-voice",
   "version": "0.5.0",
-  "description": "The plugin SDK for Freestyle — write plugins that extend the local-first voice dictation pipeline.",
+  "description": "The plugin SDK for Cadence — write plugins that extend the local-first voice dictation pipeline.",
   "license": "MIT",
-  "homepage": "https://github.com/freestyle-voice/freestyle/tree/main/packages/sdk#readme",
+  "homepage": "https://github.com/rishabh777dev/cadence/tree/main/packages/sdk#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freestyle-voice/freestyle.git",
+    "url": "git+https://github.com/rishabh777dev/cadence.git",
     "directory": "packages/sdk"
   },
   "keywords": [
-    "freestyle",
+    "cadence",
     "voice",
     "dictation",
     "plugin",

@@ -1,4 +1,4 @@
-import type { Plugin } from "freestyle-voice";
+﻿import type { Plugin } from "cadence-voice";
 
 /**
  * The Audio File Transcription plugin. Its user-facing surface is the
@@ -11,7 +11,7 @@ import type { Plugin } from "freestyle-voice";
  */
 export default function audioTranscriptionPlugin(): Plugin {
   return {
-    name: "@freestyle-voice/plugin-audio-transcription",
+    name: "@cadence-voice/plugin-audio-transcription",
     setup({ logger, mode }) {
       logger.info(`audio-transcription ready on ${mode}`);
     },

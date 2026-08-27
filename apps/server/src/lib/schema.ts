@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { countFixes } from "./fixes.js";
 
-const SCHEMA_VERSION = 16;
+const SCHEMA_VERSION = 17;
 
 // Legacy default format-rule patterns (used only by pre-v12 migrations below):
 // domain/phrase entries match as substrings of url+title+app; bare words match
@@ -583,6 +583,25 @@ function applyMigrations(db: DatabaseSync, currentVersion: number): void {
     );
     for (const row of rows) {
       update.run(countFixes(row.raw_text, row.cleaned_text), row.id);
+    }
+  }
+
+  if (currentVersion < 17) {
+    try {
+      db.exec(
+        `UPDATE model_configs
+         SET provider = 'cadence-cloud',
+             model_id = replace(model_id, 'freestyle-cloud', 'cadence-cloud'),
+             model_name = replace(model_name, 'Freestyle', 'Cadence')
+         WHERE provider = 'freestyle-cloud'`,
+      );
+      db.exec(
+        `UPDATE api_keys
+         SET provider = 'cadence-cloud'
+         WHERE provider = 'freestyle-cloud'`,
+      );
+    } catch {
+      // Tables may not exist yet in fresh databases
     }
   }
 

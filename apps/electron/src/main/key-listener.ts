@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Native Key Listener
  *
  * Wraps the platform-specific native key listener binary. Spawns the binary
@@ -11,7 +11,7 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { getNativeBinaryPath } from "./native-binary";
 
 const log = createAppLogger("key-listener");

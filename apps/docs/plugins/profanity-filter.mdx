@@ -1,4 +1,4 @@
----
+﻿---
 title: "Profanity Filter"
 description: "Swap curse words for wholesome, lighthearted stand-ins as you dictate."
 ---
@@ -14,7 +14,7 @@ The Profanity Filter plugin keeps your dictation family-friendly — and funnier
 ## Install
 
 ```bash
-npm install @freestyle-voice/profanity-filter
+npm install @cadence-voice/profanity-filter
 ```
 
 Or install from **Settings → Plugins** inside the app.
@@ -48,7 +48,7 @@ The word list is managed from the UI page above. The only static option is `pres
 
 ```jsonc
 [
-  ["@freestyle-voice/profanity-filter", {
+  ["@cadence-voice/profanity-filter", {
     "preserveCase": true
   }]
 ]
@@ -62,7 +62,7 @@ The word list is managed from the UI page above. The only static option is `pres
 
 ```bash
 pnpm install
-pnpm --filter @freestyle-voice/profanity-filter build
+pnpm --filter @cadence-voice/profanity-filter build
 ```
 
 This runs `pkgroll --minify` (server-side plugin code) followed by `vite build` (UI page).

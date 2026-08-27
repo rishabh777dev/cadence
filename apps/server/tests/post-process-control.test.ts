@@ -1,4 +1,4 @@
-import { PluginRegistry } from "freestyle-voice";
+﻿import { PluginRegistry } from "cadence-voice";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { writeSetting } from "../src/lib/db.js";
 
@@ -23,8 +23,8 @@ vi.mock("../src/lib/providers.js", () => ({
   }),
 }));
 
-vi.mock("@freestyle-voice/stt", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@freestyle-voice/stt")>();
+vi.mock("@cadence-voice/stt", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@cadence-voice/stt")>();
   return { ...actual, postProcess: cleanupSpy };
 });
 

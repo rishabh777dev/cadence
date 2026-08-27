@@ -1,4 +1,4 @@
-{
+﻿{
   "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
   "include": [
     "electron.vite.config.*",
@@ -15,12 +15,10 @@
     "types": ["electron-vite/node"],
     "baseUrl": ".",
     "paths": {
-      "freestyle-voice": ["../../packages/sdk/src/index.ts"],
-      "@freestyle-voice/server": ["../server/src/index.ts"],
-      "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
-      "@freestyle-voice/validations": [
-        "../../packages/validations/src/index.ts"
-      ]
+      "cadence-voice": ["../../packages/sdk/src/index.ts"],
+      "@cadence-voice/server": ["../server/src/index.ts"],
+      "@cadence-voice/utils": ["../../packages/utils/src/index.ts"],
+      "@cadence-voice/validations": ["../../packages/validations/src/index.ts"]
     }
   }
 }

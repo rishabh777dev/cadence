@@ -5,10 +5,10 @@ import { defineConfig } from "electron-vite";
 import { visualizer } from "rollup-plugin-visualizer";
 
 const workspaceAliases = {
-  "freestyle-voice": resolve("../../packages/sdk/src/index.ts"),
-  "@freestyle-voice/server": resolve("../server/src/index.ts"),
-  "@freestyle-voice/utils": resolve("../../packages/utils/src/index.ts"),
-  "@freestyle-voice/validations": resolve(
+  "cadence-voice": resolve("../../packages/sdk/src/index.ts"),
+  "@cadence-voice/server": resolve("../server/src/index.ts"),
+  "@cadence-voice/utils": resolve("../../packages/utils/src/index.ts"),
+  "@cadence-voice/validations": resolve(
     "../../packages/validations/src/index.ts",
   ),
 };
@@ -47,11 +47,13 @@ export default defineConfig({
   preload: {
     build: {
       sourcemap: analyze,
+      externalizeDeps: false,
       rollupOptions: {
         input: {
           index: resolve("src/preload/index.ts"),
           "plugin-bridge": resolve("src/preload/plugin-bridge.ts"),
         },
+        external: ["electron"],
         plugins: analyze ? [mkVisualizer("preload")] : [],
       },
     },

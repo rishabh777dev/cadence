@@ -1,9 +1,9 @@
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { createAppLogger } from "@cadence-voice/utils";
 import {
   FreestyleCloudAuthError,
   fetchCloudUser,
   SESSION_LIFETIME_MS,
-} from "./freestyle-cloud.js";
+} from "./cadence-cloud.js";
 import { captureException } from "./posthog.js";
 import {
   getSession,

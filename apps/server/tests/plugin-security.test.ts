@@ -1,15 +1,15 @@
-import { mkdirSync, symlinkSync, writeFileSync } from "node:fs";
+﻿import { mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { pluginSlug } from "freestyle-voice";
+import { pluginSlug } from "cadence-voice";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import createApp from "../src/index.js";
 import { writeSetting } from "../src/lib/db.js";
 
 const app = createApp();
 
-const PLUGIN_NAME = "@freestyle-voice/secure-plugin";
+const PLUGIN_NAME = "@cadence-voice/secure-plugin";
 const slug = pluginSlug(PLUGIN_NAME);
-const OTHER_NAME = "@freestyle-voice/other-plugin";
+const OTHER_NAME = "@cadence-voice/other-plugin";
 
 /** A `Referer` that looks like it came from this plugin's own UI page. */
 function refererFor(pluginSlugValue: string): string {

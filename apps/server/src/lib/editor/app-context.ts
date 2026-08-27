@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared parsing for the app-context JSON the client sends with each dictation
  * (the frontmost app/window/url captured at record time). Both the rewrite
  * context matcher and the plugin pipeline read this same payload, so the shape
@@ -8,7 +8,7 @@
  * adds the server-side raw-payload parser used by the rewrite matcher.
  */
 
-import type { AppContextPayload } from "freestyle-voice";
+import type { AppContextPayload } from "cadence-voice";
 
 export type { AppContextPayload };
 

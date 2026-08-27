@@ -18,12 +18,11 @@ import {
 } from "@renderer/hooks/use-hotkey-recorder";
 import { apiFetch, getClient } from "@renderer/lib/api";
 import type { AvailableModel } from "@renderer/lib/models";
-import { settingsQueryOptions } from "@renderer/lib/query";
+import { SETTINGS_QUERY_KEY, settingsQueryOptions } from "@renderer/lib/query";
 import { getDefaultMagicEditHotkey } from "@shared/hotkey-defaults";
 import { SETTINGS_KEYS } from "@shared/settings-keys";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Check,
   Cpu,
   Key,
   Keyboard,
@@ -60,40 +59,8 @@ const VOICE_PROVIDERS = [
   { id: "deepgram", name: "Deepgram (Nova-3)" },
 ] as const;
 
-const TONE_OPTIONS = [
-  {
-    id: "balanced",
-    title: "Balanced",
-    desc: "Accurate, faithful & natural in-place rewrite",
-  },
-  {
-    id: "professional",
-    title: "Professional",
-    desc: "Polished, executive, business-ready syntax",
-  },
-  {
-    id: "casual",
-    title: "Casual",
-    desc: "Relaxed, friendly and conversational",
-  },
-  {
-    id: "concise",
-    title: "Concise",
-    desc: "High-impact, direct, minimal fluff",
-  },
-  {
-    id: "academic",
-    title: "Academic",
-    desc: "Formal, articulate & rigorous terminology",
-  },
-  {
-    id: "direct",
-    title: "Direct",
-    desc: "Action-oriented & punchy",
-  },
-] as const;
-
 export default function MagicEditPage(): React.JSX.Element {
+  const queryClient = useQueryClient();
   const settingsQuery = useQuery(settingsQueryOptions());
 
   // Dynamic models and API keys queries from backend
@@ -156,11 +123,10 @@ export default function MagicEditPage(): React.JSX.Element {
   const [model, setModel] = useState("");
   const [isCustomModel, setIsCustomModel] = useState(false);
   const [voiceProvider, setVoiceProvider] = useState("auto");
-  const [tone, setTone] = useState("balanced");
-  const [script, setScript] = useState("roman");
+  const [script, setScript] = useState("native");
   const [customPrompt, setCustomPrompt] = useState("");
 
-  // Seed form state once settings query resolves
+  // Seed editable state from persisted settings
   const seeded = useRef(false);
   useEffect(() => {
     const s = settingsQuery.data;
@@ -175,23 +141,32 @@ export default function MagicEditPage(): React.JSX.Element {
       setModel(s[SETTINGS_KEYS.magicEditModel]);
     if (s[SETTINGS_KEYS.magicEditVoiceProvider])
       setVoiceProvider(s[SETTINGS_KEYS.magicEditVoiceProvider]);
-    if (s[SETTINGS_KEYS.magicEditTone]) setTone(s[SETTINGS_KEYS.magicEditTone]);
     if (s[SETTINGS_KEYS.magicEditScript])
       setScript(s[SETTINGS_KEYS.magicEditScript]);
     if (s[SETTINGS_KEYS.magicEditCustomPrompt])
       setCustomPrompt(s[SETTINGS_KEYS.magicEditCustomPrompt]);
   }, [settingsQuery.data]);
 
-  const handleHotkeyRecorded = useCallback((accelerator: string) => {
-    setHotkey(accelerator);
-    window.api?.updateMagicEditHotkey?.(accelerator);
-    getClient()
-      .api.settings[":key"].$put({
-        param: { key: SETTINGS_KEYS.magicEditHotkey },
-        json: { value: accelerator },
-      })
-      .catch(() => {});
-  }, []);
+  const handleHotkeyRecorded = useCallback(
+    (accelerator: string) => {
+      setHotkey(accelerator);
+      window.api?.updateMagicEditHotkey?.(accelerator);
+      queryClient.setQueryData<Record<string, string>>(
+        SETTINGS_QUERY_KEY,
+        (prev) => ({
+          ...(prev ?? {}),
+          [SETTINGS_KEYS.magicEditHotkey]: accelerator,
+        }),
+      );
+      getClient()
+        .api.settings[":key"].$put({
+          param: { key: SETTINGS_KEYS.magicEditHotkey },
+          json: { value: accelerator },
+        })
+        .catch(() => {});
+    },
+    [queryClient],
+  );
 
   const {
     state: recorderState,
@@ -216,6 +191,13 @@ export default function MagicEditPage(): React.JSX.Element {
   const handleProviderChange = useCallback(
     (newProvider: string) => {
       setProvider(newProvider);
+      queryClient.setQueryData<Record<string, string>>(
+        SETTINGS_QUERY_KEY,
+        (prev) => ({
+          ...(prev ?? {}),
+          [SETTINGS_KEYS.magicEditProvider]: newProvider,
+        }),
+      );
       getClient()
         .api.settings[":key"].$put({
           param: { key: SETTINGS_KEYS.magicEditProvider },
@@ -239,6 +221,13 @@ export default function MagicEditPage(): React.JSX.Element {
             modelsForProvider[0]?.model_id ??
             "";
           setModel(firstModel);
+          queryClient.setQueryData<Record<string, string>>(
+            SETTINGS_QUERY_KEY,
+            (prev) => ({
+              ...(prev ?? {}),
+              [SETTINGS_KEYS.magicEditModel]: firstModel,
+            }),
+          );
           getClient()
             .api.settings[":key"].$put({
               param: { key: SETTINGS_KEYS.magicEditModel },
@@ -248,58 +237,88 @@ export default function MagicEditPage(): React.JSX.Element {
         }
       }
     },
-    [dynamicModelsByProvider, model, isCustomModel],
+    [dynamicModelsByProvider, model, isCustomModel, queryClient],
   );
 
-  const handleModelChange = useCallback((newModel: string) => {
-    setModel(newModel);
-    getClient()
-      .api.settings[":key"].$put({
-        param: { key: SETTINGS_KEYS.magicEditModel },
-        json: { value: newModel },
-      })
-      .catch(() => {});
-  }, []);
+  const handleModelChange = useCallback(
+    (newModel: string) => {
+      setModel(newModel);
+      queryClient.setQueryData<Record<string, string>>(
+        SETTINGS_QUERY_KEY,
+        (prev) => ({
+          ...(prev ?? {}),
+          [SETTINGS_KEYS.magicEditModel]: newModel,
+        }),
+      );
+      getClient()
+        .api.settings[":key"].$put({
+          param: { key: SETTINGS_KEYS.magicEditModel },
+          json: { value: newModel },
+        })
+        .catch(() => {});
+    },
+    [queryClient],
+  );
 
-  const handleVoiceProviderChange = useCallback((newVoiceProvider: string) => {
-    setVoiceProvider(newVoiceProvider);
-    getClient()
-      .api.settings[":key"].$put({
-        param: { key: SETTINGS_KEYS.magicEditVoiceProvider },
-        json: { value: newVoiceProvider },
-      })
-      .catch(() => {});
-  }, []);
+  const handleVoiceProviderChange = useCallback(
+    (newVoiceProvider: string) => {
+      setVoiceProvider(newVoiceProvider);
+      queryClient.setQueryData<Record<string, string>>(
+        SETTINGS_QUERY_KEY,
+        (prev) => ({
+          ...(prev ?? {}),
+          [SETTINGS_KEYS.magicEditVoiceProvider]: newVoiceProvider,
+        }),
+      );
+      getClient()
+        .api.settings[":key"].$put({
+          param: { key: SETTINGS_KEYS.magicEditVoiceProvider },
+          json: { value: newVoiceProvider },
+        })
+        .catch(() => {});
+    },
+    [queryClient],
+  );
 
-  const handleToneChange = useCallback((newTone: string) => {
-    setTone(newTone);
-    getClient()
-      .api.settings[":key"].$put({
-        param: { key: SETTINGS_KEYS.magicEditTone },
-        json: { value: newTone },
-      })
-      .catch(() => {});
-  }, []);
+  const handleScriptChange = useCallback(
+    (newScript: string) => {
+      setScript(newScript);
+      queryClient.setQueryData<Record<string, string>>(
+        SETTINGS_QUERY_KEY,
+        (prev) => ({
+          ...(prev ?? {}),
+          [SETTINGS_KEYS.magicEditScript]: newScript,
+        }),
+      );
+      getClient()
+        .api.settings[":key"].$put({
+          param: { key: SETTINGS_KEYS.magicEditScript },
+          json: { value: newScript },
+        })
+        .catch(() => {});
+    },
+    [queryClient],
+  );
 
-  const handleScriptChange = useCallback((newScript: string) => {
-    setScript(newScript);
-    getClient()
-      .api.settings[":key"].$put({
-        param: { key: SETTINGS_KEYS.magicEditScript },
-        json: { value: newScript },
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleCustomPromptChange = useCallback((newPrompt: string) => {
-    setCustomPrompt(newPrompt);
-    getClient()
-      .api.settings[":key"].$put({
-        param: { key: SETTINGS_KEYS.magicEditCustomPrompt },
-        json: { value: newPrompt },
-      })
-      .catch(() => {});
-  }, []);
+  const handleCustomPromptChange = useCallback(
+    (newPrompt: string) => {
+      setCustomPrompt(newPrompt);
+      queryClient.setQueryData<Record<string, string>>(
+        SETTINGS_QUERY_KEY,
+        (prev) => ({
+          ...(prev ?? {}),
+          [SETTINGS_KEYS.magicEditCustomPrompt]: newPrompt,
+        }),
+      );
+      getClient()
+        .api.settings[":key"].$put({
+          param: { key: SETTINGS_KEYS.magicEditCustomPrompt },
+          json: { value: newPrompt },
+        })
+        .catch(() => {});
+    },
+    [queryClient],
+  );
 
   const currentProviderModels = useMemo(() => {
     if (provider === "auto") return [];
@@ -568,48 +587,29 @@ export default function MagicEditPage(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Section 4: Transformation Tone */}
-        <div className="bg-card/70 border-border rounded-2xl border p-6 shadow-sm flex flex-col gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <Sliders className="text-primary size-4" />
-              <h3 className="text-foreground text-[16px] font-medium">
-                Transformation Tone & Demeanor
-              </h3>
+        {/* Section 4: Context Awareness & Tone */}
+        <div className="bg-card/70 border-border rounded-2xl border p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary shrink-0 mt-0.5">
+              <Sliders className="size-5" />
             </div>
-            <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed">
-              Default style and phrasing tone applied to every in-place voice
-              transformation.
-            </p>
+            <div>
+              <h3 className="text-foreground text-[16px] font-medium">
+                App-Aware Tones & Phrasing
+              </h3>
+              <p className="text-muted-foreground mt-1 text-[13px] leading-relaxed max-w-xl">
+                Magic Edit automatically detects whichever app is currently open
+                (WhatsApp, Slack, Gmail, etc.) and adopts your custom tone and
+                scope settings.
+              </p>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {TONE_OPTIONS.map((tOpt) => {
-              const active = tone === tOpt.id;
-              return (
-                <button
-                  key={tOpt.id}
-                  type="button"
-                  onClick={() => handleToneChange(tOpt.id)}
-                  className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all cursor-pointer ${
-                    active
-                      ? "bg-primary/10 border-primary/60 text-foreground ring-1 ring-primary/30"
-                      : "bg-background/60 border-border/70 hover:bg-secondary/40 text-muted-foreground"
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-sm font-semibold text-foreground">
-                      {tOpt.title}
-                    </span>
-                    {active && <Check className="size-4 text-primary" />}
-                  </div>
-                  <span className="text-xs text-muted-foreground mt-1 leading-snug">
-                    {tOpt.desc}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <Link
+            to="/settings/tone"
+            className="shrink-0 px-4 py-2 text-xs font-medium bg-secondary hover:bg-secondary/80 text-foreground border border-border/80 rounded-xl transition-all inline-flex items-center gap-1.5 shadow-sm"
+          >
+            Configure Tones →
+          </Link>
         </div>
 
         {/* Section 5: Multilingual Script */}

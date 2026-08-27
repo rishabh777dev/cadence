@@ -1,4 +1,4 @@
-{
+﻿{
   "compilerOptions": {
     "strict": true,
     "jsx": "react-jsx",
@@ -12,12 +12,10 @@
     "declarationDir": "./dist",
     "emitDeclarationOnly": true,
     "paths": {
-      "freestyle-voice": ["../../packages/sdk/src/index.ts"],
-      "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
-      "@freestyle-voice/validations": [
-        "../../packages/validations/src/index.ts"
-      ],
-      "@freestyle-voice/stt": ["../../packages/stt/src/index.ts"]
+      "cadence-voice": ["../../packages/sdk/src/index.ts"],
+      "@cadence-voice/utils": ["../../packages/utils/src/index.ts"],
+      "@cadence-voice/validations": ["../../packages/validations/src/index.ts"],
+      "@cadence-voice/stt": ["../../packages/stt/src/index.ts"]
     }
   },
   "include": [

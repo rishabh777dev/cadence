@@ -1,6 +1,6 @@
-import { execFile } from "node:child_process";
+﻿import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 
 const log = createAppLogger("paste");
 

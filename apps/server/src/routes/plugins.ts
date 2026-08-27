@@ -1,14 +1,14 @@
-import { readFile } from "node:fs/promises";
+﻿import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { zValidator } from "@hono/zod-validator";
-import { pluginSlug } from "freestyle-voice";
+import { pluginSlug } from "cadence-voice";
 import { Hono } from "hono";
 import * as semver from "semver";
 import { z } from "zod";
+import { freestyleCloudUrl } from "../lib/cadence-cloud.js";
 import { deleteSetting, readSetting, writeSetting } from "../lib/db.js";
 import { formatError } from "../lib/format-error.js";
-import { freestyleCloudUrl } from "../lib/freestyle-cloud.js";
 import { reloadServerPlugins } from "../lib/plugins/index.js";
 import {
   installServerPlugin,

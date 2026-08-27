@@ -1,4 +1,4 @@
-import { serverUrlSchema } from "@freestyle-voice/validations";
+﻿import { serverUrlSchema } from "@cadence-voice/validations";
 import { describe, expect, it } from "vitest";
 
 describe("serverUrlSchema", () => {

@@ -1,4 +1,4 @@
-import { PluginRegistry } from "freestyle-voice";
+import { PluginRegistry } from "cadence-voice";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { writeSetting } from "../src/lib/db.js";
 
@@ -8,7 +8,7 @@ import { writeSetting } from "../src/lib/db.js";
 // branch and the documented consume/abort semantics. The cloud branch
 // previously never ran `beforeCleanup` at all.
 
-const FREESTYLE_CLOUD_PROVIDER_ID = "freestyle-cloud";
+const CADENCE_CLOUD_PROVIDER_ID = "cadence-cloud";
 
 const cloudPostProcessSpy = vi.fn().mockResolvedValue({
   cleaned: "CLOUD CLEANED",
@@ -18,13 +18,13 @@ const cloudPostProcessSpy = vi.fn().mockResolvedValue({
 vi.mock("../src/lib/providers.js", () => ({
   createChatModel: vi.fn().mockResolvedValue({}),
   getDefaultModels: () => ({
-    llm: { provider: FREESTYLE_CLOUD_PROVIDER_ID, model_id: "post-process" },
+    llm: { provider: CADENCE_CLOUD_PROVIDER_ID, model_id: "post-process" },
   }),
 }));
 
-vi.mock("../src/lib/freestyle-cloud.js", async (importOriginal) => {
+vi.mock("../src/lib/cadence-cloud.js", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../src/lib/freestyle-cloud.js")>();
+    await importOriginal<typeof import("../src/lib/cadence-cloud.js")>();
   return { ...actual, postProcessWithFreestyleCloud: cloudPostProcessSpy };
 });
 

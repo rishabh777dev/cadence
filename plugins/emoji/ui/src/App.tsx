@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { FreestyleBridge } from "freestyle-voice";
+import type { CadenceBridge } from "cadence-voice";
 
 type PlacementMode = "after" | "replace";
 
@@ -14,12 +14,12 @@ interface EmojiSettings {
  */
 function getRoute(): string {
   const match = window.location.pathname.match(/\/api\/plugins\/([^/]+)\/ui\//);
-  const slug = match?.[1] ?? "freestyle-voice-plugin-emoji";
+  const slug = match?.[1] ?? "cadence-voice-plugin-emoji";
   return `/api/plugins/${slug}/settings`;
 }
 
-function getBridge(): FreestyleBridge {
-  const b = window.freestyle;
+function getBridge(): CadenceBridge {
+  const b = window.cadence || window.freestyle;
   if (!b) throw new Error("Host bridge unavailable.");
   return b;
 }
@@ -31,7 +31,7 @@ function assertResponse(res: unknown): asserts res is Response {
     typeof (res as Response).json !== "function"
   ) {
     throw new Error(
-      "plugin API unavailable — the host bridge is out of date; try restarting Freestyle",
+      "plugin API unavailable — the host bridge is out of date; try restarting Cadence",
     );
   }
 }

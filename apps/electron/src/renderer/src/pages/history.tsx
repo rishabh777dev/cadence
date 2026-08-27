@@ -1,8 +1,8 @@
-import {
+﻿import {
   DEFAULT_HISTORY_FILTERS,
   type HistoryFiltersSetting,
   parseHistoryFilters,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { DragSpacer } from "@renderer/components/drag-spacer";
 import { TutorialDemo } from "@renderer/components/tutorial-demo";
 import { Button } from "@renderer/components/ui/button";

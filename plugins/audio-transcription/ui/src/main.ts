@@ -1,4 +1,4 @@
-import type { FreestyleBridge } from "freestyle-voice";
+import type { CadenceBridge } from "cadence-voice";
 import { toWav16k } from "./to-wav.js";
 
 /**
@@ -7,7 +7,7 @@ import { toWav16k } from "./to-wav.js";
  * cleaned text. No host privileges beyond the bridge.
  */
 
-const bridge: FreestyleBridge | undefined = window.freestyle;
+const bridge: CadenceBridge | undefined = window.cadence || window.freestyle;
 
 const dropzone = requireEl<HTMLLabelElement>("#dropzone");
 const fileInput = requireEl<HTMLInputElement>("#file-input");

@@ -1,8 +1,5 @@
-import { createAppLogger } from "@freestyle-voice/utils";
-import {
-  clientErrorSchema,
-  telemetrySchema,
-} from "@freestyle-voice/validations";
+﻿import { createAppLogger } from "@cadence-voice/utils";
+import { clientErrorSchema, telemetrySchema } from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { capture, captureException, getDeviceId } from "../lib/posthog.js";

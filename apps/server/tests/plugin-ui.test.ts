@@ -1,13 +1,13 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+﻿import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { pluginSlug } from "freestyle-voice";
+import { pluginSlug } from "cadence-voice";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import createApp from "../src/index.js";
 import { writeSetting } from "../src/lib/db.js";
 
 const app = createApp();
 
-const PLUGIN_NAME = "@freestyle-voice/example-plugin";
+const PLUGIN_NAME = "@cadence-voice/example-plugin";
 const slug = pluginSlug(PLUGIN_NAME);
 
 beforeAll(() => {
@@ -22,7 +22,7 @@ beforeAll(() => {
   writeFileSync(
     path.join(pkgDir, "package.json"),
     JSON.stringify({
-      name: "@freestyle-voice/example-plugin",
+      name: "@cadence-voice/example-plugin",
       version: "1.2.3",
       description: "An example",
       freestyle: {
@@ -38,7 +38,7 @@ beforeAll(() => {
     "<!doctype html><title>hi</title>",
   );
   writeFileSync(path.join(pkgDir, "README.md"), "# Example");
-  writeSetting("plugins", JSON.stringify(["@freestyle-voice/example-plugin"]));
+  writeSetting("plugins", JSON.stringify(["@cadence-voice/example-plugin"]));
 });
 
 afterAll(() => {
@@ -55,7 +55,7 @@ describe("GET /api/plugins", () => {
     const plugin = plugins.find((p) => p.slug === slug);
     expect(plugin).toBeDefined();
     expect(plugin).toMatchObject({
-      name: "@freestyle-voice/example-plugin",
+      name: "@cadence-voice/example-plugin",
       slug,
       version: "1.2.3",
       displayName: "Example",

@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { FreestyleBridge } from "freestyle-voice";
+import type { CadenceBridge } from "cadence-voice";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 
-const ROUTE = "/api/plugins/freestyle-voice-profanity-filter/replacements";
+const ROUTE = "/api/plugins/cadence-voice-plugin-profanity-filter/replacements";
 
 interface Entry {
   word: string;
@@ -16,8 +16,8 @@ interface ReplacementsResponse {
   replacements: Entry[];
 }
 
-function getBridge(): FreestyleBridge {
-  const b = window.freestyle;
+function getBridge(): CadenceBridge {
+  const b = window.cadence || window.freestyle;
   if (!b) throw new Error("Host bridge unavailable.");
   return b;
 }
@@ -35,7 +35,7 @@ function assertResponse(res: unknown): asserts res is Response {
     typeof (res as Response).json !== "function"
   ) {
     throw new Error(
-      "plugin API unavailable — the host bridge is out of date; try restarting Freestyle",
+      "plugin API unavailable — the host bridge is out of date; try restarting Cadence",
     );
   }
 }

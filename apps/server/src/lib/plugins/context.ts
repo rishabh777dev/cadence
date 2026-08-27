@@ -1,11 +1,11 @@
-import path from "node:path";
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import path from "node:path";
+import { createAppLogger } from "@cadence-voice/utils";
 import type {
   PluginContext,
   PluginStorage,
   SettingsReader,
-} from "freestyle-voice";
-import { createPluginLogger } from "freestyle-voice";
+} from "cadence-voice";
+import { createPluginLogger } from "cadence-voice";
 import { deleteSetting, readSetting, writeSetting } from "../db.js";
 
 const STORAGE_PREFIX = "plugin:";

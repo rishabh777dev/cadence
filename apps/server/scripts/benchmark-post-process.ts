@@ -1,7 +1,7 @@
-import {
+﻿import {
   maxOutputTokensForCleanup,
   sanitizeTranscriptText,
-} from "@freestyle-voice/stt";
+} from "@cadence-voice/stt";
 import { generateText } from "ai";
 import { buildRewritePrompt } from "../src/lib/editor/prompts.ts";
 import { getGroqChatModel } from "../src/lib/groq-http.ts";

@@ -41,17 +41,49 @@ describe("buildMagicEditPrompt", () => {
     expect(system).toContain("Roman script");
   });
 
-  it("applies tone and custom instructions when configured", () => {
-    const { system } = buildMagicEditPrompt({
-      selectedText: "Hey what's up",
-      instruction: "make it professional",
-      tone: "professional",
-      customPrompt: "Always use bullet points.",
+  it("constructs smart reply prompt when user asks to reply to a selected message", () => {
+    const { system, prompt } = buildMagicEditPrompt({
+      selectedText: "Hey, are you free for a quick call tomorrow at 3pm?",
+      instruction: "reply saying I'm interested and ask for Friday instead",
     });
 
     expect(system).toContain(
-      "polished, professional, business-appropriate tone",
+      "You are an elite AI communication partner and ghostwriter",
     );
-    expect(system).toContain("Always use bullet points.");
+    expect(system).toContain("FIRST-PERSON REPLY");
+    expect(prompt).toContain(
+      "<reply_instruction>\nreply saying I'm interested and ask for Friday instead\n</reply_instruction>",
+    );
+    expect(prompt).toContain(
+      "<incoming_message_to_reply_to>\nHey, are you free for a quick call tomorrow at 3pm?\n</incoming_message_to_reply_to>",
+    );
+  });
+
+  it("handles open-ended reply requests like 'help me reply to this'", () => {
+    const { system, prompt } = buildMagicEditPrompt({
+      selectedText: "Can you send the contract review by EOD?",
+      instruction: "help me reply to this",
+    });
+
+    expect(system).toContain(
+      "You are an elite AI communication partner and ghostwriter",
+    );
+    expect(system).toContain("OPEN-ENDED & SPECIFIC INSTRUCTIONS");
+    expect(prompt).toContain(
+      "<reply_instruction>\nhelp me reply to this\n</reply_instruction>",
+    );
+  });
+
+  it("constructs direct ghostwriting prompt when no text was selected", () => {
+    const { system, prompt } = buildMagicEditPrompt({
+      selectedText: "",
+      instruction: "write a cold email to a client offering AI consulting",
+    });
+
+    expect(system).toContain("You are an elite, highly capable AI ghostwriter");
+    expect(system).toContain("GHOSTWRITER & FIRST-PERSON PERSPECTIVE");
+    expect(prompt).toContain(
+      "<user_request>\nwrite a cold email to a client offering AI consulting\n</user_request>",
+    );
   });
 });

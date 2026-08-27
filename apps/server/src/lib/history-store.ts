@@ -1,4 +1,4 @@
-import { parseRetentionDays } from "@freestyle-voice/validations";
+﻿import { parseRetentionDays } from "@cadence-voice/validations";
 import { getDb, readSetting } from "./db.js";
 import { countFixes } from "./fixes.js";
 import { capture, captureException } from "./posthog.js";

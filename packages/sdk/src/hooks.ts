@@ -1,5 +1,5 @@
 import type { PluginConfig } from "./config.js";
-import type { AppContext, FreestyleEvent } from "./events.js";
+import type { AppContext, CadenceEvent } from "./events.js";
 import type { HookApi } from "./hook-api.js";
 import type { OutputMode } from "./output.js";
 
@@ -29,7 +29,7 @@ export type Handler<I, O> = (
  * value is not required (and is ignored), except for `config`.
  *
  * Hooks are split by host process:
- * - Server hooks run inside the Freestyle server (the dictation backend).
+ * - Server hooks run inside the Cadence server (the dictation backend).
  * - App hooks run inside the Electron main process (OS integration / output).
  */
 export interface Hooks {
@@ -37,7 +37,7 @@ export interface Hooks {
    * Observe pipeline events. Read-only: mutating `input.event` has no effect.
    * Runs in both processes for the events that process emits.
    */
-  event?: (input: { event: FreestyleEvent }) => void | Promise<void>;
+  event?: (input: { event: CadenceEvent }) => void | Promise<void>;
 
   /**
    * [server] Inspect and contribute configuration at server boot, after
@@ -102,7 +102,12 @@ export interface Hooks {
 }
 
 /** The destination bucket used to steer contextual cleanup. */
-export type CleanupToneDestination = "overall" | "personal" | "work" | "email";
+export type CleanupToneDestination =
+  | "overall"
+  | "personal"
+  | "work"
+  | "email"
+  | "developer";
 
 export interface BeforeTranscribeInput {
   /** The resolved default voice provider id, before any plugin override. */

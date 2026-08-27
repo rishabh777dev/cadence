@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Pause background media while dictating on Linux.
  *
  * 1. MPRIS pause via D-Bus (busctl) — Spotify, browser media, VLC, etc.
@@ -7,7 +7,7 @@
 
 import { execFile, execFileSync } from "node:child_process";
 import { promisify } from "node:util";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { AUDIO_CONTROL_CMD_TIMEOUT_MS } from "./audio-control-constants";
 
 const log = createAppLogger("linux-media-playback");

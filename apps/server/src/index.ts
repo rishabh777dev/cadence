@@ -1,4 +1,4 @@
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { type ServerType, serve } from "@hono/node-server";
 import type { MiddlewareHandler } from "hono";
 import { Hono } from "hono";
@@ -9,9 +9,9 @@ import { requestId } from "hono/request-id";
 import { timeout } from "hono/timeout";
 import { WebSocketServer } from "ws";
 import { authMiddleware, setAuthToken } from "./lib/auth.js";
+import { isTransientCloudError } from "./lib/cadence-cloud.js";
 import { refreshCleanupPromptConfig } from "./lib/editor/prompt-config.js";
 import { formatError } from "./lib/format-error.js";
-import { isTransientCloudError } from "./lib/freestyle-cloud.js";
 import { startHistoryRetentionSweep } from "./lib/history-store.js";
 import { reconcileUnsupportedMlxVoiceDefault } from "./lib/mlx-asr/reconcile.js";
 import {

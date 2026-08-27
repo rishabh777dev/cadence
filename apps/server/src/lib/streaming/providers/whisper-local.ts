@@ -1,5 +1,5 @@
-import { collapseAsrLineBreaks } from "@freestyle-voice/stt";
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { collapseAsrLineBreaks } from "@cadence-voice/stt";
+import { createAppLogger } from "@cadence-voice/utils";
 import { parseLanguageCodes } from "../../language.js";
 import { isServerBinaryAvailable } from "../../whisper/binary.js";
 import { WHISPER_PROVIDER_ID } from "../../whisper/constants.js";

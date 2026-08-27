@@ -1,10 +1,10 @@
 import WebSocket from "ws";
 import {
-  FREESTYLE_CLOUD_PROVIDER_ID,
-  FreestyleCloudAuthError,
-  freestyleCloudStreamWsUrl,
+  CADENCE_CLOUD_PROVIDER_ID,
+  CadenceCloudAuthError,
+  cadenceCloudStreamWsUrl,
   transcribeWithFreestyleCloud,
-} from "../../freestyle-cloud.js";
+} from "../../cadence-cloud.js";
 import { getCloudVocabularyBias } from "../../vocabulary.js";
 import { sonioxContextFromBias } from "../transcribe-bias.js";
 import type {
@@ -16,8 +16,10 @@ import type {
 } from "../types.js";
 
 export {
-  FREESTYLE_CLOUD_PROVIDER_ID,
-  FreestyleCloudAuthError as CloudAuthError,
+  CADENCE_CLOUD_PROVIDER_ID,
+  CADENCE_CLOUD_PROVIDER_ID as FREESTYLE_CLOUD_PROVIDER_ID,
+  CadenceCloudAuthError as CloudAuthError,
+  CadenceCloudAuthError as FreestyleCloudAuthError,
 };
 
 /**
@@ -34,26 +36,16 @@ interface CloudServerMessage {
 }
 
 /**
- * Managed STT via Freestyle Cloud. Supports both batch (POST /v2/transcribe)
+ * Managed STT via Cadence Cloud. Supports both batch (POST /v2/transcribe)
  * and streaming (WSS /v2/stream) modes.
- *
- * In streaming mode, the cloud Durable Object handles Soniox STT + Groq LLM
- * post-processing. The `onFinal` callback delivers already-cleaned text, so
- * the desktop pipeline must skip local post-processing.
- *
- * `opts.apiKey` carries the cloud session token (from device auth flow).
- * Called with `mode: "raw"` in batch so the cloud skips post-processing and
- * returns only the transcript — cleanup is decided downstream by the
- * configured cleanup model, keeping cloud transcription independent from
- * cloud cleanup.
  */
-export class FreestyleCloudTranscriptionProvider
+export class CadenceCloudTranscriptionProvider
   implements TranscriptionProvider
 {
-  readonly providerId = FREESTYLE_CLOUD_PROVIDER_ID;
+  readonly providerId = CADENCE_CLOUD_PROVIDER_ID;
 
   async transcribe(opts: TranscribeOptions): Promise<TranscribeResult> {
-    if (!opts.apiKey) throw new FreestyleCloudAuthError();
+    if (!opts.apiKey) throw new CadenceCloudAuthError();
 
     const data = await transcribeWithFreestyleCloud({
       token: opts.apiKey,
@@ -79,10 +71,10 @@ export class FreestyleCloudTranscriptionProvider
       opts;
 
     if (!apiKey) {
-      throw new FreestyleCloudAuthError();
+      throw new CadenceCloudAuthError();
     }
 
-    const wsUrl = freestyleCloudStreamWsUrl();
+    const wsUrl = cadenceCloudStreamWsUrl();
     const ws = new WebSocket(wsUrl, {
       headers: {
         authorization: `Bearer ${apiKey}`,

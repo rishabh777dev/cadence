@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tone-feature benchmark.
  *
  * Exercises the destination + tone path of `buildRewritePrompt` against
@@ -18,7 +18,7 @@ import { resolve } from "node:path";
 import {
   maxOutputTokensForCleanup,
   sanitizeTranscriptText,
-} from "@freestyle-voice/stt";
+} from "@cadence-voice/stt";
 import { generateText } from "ai";
 import { buildRewritePrompt } from "../src/lib/editor/prompts.ts";
 import { getGroqChatModel } from "../src/lib/groq-http.ts";

@@ -1,7 +1,7 @@
-# `create-freestyle-plugin`
+# `create-cadence-plugin`
 
-Scaffold a new [Freestyle](../../README.md) voice plugin from a starter
-template. Freestyle is the local-first voice dictation app; plugins extend its
+Scaffold a new [Cadence](../../README.md) voice plugin from a starter
+template. Cadence is the local-first voice dictation app; plugins extend its
 dictation pipeline — rewrite transcripts, inject cleanup prompts, transform the
 final text, and add UI pages. See the [plugin
 SDK](../sdk/README.md) for the full plugin contract.
@@ -11,19 +11,19 @@ SDK](../sdk/README.md) for the full plugin contract.
 Run it with your package manager's `create` command — no install needed:
 
 ```bash
-npm create freestyle-plugin@latest
+npm create cadence-plugin@latest
 # or
-pnpm create freestyle-plugin
+pnpm create cadence-plugin
 # or
-yarn create freestyle-plugin
+yarn create cadence-plugin
 # or
-bun create freestyle-plugin
+bun create cadence-plugin
 ```
 
 You can also pass the target directory directly:
 
 ```bash
-npm create freestyle-plugin@latest my-plugin
+npm create cadence-plugin@latest my-plugin
 ```
 
 With no flags, the CLI prompts for the target directory, template, package
@@ -37,7 +37,7 @@ manager, and whether to install dependencies. Pass flags to skip the prompts.
 | `with-ui` | Plugin with a React UI page |
 
 Templates are pulled from
-[`templates/`](../../templates) in the Freestyle monorepo.
+[`templates/`](../../templates) in the Cadence monorepo.
 
 ## Options
 
@@ -54,7 +54,7 @@ Templates are pulled from
 Non-interactive example:
 
 ```bash
-npm create freestyle-plugin@latest my-plugin -- --template with-ui --pm pnpm --install
+npm create cadence-plugin@latest my-plugin -- --template with-ui --pm pnpm --install
 ```
 
 The scaffolder sets the package name (slugified from the target), the plugin's
@@ -69,15 +69,15 @@ After scaffolding:
 cd my-plugin
 pnpm install        # if you didn't pass --install
 pnpm run build      # build the plugin (and UI, for with-ui)
-pnpm run link       # symlink it into Freestyle for local testing
+pnpm run link       # symlink it into Cadence for local testing
 ```
 
 Use `pnpm run build` / `pnpm run link` (the `run` form) rather than
 `pnpm build` / `pnpm link` — the bare `build` and `link` commands collide with
 built-in package-manager commands and would run the wrong thing.
 
-`link` drops a `-dev` copy of your plugin into Freestyle's user-data `plugins/`
-directory, symlinked to your `dist/`. Restart Freestyle, then enable the plugin
+`link` drops a `-dev` copy of your plugin into Cadence's user-data `plugins/`
+directory, symlinked to your `dist/`. Restart Cadence, then enable the plugin
 under **Settings → Plugins** to activate its hooks and middleware. Rebuild to
 pick up changes; run `pnpm run unlink` to remove the dev copy.
 

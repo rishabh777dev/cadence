@@ -1,7 +1,7 @@
-import {
+﻿import {
   type DictionaryInput,
   dictionarySchema,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragSpacer } from "@renderer/components/drag-spacer";
 import { Button } from "@renderer/components/ui/button";

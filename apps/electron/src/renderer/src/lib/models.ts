@@ -119,7 +119,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   mistral: "Mistral",
   openrouter: "OpenRouter",
   vercel: "Vercel AI Gateway",
-  "freestyle-cloud": "Cadence Transcribe",
+  "freestyle-cloud": "Cadence Cloud",
   "local-llm": "Local LLM",
   "local-whisper": "Local Whisper",
   "local-mlx": "Local MLX",

@@ -1,6 +1,6 @@
-import { Buffer } from "node:buffer";
+﻿import { Buffer } from "node:buffer";
 import { createOpenAI } from "@ai-sdk/openai";
-import { sanitizeSttBaseUrl } from "@freestyle-voice/validations";
+import { sanitizeSttBaseUrl } from "@cadence-voice/validations";
 import WebSocket from "ws";
 import { readSetting } from "../../db.js";
 import { parseLanguageCodes } from "../../language.js";

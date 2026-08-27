@@ -1,5 +1,5 @@
-{
-  "name": "@freestyle-voice/mobile",
+﻿{
+  "name": "@cadence-voice/mobile",
   "main": "expo-router/entry",
   "version": "0.0.1",
   "dependencies": {

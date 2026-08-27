@@ -1,4 +1,4 @@
-import { PluginRegistry } from "freestyle-voice";
+import { PluginRegistry } from "cadence-voice";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SETTINGS_KEYS } from "../../electron/src/shared/settings-keys.js";
 import { getDb, writeSetting } from "../src/lib/db.js";
@@ -11,7 +11,7 @@ import { getDb, writeSetting } from "../src/lib/db.js";
 //     the local/BYOK flow. Previously the combined path forwarded fragments but
 //     silently ran cloud cleanup even when the plugin asked to skip it.
 
-const FREESTYLE_CLOUD_PROVIDER_ID = "freestyle-cloud";
+const FREESTYLE_CLOUD_PROVIDER_ID = "cadence-cloud";
 
 const cloudTranscribeSpy = vi.fn(
   async (opts: { mode?: string; systemFragments?: string[] }) => ({
@@ -21,9 +21,9 @@ const cloudTranscribeSpy = vi.fn(
   }),
 );
 
-vi.mock("../src/lib/freestyle-cloud.js", async (importOriginal) => {
+vi.mock("../src/lib/cadence-cloud.js", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../src/lib/freestyle-cloud.js")>();
+    await importOriginal<typeof import("../src/lib/cadence-cloud.js")>();
   return { ...actual, transcribeWithFreestyleCloud: cloudTranscribeSpy };
 });
 
@@ -35,11 +35,11 @@ vi.mock("../src/lib/providers.js", async (importOriginal) => {
     getDefaultModels: () => ({
       voice: {
         provider: FREESTYLE_CLOUD_PROVIDER_ID,
-        model_id: "freestyle-cloud/stt",
+        model_id: "cadence-cloud/stt",
       },
       llm: {
         provider: FREESTYLE_CLOUD_PROVIDER_ID,
-        model_id: "freestyle-cloud/post-process",
+        model_id: "cadence-cloud/post-process",
       },
     }),
   };

@@ -1,4 +1,4 @@
-import { Buffer } from "node:buffer";
+﻿import { Buffer } from "node:buffer";
 import { execFile as execFileCallback } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -17,7 +17,7 @@ import { join } from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import {
   assertEnoughDiskSpace,
   DOWNLOAD_FREE_BUFFER_BYTES,

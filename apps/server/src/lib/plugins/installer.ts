@@ -1,8 +1,8 @@
-import { createHash } from "node:crypto";
+﻿import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createAppLogger } from "@freestyle-voice/utils";
-import { pluginSlug } from "freestyle-voice";
+import { createAppLogger } from "@cadence-voice/utils";
+import { pluginSlug } from "cadence-voice";
 import * as tar from "tar";
 
 const log = createAppLogger("plugin-installer");

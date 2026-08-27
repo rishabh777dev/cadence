@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UI contribution descriptors. A plugin may declare one or more pages in its
  * `package.json` under `freestyle.contributes.pages`; the host renders each in a
  * sandboxed web view and lists it in the Plugins hub.
@@ -75,7 +75,7 @@ export interface PluginManifest {
 
 /**
  * Derive a URL- and route-safe slug from a package name, e.g.
- * `@freestyle-voice/plugin-audio-transcription` →
+ * `@cadence-voice/plugin-audio-transcription` →
  * `freestyle-voice-plugin-audio-transcription`.
  * Used as the `/plugins/:slug/...` route segment, the on-disk package dir, and
  * the per-plugin session partition, since package names can contain `@` and `/`

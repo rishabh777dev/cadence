@@ -1,7 +1,7 @@
-import type {
+﻿import type {
   CleanupAppAssignment,
   CleanupToneDestination,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { normalizeRouteIconHost } from "../../../../shared/route-icons";
 import type { AppMarkId } from "./app-marks";
 import {
@@ -13,6 +13,7 @@ export const BUILTIN_ROUTE_GROUPS = {
   personal: ["messages", "whatsapp", "telegram", "discord"],
   work: ["slack", "linkedin", "work_chat"],
   email: ["gmail", "outlook", "apple_mail", "proton"],
+  developer: ["vscode", "cursor", "antigravity", "terminal", "github"],
 } as const satisfies Record<
   Exclude<CleanupToneDestination, "overall">,
   readonly AppMarkId[]
@@ -139,6 +140,7 @@ export function getDestinationLabelKey(
   | "tone.tabs.personal"
   | "tone.tabs.work"
   | "tone.tabs.email"
+  | "tone.tabs.developer"
   | "tone.tabs.everythingElse" {
   switch (destination) {
     case "personal":
@@ -147,6 +149,8 @@ export function getDestinationLabelKey(
       return "tone.tabs.work";
     case "email":
       return "tone.tabs.email";
+    case "developer":
+      return "tone.tabs.developer";
     default:
       return "tone.tabs.everythingElse";
   }

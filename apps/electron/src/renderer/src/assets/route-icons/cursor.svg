@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cursor_grad0" x1="255.4" y1="256" x2="255.4" y2="423" gradientUnits="userSpaceOnUse">
+      <stop offset="0.16" stop-color="#FFFFFF" stop-opacity="0.4"/>
+      <stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="cursor_grad1" x1="404.4" y1="173" x2="257.5" y2="261.5" gradientUnits="userSpaceOnUse">
+      <stop offset="0.18" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="0.72" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="cursor_grad2" x1="255.4" y1="89" x2="112.3" y2="342.8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.65"/>
+      <stop offset="0.67" stop-color="#FFFFFF" stop-opacity="0.22"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="120" fill="#141419"/>
+  <path d="M255.4 423l149-83.5-149-83.5-149 83.5 149 83.5z" fill="url(#cursor_grad0)"/>
+  <path d="M404.4 339.5v-167L255.4 89v167l149 83.5z" fill="url(#cursor_grad1)"/>
+  <path d="M255.4 89l-149 83.5v167l149-83.5V89z" fill="url(#cursor_grad2)"/>
+  <path d="M404.4 172.5L255.4 423V256l149-83.5z" fill="#E4E4E4"/>
+  <path d="M404.4 172.5L255.4 256l-149-83.5h298z" fill="#FFFFFF"/>
+</svg>

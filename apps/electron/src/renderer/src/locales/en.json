@@ -376,6 +376,7 @@
       "personal": "Personal",
       "work": "Work",
       "email": "Email",
+      "developer": "Developer & Code",
       "everythingElse": "Everything else"
     },
     "cleanup": {
@@ -432,10 +433,12 @@
       "currentRoutes": "Added here",
       "currentRoute": "Already added here",
       "includedByDefault": "Included here by default",
-      "openApps": "Open apps",
-      "openAppsEmpty": "No open apps found right now. Open the app you want, then refresh.",
-      "loadingOpenApps": "Looking for open apps…",
-      "refresh": "Refresh",
+      "openApps": "System & Open Apps (Scan)",
+      "openAppsEmpty": "No matching apps found. Type an app name above to add it directly.",
+      "loadingOpenApps": "Scanning system & running apps…",
+      "searchAppsPlaceholder": "Search apps (e.g. Antigravity, Cursor, Code, Slack)…",
+      "addCustomApp": "Add \"{{name}}\" as custom app",
+      "refresh": "Scan Apps",
       "pickApp": "Add this app",
       "moveFrom": "Moves from {{destination}}",
       "websiteLabel": "Website",
@@ -539,6 +542,47 @@
         }
       }
     },
+    "developer": {
+      "eyebrow": "Developer & Code",
+      "title": "Developer voice.",
+      "desc": "Used in VS Code, Cursor, Terminals, GitHub, Linear, and Jira.",
+      "preview": {
+        "rawSample": "i added jwt token verification to the auth route and handled refresh errors"
+      },
+      "cards": {
+        "commits": {
+          "title": "Conventional Commits",
+          "desc": "Standard git commit syntax.",
+          "sample": "feat(auth): add JWT token verification and handle refresh errors"
+        },
+        "docstrings": {
+          "title": "Docs & Markdown",
+          "desc": "Backticks symbols and paths.",
+          "sample": "Add `verifyJwtToken()` to `src/routes/auth.ts` with typed error handling for `RefreshTokenError`."
+        },
+        "terminal": {
+          "title": "Terminal & Shell",
+          "desc": "Clean CLI commands & flags.",
+          "sample": "git commit -m \"feat(auth): add JWT token verification\""
+        },
+        "technical": {
+          "title": "Concise Technical",
+          "desc": "Engineer-to-engineer notes.",
+          "sample": "• Implemented JWT token verification in auth middleware.\n• Handled edge cases for expired refresh tokens."
+        },
+        "off": {
+          "title": "Off",
+          "desc": "No code styling — just clean text.",
+          "sample": "I added JWT token verification to the auth route and handled refresh errors."
+        }
+      },
+      "tags": {
+        "title": "Tech Stack & Context Tags",
+        "desc": "Add keywords, framework names, or library terms to guarantee accurate spelling and symbol formatting.",
+        "placeholder": "Add tag (e.g. Next.js, Rust)...",
+        "add": "Add"
+      }
+    },
     "everythingElse": {
       "eyebrow": "Everything else",
       "title": "Everything else.",
@@ -598,7 +642,7 @@
       "pickModel": "Pick a model",
       "noneSelected": "None selected",
       "via": "via",
-      "includedWithFreestyle": "Included with Cadence Transcribe",
+      "includedWithFreestyle": "Included with Cadence Cloud",
       "configureWarming": "Configure model warming"
     },
     "picker": {
@@ -606,10 +650,10 @@
       "cleanup": "AI cleanup",
       "freestyleTranscribe": "Cadence Transcribe",
       "recommended": "Recommended",
-      "managedSignedIn": "Managed cloud · signed in",
-      "managedSignIn": "Managed cloud · sign in once, no API key",
-      "freestyleBundleSignedIn": "Managed cloud · transcription and AI cleanup included",
-      "freestyleBundleSignIn": "Managed cloud · sign in once · transcription and cleanup included",
+      "managedSignedIn": "Cadence Cloud · signed in",
+      "managedSignIn": "Cadence Cloud · sign in once, no API key",
+      "freestyleBundleSignedIn": "Cadence Cloud · transcription and AI cleanup included",
+      "freestyleBundleSignIn": "Cadence Cloud · sign in once · transcription and cleanup included",
       "onDevice": "On {{phrase}}",
       "yourApiKey": "Your API key",
       "unavailableOnDevice": "Unavailable on this device",

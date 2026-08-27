@@ -1,4 +1,4 @@
-import type { AppType } from "@freestyle-voice/server";
+﻿import type { AppType } from "@cadence-voice/server";
 import { hc } from "hono/client";
 import { bearerAuthHeaders } from "../../../shared/server-auth";
 

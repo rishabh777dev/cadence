@@ -307,24 +307,24 @@ describe("soniox", () => {
   });
 });
 
-describe("freestyle-cloud", () => {
+describe("cadence-cloud", () => {
   it("builds soniox-context bias for the cloud streaming path", () => {
     const bias = buildAsrVocabularyBias(
-      "freestyle-cloud",
-      "freestyle-cloud/streaming",
-      ["Freestyle", "Kubernetes"],
+      "cadence-cloud",
+      "cadence-cloud/streaming",
+      ["Cadence", "Kubernetes"],
       true,
     );
     expect(bias).toEqual({
       kind: "soniox-context",
-      terms: ["Freestyle", "Kubernetes"],
+      terms: ["Cadence", "Kubernetes"],
     });
   });
 
   it("returns null for empty terms", () => {
     const bias = buildAsrVocabularyBias(
-      "freestyle-cloud",
-      "freestyle-cloud/streaming",
+      "cadence-cloud",
+      "cadence-cloud/streaming",
       [],
       true,
     );

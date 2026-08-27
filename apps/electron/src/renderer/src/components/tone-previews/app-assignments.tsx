@@ -1,7 +1,7 @@
-import type {
+﻿import type {
   CleanupAppAssignment,
   CleanupToneDestination,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { RouteMark } from "@renderer/components/tone-previews/app-marks";
 import {
   findRouteOwnership,
@@ -17,8 +17,8 @@ import {
 } from "@renderer/components/ui/dialog";
 import { Input } from "@renderer/components/ui/input";
 import { cn } from "@renderer/lib/utils";
-import { Globe, Loader2, Plus, RefreshCw, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Globe, Loader2, Plus, RefreshCw, Search, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { OpenAppCandidate } from "../../../../shared/open-apps";
 
@@ -97,6 +97,32 @@ function ExistingAssignmentRow({
   );
 }
 
+const POPULAR_APP_SUGGESTIONS: readonly OpenAppCandidate[] = [
+  { label: "ChatGPT", match: "chatgpt" },
+  { label: "Claude", match: "claude" },
+  { label: "Antigravity", match: "antigravity" },
+  { label: "Cursor", match: "cursor" },
+  { label: "Visual Studio Code", match: "vscode" },
+  { label: "Windows Terminal", match: "terminal" },
+  { label: "GitHub Desktop", match: "github" },
+  { label: "Slack", match: "slack" },
+  { label: "Discord", match: "discord" },
+  { label: "WhatsApp", match: "whatsapp" },
+  { label: "Telegram", match: "telegram" },
+  { label: "Microsoft Teams", match: "microsoft teams" },
+  { label: "Google Chrome", match: "google chrome" },
+  { label: "Postman", match: "postman" },
+  { label: "Docker Desktop", match: "docker desktop" },
+  { label: "Notion", match: "notion" },
+  { label: "Obsidian", match: "obsidian" },
+  { label: "Warp", match: "warp" },
+  { label: "Windsurf", match: "windsurf" },
+  { label: "Zed", match: "zed" },
+  { label: "PyCharm", match: "pycharm" },
+  { label: "IntelliJ IDEA", match: "intellij idea" },
+  { label: "WebStorm", match: "webstorm" },
+];
+
 export function AppAssignments({
   destination,
   items,
@@ -115,7 +141,10 @@ export function AppAssignments({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [siteValue, setSiteValue] = useState("");
-  const [detectedApps, setDetectedApps] = useState<OpenAppCandidate[]>([]);
+  const [appSearch, setAppSearch] = useState("");
+  const [detectedApps, setDetectedApps] = useState<OpenAppCandidate[]>([
+    ...POPULAR_APP_SUGGESTIONS,
+  ]);
   const [loadingApps, setLoadingApps] = useState(false);
 
   const siteAssignment = inputToSiteAssignment(siteValue, destination);
@@ -158,10 +187,17 @@ export function AppAssignments({
   const loadDetectedApps = useCallback(async (): Promise<void> => {
     setLoadingApps(true);
     try {
-      const next = (await window.api?.getOpenAppCandidates()) ?? [];
-      setDetectedApps(next);
+      const scanned = (await window.api?.getOpenAppCandidates()) ?? [];
+      const deduped = new Map<string, OpenAppCandidate>();
+      for (const item of POPULAR_APP_SUGGESTIONS) {
+        deduped.set(item.match.toLowerCase(), item);
+      }
+      for (const item of scanned) {
+        deduped.set(item.match.toLowerCase(), item);
+      }
+      setDetectedApps([...deduped.values()]);
     } catch {
-      setDetectedApps([]);
+      setDetectedApps([...POPULAR_APP_SUGGESTIONS]);
     } finally {
       setLoadingApps(false);
     }
@@ -172,9 +208,20 @@ export function AppAssignments({
     void loadDetectedApps();
   }, [open, loadDetectedApps]);
 
+  const filteredApps = useMemo(() => {
+    const query = appSearch.trim().toLowerCase();
+    if (!query) return detectedApps;
+    return detectedApps.filter(
+      (app) =>
+        app.label.toLowerCase().includes(query) ||
+        app.match.toLowerCase().includes(query),
+    );
+  }, [detectedApps, appSearch]);
+
   function closeDialog(): void {
     setOpen(false);
     setSiteValue("");
+    setAppSearch("");
   }
 
   function addDetectedApp(candidate: OpenAppCandidate): void {
@@ -198,7 +245,10 @@ export function AppAssignments({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) setSiteValue("");
+        if (!next) {
+          setSiteValue("");
+          setAppSearch("");
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -260,14 +310,59 @@ export function AppAssignments({
               </Button>
             </div>
 
+            {/* App Search / Filter input */}
+            <div className="relative">
+              <Search className="text-muted-foreground absolute left-3 top-1/2 size-3.5 -translate-y-1/2" />
+              <Input
+                value={appSearch}
+                onChange={(e) => setAppSearch(e.target.value)}
+                placeholder={t("tone.apps.searchAppsPlaceholder")}
+                className="h-8.5 pl-8 pr-8 text-[12.5px]"
+              />
+              {appSearch ? (
+                <button
+                  type="button"
+                  onClick={() => setAppSearch("")}
+                  className="text-muted-foreground hover:text-foreground absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 cursor-pointer"
+                >
+                  <X className="size-3.5" />
+                </button>
+              ) : null}
+            </div>
+
+            {/* If user searched for an app not in list, provide quick add */}
+            {appSearch.trim() &&
+            !detectedApps.some(
+              (a) =>
+                a.match.toLowerCase() === appSearch.trim().toLowerCase() ||
+                a.label.toLowerCase() === appSearch.trim().toLowerCase(),
+            ) ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  addDetectedApp({
+                    label: appSearch.trim(),
+                    match: appSearch.trim().toLowerCase(),
+                  })
+                }
+                className="w-full justify-start gap-2 rounded-[12px] border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 text-primary h-9 px-3 text-[12.5px]"
+              >
+                <Plus className="size-4" />
+                <span>
+                  {t("tone.apps.addCustomApp", { name: appSearch.trim() })}
+                </span>
+              </Button>
+            ) : null}
+
             {loadingApps ? (
               <div className="text-muted-foreground flex min-h-[84px] items-center justify-center rounded-[14px] border border-dashed border-border bg-background text-[12px]">
                 <Loader2 className="mr-2 size-4 animate-spin" />
                 {t("tone.apps.loadingOpenApps")}
               </div>
-            ) : detectedApps.length > 0 ? (
+            ) : filteredApps.length > 0 ? (
               <div className="grid max-h-[min(44vh,420px)] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-                {detectedApps.map((candidate) => {
+                {filteredApps.map((candidate) => {
                   const status = getRouteStatus("app", candidate.match);
                   const disabled = status.type === "current";
                   const showHoverAction = status.type === "available";

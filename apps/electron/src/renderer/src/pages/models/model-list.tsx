@@ -1,8 +1,8 @@
-import type { EndpointConnectFormValues } from "@freestyle-voice/validations";
+﻿import type { EndpointConnectFormValues } from "@cadence-voice/validations";
 import {
   localLlmConnectFormSchema,
   openaiSttConnectFormSchema,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@renderer/components/ui/badge";
 import { Button } from "@renderer/components/ui/button";

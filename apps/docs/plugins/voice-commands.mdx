@@ -1,4 +1,4 @@
----
+﻿---
 title: "Voice Commands"
 description: "Turn spoken trigger phrases into actions — run Shortcuts, call webhooks, open URLs, or execute scripts by voice."
 ---
@@ -12,7 +12,7 @@ The Voice Commands plugin lets you define commands like _"post to Slack…"_ or 
 ## Install
 
 ```bash
-npm install @freestyle-voice/commands
+npm install @cadence-voice/commands
 ```
 
 Or install from **Settings → Plugins** inside the app.
@@ -55,7 +55,7 @@ Every change is saved through the `window.freestyle` host bridge to the plugin's
 
 ```bash
 pnpm install
-pnpm --filter @freestyle-voice/commands build
+pnpm --filter @cadence-voice/commands build
 ```
 
 This runs `pkgroll --minify` (server-side plugin code, bundling the AI SDK) followed by `vite build` (UI page).

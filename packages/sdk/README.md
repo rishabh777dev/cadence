@@ -1,6 +1,6 @@
-# Freestyle Voice
+# Cadence Voice
 
-The plugin SDK for [Freestyle](../../README.md) — the local-first voice
+The plugin SDK for [Cadence](../../README.md) — the local-first voice
 dictation app. This package is the **public contract** for writing plugins that
 extend the dictation pipeline: rewrite transcripts, inject cleanup prompts,
 transform final text, and control how text is delivered.
@@ -19,7 +19,7 @@ implements.
 Plugins are loaded from two places:
 
 - **Local files** — drop a `.js`, `.mjs`, or `.ts` module into the plugins
-  directory inside your Freestyle user-data folder (`<userData>/plugins/`).
+  directory inside your Cadence user-data folder (`<userData>/plugins/`).
   `.ts` files are loaded via Node's native type-stripping, so stick to plain,
   strippable TypeScript — no `enum`s, `namespace`s, or other constructs that
   require emit.
@@ -28,7 +28,7 @@ Plugins are loaded from two places:
 Either way, import the types from this package:
 
 ```ts
-import type { Plugin } from "freestyle-voice";
+import type { Plugin } from "cadence-voice";
 ```
 
 ## Writing a plugin
@@ -39,11 +39,11 @@ times across the dictation pipeline. Use the `setup` lifecycle hook to capture
 context (logger, settings) in a closure.
 
 ```ts
-import type { Plugin } from "freestyle-voice";
+import type { Plugin } from "cadence-voice";
 
 export default function myPlugin(): Plugin {
   return {
-    name: "freestyle-plugin-my",
+    name: "cadence-plugin-my",
     enforce: "pre", // optional — chain position
 
     setup({ logger, mode }) {
@@ -62,11 +62,11 @@ For the common single-rewrite case, use the `transform` helper to skip the
 `(input, output)` mutation convention:
 
 ```ts
-import { transform, type Plugin } from "freestyle-voice";
+import { transform, type Plugin } from "cadence-voice";
 
 export default function trim(): Plugin {
   return {
-    name: "freestyle-plugin-trim",
+    name: "cadence-plugin-trim",
     afterCleanup: transform((text) => text.trimEnd()),
   };
 }
@@ -98,7 +98,7 @@ When your setup logic differs by process, branch on `ctx.mode`:
 
 ```ts
 export default (): Plugin => ({
-  name: "freestyle-plugin-stats",
+  name: "cadence-plugin-stats",
   setup({ logger, mode }) {
     if (mode === "server") {
       // open a server-only resource
@@ -122,20 +122,20 @@ export default (): Plugin => ({
 ### Calling the server from a UI page
 
 A plugin's UI page is sandboxed and can't reach the server directly. Use the
-`window.freestyle` bridge: `api()` proxies a `fetch` through the host, and
+`window.cadence` bridge: `api()` proxies a `fetch` through the host, and
 `serverUrl` / `token` are provided for building your own client. For a fully
-typed client, install `@freestyle-voice/server` as a **dev dependency** (for its
+typed client, install `@cadence-voice/server` as a **dev dependency** (for its
 `AppType` only — it's a type-only import, nothing ships at runtime) and hand
 Hono's `hc` the bridge's `fetch`:
 
 ```ts
 import { hc } from "hono/client";
-import type { AppType } from "@freestyle-voice/server";
+import type { AppType } from "@cadence-voice/server";
 
-const client = hc<AppType>(window.freestyle.serverUrl, {
+const client = hc<AppType>(window.cadence.serverUrl, {
   // Route every request through the host bridge (handles auth + sandboxing).
   fetch: (input: RequestInfo | URL, init?: RequestInit) =>
-    window.freestyle.api(
+    window.cadence.api(
       typeof input === "string" ? input : input.toString(),
       init,
     ),
@@ -146,7 +146,7 @@ const res = await client.api.transcribe.$post({ form: { audio } });
 
 The SDK intentionally does **not** re-export `AppType`: the server already
 depends on the SDK, so re-exporting it would create a build cycle. Importing the
-type straight from `@freestyle-voice/server` keeps the dependency graph acyclic, and
+type straight from `@cadence-voice/server` keeps the dependency graph acyclic, and
 because it's a `import type` it adds no runtime weight to your plugin bundle.
 
 ### Presets and conditional plugins
@@ -227,7 +227,7 @@ the constant or the literal string):
 | `"none"` | `OutputMode.None` | Suppress delivery — nothing is pasted or copied |
 
 ```ts
-import { OutputMode } from "freestyle-voice";
+import { OutputMode } from "cadence-voice";
 
 beforeOutput: (input, output) => {
   if (/terminal/i.test(input.appContext?.appName ?? "")) {
@@ -241,20 +241,20 @@ voice-command plugins that consume the utterance instead of typing it.
 
 ## Events
 
-The read-only `event` hook receives a discriminated `FreestyleEvent`:
+The read-only `event` hook receives a discriminated `CadenceEvent`:
 
 ```ts
-import { FreestyleEventType } from "freestyle-voice";
+import { CadenceEventType } from "cadence-voice";
 
 event: ({ event }) => {
   switch (event.type) {
-    case FreestyleEventType.RecordingStarted:   break;
-    case FreestyleEventType.RecordingCommitted: break;
-    case FreestyleEventType.RecordingCancelled: break;
-    case FreestyleEventType.Transcribed:        /* event.text, event.durationInSeconds */ break;
-    case FreestyleEventType.Cleaned:            /* event.before, event.after */ break;
-    case FreestyleEventType.OutputDelivered:    /* event.text, event.mode (OutputMode.None = suppressed) */ break;
-    case FreestyleEventType.PipelineError:      /* event.stage, event.message */ break;
+    case CadenceEventType.RecordingStarted:   break;
+    case CadenceEventType.RecordingCommitted: break;
+    case CadenceEventType.RecordingCancelled: break;
+    case CadenceEventType.Transcribed:        /* event.text, event.durationInSeconds */ break;
+    case CadenceEventType.Cleaned:            /* event.before, event.after */ break;
+    case CadenceEventType.OutputDelivered:    /* event.text, event.mode (OutputMode.None = suppressed) */ break;
+    case CadenceEventType.PipelineError:      /* event.stage, event.message */ break;
   }
 };
 ```

@@ -1,19 +1,19 @@
-import { resolve } from "node:path";
+﻿import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
     alias: {
-      "@freestyle-voice/validations": resolve(
+      "@cadence-voice/validations": resolve(
         __dirname,
         "../../packages/validations/src/index.ts",
       ),
-      "freestyle-voice": resolve(__dirname, "../../packages/sdk/src/index.ts"),
-      "@freestyle-voice/utils": resolve(
+      "cadence-voice": resolve(__dirname, "../../packages/sdk/src/index.ts"),
+      "@cadence-voice/utils": resolve(
         __dirname,
         "../../packages/utils/src/index.ts",
       ),
-      "@freestyle-voice/stt": resolve(
+      "@cadence-voice/stt": resolve(
         __dirname,
         "../../packages/stt/src/index.ts",
       ),

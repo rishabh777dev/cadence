@@ -86,9 +86,26 @@ describe("getRewritePromptContext", () => {
   it("falls back to overall for unmatched contexts", () => {
     expect(
       getRewritePromptContext(
-        JSON.stringify({ app: "Cursor", title: "fix tests" }),
+        JSON.stringify({ app: "Calculator", title: "Budget" }),
       ).destination,
     ).toBe("overall");
+  });
+
+  it("routes developer editors and tools to developer destination", () => {
+    expect(
+      getRewritePromptContext(
+        JSON.stringify({ app: "Cursor", title: "fix tests" }),
+      ).destination,
+    ).toBe("developer");
+    expect(
+      getRewritePromptContext(JSON.stringify({ app: "Code", title: "auth.ts" }))
+        .destination,
+    ).toBe("developer");
+    expect(
+      getRewritePromptContext(
+        JSON.stringify({ url: "https://github.com/org/repo/pull/12" }),
+      ).destination,
+    ).toBe("developer");
   });
 
   it("routes an unmatched app into the group a user assigned it to", () => {

@@ -1,7 +1,7 @@
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { Hono } from "hono";
+import { fetchCloudUsage } from "../lib/cadence-cloud.js";
 import { formatError } from "../lib/format-error.js";
-import { fetchCloudUsage } from "../lib/freestyle-cloud.js";
 import { getSessionToken } from "../lib/sessions.js";
 
 const log = createAppLogger("usage");
@@ -9,7 +9,7 @@ const log = createAppLogger("usage");
 const usage = new Hono().get("/", async (c) => {
   const token = getSessionToken();
   if (!token) {
-    return c.json({ error: "Not signed in to Freestyle Cloud" }, 401);
+    return c.json({ error: "Not signed in to Cadence Cloud" }, 401);
   }
   try {
     const balance = await fetchCloudUsage(token);

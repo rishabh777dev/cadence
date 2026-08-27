@@ -4,7 +4,7 @@ import winston from "winston";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-const LOG_FILE = "freestyle.log";
+const LOG_FILE = "cadence.log";
 const MAX_SIZE = 2 * 1024 * 1024; // 2 MB per file
 const MAX_FILES = 5; // keep ~10 MB of history (size-rotated, tailable)
 
@@ -22,7 +22,8 @@ let fileTransport: winston.transport | null = null;
 
 // Initialised from the env var so the standalone server (and tests) can opt in
 // without code changes; the Electron app calls `enableFileLogging()` instead.
-let logDir: string | undefined = process.env.FREESTYLE_LOG_DIR || undefined;
+let logDir: string | undefined =
+  process.env.CADENCE_LOG_DIR || process.env.FREESTYLE_LOG_DIR || undefined;
 
 function getFileTransport(dir: string): winston.transport | null {
   if (fileTransport) return fileTransport;

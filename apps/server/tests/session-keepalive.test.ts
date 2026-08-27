@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+﻿import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   FreestyleCloudAuthError,
   SESSION_LIFETIME_MS,
-} from "../src/lib/freestyle-cloud.js";
+} from "../src/lib/cadence-cloud.js";
 import { renewSession } from "../src/lib/session-keepalive.js";
 import { clearSession, getSession, setSession } from "../src/lib/sessions.js";
 
-vi.mock("../src/lib/freestyle-cloud.js", async (importOriginal) => {
+vi.mock("../src/lib/cadence-cloud.js", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../src/lib/freestyle-cloud.js")>();
+    await importOriginal<typeof import("../src/lib/cadence-cloud.js")>();
   return {
     ...actual,
     fetchCloudUser: vi.fn(async () => ({
@@ -20,7 +20,7 @@ vi.mock("../src/lib/freestyle-cloud.js", async (importOriginal) => {
   };
 });
 
-const cloud = await import("../src/lib/freestyle-cloud.js");
+const cloud = await import("../src/lib/cadence-cloud.js");
 
 const HOST = "https://service.freestylevoice.com";
 const USER = { id: "user_1", email: "user@example.com" };

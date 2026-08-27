@@ -1,13 +1,13 @@
-import { sanitizeTranscriptText } from "@freestyle-voice/stt";
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { sanitizeTranscriptText } from "@cadence-voice/stt";
+import { createAppLogger } from "@cadence-voice/utils";
 import { Hono } from "hono";
-import { getDb } from "../lib/db.js";
-import { transformWithMagicEdit } from "../lib/editor/magic-edit.js";
-import { formatError } from "../lib/format-error.js";
 import {
   FREESTYLE_CLOUD_PROVIDER_ID,
   transcribeWithFreestyleCloud,
-} from "../lib/freestyle-cloud.js";
+} from "../lib/cadence-cloud.js";
+import { getDb } from "../lib/db.js";
+import { transformWithMagicEdit } from "../lib/editor/magic-edit.js";
+import { formatError } from "../lib/format-error.js";
 import { saveProcessedHistory } from "../lib/history-store.js";
 import { getLanguageSetting } from "../lib/language.js";
 import { resolveAppContextForCleanup } from "../lib/post-process.js";

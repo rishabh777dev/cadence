@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Microphone Activity Listener
  *
  * Monitors microphone usage across the system using native platform binaries.
@@ -10,7 +10,7 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { getNativeBinaryPath } from "./native-binary";
 
 const log = createAppLogger("mic-listener");

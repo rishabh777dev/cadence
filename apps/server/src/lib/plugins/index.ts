@@ -1,13 +1,13 @@
-import { createAppLogger } from "@freestyle-voice/utils";
-import type { Plugin, PluginConfig } from "freestyle-voice";
-import { PluginRegistry } from "freestyle-voice";
+﻿import { createAppLogger } from "@cadence-voice/utils";
+import type { Plugin, PluginConfig } from "cadence-voice";
+import { PluginRegistry } from "cadence-voice";
 import { loadServerPlugins } from "./loader.js";
 
 export {
   FreestyleEventType,
   PipelineStage,
   parseAppContext,
-} from "freestyle-voice";
+} from "cadence-voice";
 
 const log = createAppLogger("plugins");
 

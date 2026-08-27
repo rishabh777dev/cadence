@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Pause background media while dictating on Windows.
  *
  * Uses the Windows Global System Media Transport Controls WinRT API through
@@ -6,7 +6,7 @@
  */
 
 import { execFile, execFileSync } from "node:child_process";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { AUDIO_CONTROL_CMD_TIMEOUT_MS } from "./audio-control-constants";
 
 const log = createAppLogger("windows-media-playback");

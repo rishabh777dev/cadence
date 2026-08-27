@@ -1,4 +1,4 @@
-import { deviceTokenSchema } from "@freestyle-voice/validations";
+﻿import { deviceTokenSchema } from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import {
@@ -8,8 +8,8 @@ import {
   pollDeviceToken,
   requestDeviceCode,
   signOutCloud,
-} from "../lib/freestyle-cloud.js";
-import { applyFreestyleCloudDefaults } from "../lib/freestyle-cloud-defaults.js";
+} from "../lib/cadence-cloud.js";
+import { applyFreestyleCloudDefaults } from "../lib/cadence-cloud-defaults.js";
 import { capture, identifyCloudUser } from "../lib/posthog.js";
 import {
   getSession,

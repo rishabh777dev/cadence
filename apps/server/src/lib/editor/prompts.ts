@@ -1,18 +1,20 @@
-/** Transcript cleanup prompt assembly (intensity preset + dynamic blocks). */
+﻿/** Transcript cleanup prompt assembly (intensity preset + dynamic blocks). */
 
 import {
+  type CleanupDeveloperTone,
   type CleanupEmailTone,
   type CleanupIntensity,
   type CleanupOverallTone,
   type CleanupPersonalTone,
   type CleanupToneDestination,
   type CleanupWorkTone,
+  DEFAULT_CLEANUP_DEVELOPER_TONE,
   DEFAULT_CLEANUP_EMAIL_TONE,
   DEFAULT_CLEANUP_INTENSITY,
   DEFAULT_CLEANUP_OVERALL_TONE,
   DEFAULT_CLEANUP_PERSONAL_TONE,
   DEFAULT_CLEANUP_WORK_TONE,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { getCleanupPromptConfig } from "./prompt-config.js";
 
 function normalizeLanguageCode(language: string): string {
@@ -79,6 +81,8 @@ function buildDestinationToneBlock(options: {
   personalSurface?: "discord" | null;
   workTone?: CleanupWorkTone;
   emailTone?: CleanupEmailTone;
+  developerTone?: CleanupDeveloperTone;
+  developerTags?: string[];
   overallTone?: CleanupOverallTone;
 }): string {
   const config = getCleanupPromptConfig();
@@ -109,6 +113,15 @@ function buildDestinationToneBlock(options: {
       const tone = options.emailTone ?? DEFAULT_CLEANUP_EMAIL_TONE;
       if (tone === "off") return "";
       return priority + toneBlocks.email[tone] + toneBlocks.emailStructure;
+    }
+    case "developer": {
+      const tone = options.developerTone ?? DEFAULT_CLEANUP_DEVELOPER_TONE;
+      if (tone === "off") return "";
+      const tagsBlock =
+        options.developerTags && options.developerTags.length > 0
+          ? `\n\nActive Tech Stack & Domain Terms: ${options.developerTags.join(", ")}.\nAccurately recognize, spell, and format all terms, libraries, functions, and symbols related to this stack.`
+          : "";
+      return priority + toneBlocks.developer[tone] + tagsBlock;
     }
     default: {
       const tone = options.overallTone ?? DEFAULT_CLEANUP_OVERALL_TONE;
@@ -174,6 +187,8 @@ export function buildRewritePrompt(
     personalSurface?: "discord" | null;
     workTone?: CleanupWorkTone;
     emailTone?: CleanupEmailTone;
+    developerTone?: CleanupDeveloperTone;
+    developerTags?: string[];
     overallTone?: CleanupOverallTone;
   },
 ): { system: string; prompt: string } {
@@ -184,6 +199,8 @@ export function buildRewritePrompt(
     personalSurface: options?.personalSurface,
     workTone: options?.workTone,
     emailTone: options?.emailTone,
+    developerTone: options?.developerTone,
+    developerTags: options?.developerTags,
     overallTone: options?.overallTone,
   });
   const destinationUserPromptBlock = buildDestinationUserPromptBlock({

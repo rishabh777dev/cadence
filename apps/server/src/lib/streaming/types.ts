@@ -1,10 +1,10 @@
-import type {
+﻿import type {
   CleanupAppAssignment,
   CleanupEmailTone,
   CleanupOverallTone,
   CleanupPersonalTone,
   CleanupWorkTone,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import type { AsrVocabularyBias } from "../vocabulary-bias.js";
 
 export interface StreamCallbacks {

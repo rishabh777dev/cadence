@@ -1,5 +1,5 @@
+﻿import type { FreestyleBridge, HostActions } from "cadence-voice";
 import { contextBridge, ipcRenderer } from "electron";
-import type { FreestyleBridge, HostActions } from "freestyle-voice";
 
 /**
  * Preload injected into every plugin UI page (running in a sandboxed
@@ -66,4 +66,5 @@ const bridge: FreestyleBridge = {
   },
 };
 
+contextBridge.exposeInMainWorld("cadence", bridge);
 contextBridge.exposeInMainWorld("freestyle", bridge);

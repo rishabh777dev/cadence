@@ -1,38 +1,43 @@
 import {
   postProcess as cleanupWithModel,
   sanitizeTranscriptText,
-} from "@freestyle-voice/stt";
-import { createAppLogger } from "@freestyle-voice/utils";
+} from "@cadence-voice/stt";
+import { createAppLogger } from "@cadence-voice/utils";
 import type {
   CleanupAppAssignment,
+  CleanupDeveloperTone,
   CleanupEmailTone,
   CleanupIntensity,
   CleanupOverallTone,
   CleanupPersonalTone,
+  CleanupToneScope,
   CleanupWorkTone,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import {
   areAllCleanupTonesOff,
   parseCleanupAppAssignments,
+  parseCleanupDeveloperTags,
+  parseCleanupDeveloperTone,
   parseCleanupEmailTone,
   parseCleanupIntensity,
   parseCleanupOverallTone,
   parseCleanupPersonalTone,
+  parseCleanupToneScope,
   parseCleanupWorkTone,
-} from "@freestyle-voice/validations";
-import type { HookApi } from "freestyle-voice";
+} from "@cadence-voice/validations";
+import type { HookApi } from "cadence-voice";
 import { getModelCost, isCleanupModelSupported } from "../routes/models.js";
+import {
+  CADENCE_CLOUD_PROVIDER_ID,
+  CadenceCloudAuthError,
+  isTransientCloudError,
+  postProcessWithFreestyleCloud,
+} from "./cadence-cloud.js";
 import { getDb, readSetting } from "./db.js";
 import { applyDictionaryReplacements } from "./dictionary-replacements.js";
 import { ensureCleanupPromptConfigFresh } from "./editor/prompt-config.js";
 import { buildRewritePrompt } from "./editor/prompts.js";
 import { getRewritePromptContext } from "./editor/rewrite-context.js";
-import {
-  FREESTYLE_CLOUD_PROVIDER_ID,
-  FreestyleCloudAuthError,
-  isTransientCloudError,
-  postProcessWithFreestyleCloud,
-} from "./freestyle-cloud.js";
 import { getLlmProvider } from "./llm/registry.js";
 import {
   FreestyleEventType,
@@ -99,16 +104,44 @@ export function getCleanupPersonalTone(): CleanupPersonalTone {
   return parseCleanupPersonalTone(readSetting("cleanup_personal_tone"));
 }
 
+export function getCleanupPersonalToneScope(): CleanupToneScope {
+  return parseCleanupToneScope(readSetting("cleanup_personal_tone_scope"));
+}
+
 export function getCleanupWorkTone(): CleanupWorkTone {
   return parseCleanupWorkTone(readSetting("cleanup_work_tone"));
+}
+
+export function getCleanupWorkToneScope(): CleanupToneScope {
+  return parseCleanupToneScope(readSetting("cleanup_work_tone_scope"));
 }
 
 export function getCleanupEmailTone(): CleanupEmailTone {
   return parseCleanupEmailTone(readSetting("cleanup_email_tone"));
 }
 
+export function getCleanupEmailToneScope(): CleanupToneScope {
+  return parseCleanupToneScope(readSetting("cleanup_email_tone_scope"));
+}
+
 export function getCleanupOverallTone(): CleanupOverallTone {
   return parseCleanupOverallTone(readSetting("cleanup_overall_tone"));
+}
+
+export function getCleanupOverallToneScope(): CleanupToneScope {
+  return parseCleanupToneScope(readSetting("cleanup_overall_tone_scope"));
+}
+
+export function getCleanupDeveloperTone(): CleanupDeveloperTone {
+  return parseCleanupDeveloperTone(readSetting("cleanup_developer_tone"));
+}
+
+export function getCleanupDeveloperToneScope(): CleanupToneScope {
+  return parseCleanupToneScope(readSetting("cleanup_developer_tone_scope"));
+}
+
+export function getCleanupDeveloperTags(): string[] {
+  return parseCleanupDeveloperTags(readSetting("cleanup_developer_tags"));
 }
 
 export function getCleanupAppAssignments(): CleanupAppAssignment[] {
@@ -121,22 +154,48 @@ export interface EffectiveCleanupTones {
   personalTone: CleanupPersonalTone;
   workTone: CleanupWorkTone;
   emailTone: CleanupEmailTone;
+  developerTone: CleanupDeveloperTone;
+  developerTags: string[];
   overallTone: CleanupOverallTone;
+  personalToneScope: CleanupToneScope;
+  workToneScope: CleanupToneScope;
+  emailToneScope: CleanupToneScope;
+  developerToneScope: CleanupToneScope;
+  overallToneScope: CleanupToneScope;
 }
 
 /**
- * Resolve the cleanup strength + per-sector tones applied to a dictation.
- * Shared by every cleanup path (batch/local, Freestyle Cloud post-process,
- * and Freestyle Cloud streaming).
+ * Resolve the cleanup strength + per-sector tones applied to normal speech dictation.
+ * If a sector tone's scope is set to "magic_edit" only, dictation ignores that tone ("off").
  */
 export function getEffectiveCleanupTones(): EffectiveCleanupTones {
+  const personalTone = getCleanupPersonalTone();
+  const personalToneScope = getCleanupPersonalToneScope();
+  const workTone = getCleanupWorkTone();
+  const workToneScope = getCleanupWorkToneScope();
+  const emailTone = getCleanupEmailTone();
+  const emailToneScope = getCleanupEmailToneScope();
+  const developerTone = getCleanupDeveloperTone();
+  const developerToneScope = getCleanupDeveloperToneScope();
+  const developerTags = getCleanupDeveloperTags();
+  const overallTone = getCleanupOverallTone();
+  const overallToneScope = getCleanupOverallToneScope();
+
   return {
     intensity: getCleanupIntensity(),
     customPrompt: getCleanupCustomPrompt(),
-    personalTone: getCleanupPersonalTone(),
-    workTone: getCleanupWorkTone(),
-    emailTone: getCleanupEmailTone(),
-    overallTone: getCleanupOverallTone(),
+    // If scope is "magic_edit", dictation leaves it as "off"
+    personalTone: personalToneScope === "magic_edit" ? "off" : personalTone,
+    workTone: workToneScope === "magic_edit" ? "off" : workTone,
+    emailTone: emailToneScope === "magic_edit" ? "off" : emailTone,
+    developerTone: developerToneScope === "magic_edit" ? "off" : developerTone,
+    developerTags,
+    overallTone: overallToneScope === "magic_edit" ? "off" : overallTone,
+    personalToneScope,
+    workToneScope,
+    emailToneScope,
+    developerToneScope,
+    overallToneScope,
   };
 }
 
@@ -276,10 +335,12 @@ export async function postProcess(
       personalTone,
       workTone,
       emailTone,
+      developerTone,
+      developerTags,
       overallTone,
     } = getEffectiveCleanupTones();
 
-    if (llm.provider === FREESTYLE_CLOUD_PROVIDER_ID) {
+    if (llm.provider === CADENCE_CLOUD_PROVIDER_ID) {
       // Freestyle Cloud assembles its cleanup prompts server-side: it resolves
       // the destination from appContext + appAssignments and applies the tone
       // preferences we forward here, mirroring the local/direct-model path.
@@ -307,7 +368,7 @@ export async function postProcess(
         cleanedText = normalizedRawText;
       } else {
         const token = getSessionToken();
-        if (!token) throw new FreestyleCloudAuthError();
+        if (!token) throw new CadenceCloudAuthError();
         try {
           const result = await postProcessWithFreestyleCloud({
             token,
@@ -331,7 +392,7 @@ export async function postProcess(
           llmModel = llm.model_id;
           cleanedText = sanitizeTranscriptText(result.cleaned);
         } catch (err) {
-          if (err instanceof FreestyleCloudAuthError) throw err;
+          if (err instanceof CadenceCloudAuthError) throw err;
           // Transient network faults / upstream 5xx aren't app defects.
           if (!isTransientCloudError(err)) captureException(err);
           capture("post process failed", {
@@ -391,6 +452,8 @@ export async function postProcess(
               : null,
           workTone,
           emailTone,
+          developerTone,
+          developerTags,
           overallTone,
         });
         const pluginSystem =

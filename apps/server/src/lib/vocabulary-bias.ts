@@ -166,6 +166,7 @@ export function buildAsrVocabularyBias(
         : null;
     }
     case "soniox":
+    case "cadence-cloud":
     case "freestyle-cloud": {
       const sonioxTerms = capSonioxTerms(capped);
       if (sonioxTerms.length === 0) return null;

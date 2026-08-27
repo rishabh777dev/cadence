@@ -1,6 +1,6 @@
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { createAppLogger } from "@cadence-voice/utils";
 import { generateText } from "ai";
-import type { PluginLlm } from "freestyle-voice";
+import type { PluginLlm } from "cadence-voice";
 import { createChatModel, getDefaultModels } from "../providers.js";
 
 const log = createAppLogger("plugins");

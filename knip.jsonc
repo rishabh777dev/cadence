@@ -53,10 +53,10 @@
       "paths": {
         "@renderer/*": ["src/renderer/src/*"],
         "@shared/*": ["src/shared/*"],
-        "freestyle-voice": ["../../packages/sdk/src/index.ts"],
-        "@freestyle-voice/server": ["../server/src/index.ts"],
-        "@freestyle-voice/utils": ["../../packages/utils/src/index.ts"],
-        "@freestyle-voice/validations": [
+        "cadence-voice": ["../../packages/sdk/src/index.ts"],
+        "@cadence-voice/server": ["../server/src/index.ts"],
+        "@cadence-voice/utils": ["../../packages/utils/src/index.ts"],
+        "@cadence-voice/validations": [
           "../../packages/validations/src/index.ts"
         ]
       },

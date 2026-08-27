@@ -1,5 +1,5 @@
 export { type AppContextPayload, parseAppContext } from "./app-context.js";
-export type { FreestyleBridge, HostActions } from "./bridge.js";
+export type { CadenceBridge, FreestyleBridge, HostActions } from "./bridge.js";
 export type { PluginConfig } from "./config.js";
 export {
   type BaseLogger,
@@ -9,8 +9,12 @@ export {
   type PluginStorage,
   type SettingsReader,
 } from "./context.js";
-export type { AppContext, FreestyleEvent } from "./events.js";
-export { FreestyleEventType, PipelineStage } from "./events.js";
+export type { AppContext, CadenceEvent, FreestyleEvent } from "./events.js";
+export {
+  CadenceEventType,
+  FreestyleEventType,
+  PipelineStage,
+} from "./events.js";
 export {
   createHookApi,
   type HookApi,

@@ -1,4 +1,4 @@
-import type { AfterCleanupInput, Handler } from "./hooks.js";
+﻿import type { AfterCleanupInput, Handler } from "./hooks.js";
 
 /**
  * A pure-ish text transformer: given the current text (and context), return the
@@ -16,7 +16,7 @@ export type TextTransformer = (
  *
  * @example
  * ```ts
- * import { transform, type Plugin } from "freestyle-voice";
+ * import { transform, type Plugin } from "cadence-voice";
  *
  * export default function trim(): Plugin {
  *   return {

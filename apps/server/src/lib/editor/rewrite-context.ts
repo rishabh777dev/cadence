@@ -1,9 +1,9 @@
-import type {
+﻿import type {
   CleanupAppAssignment,
   CleanupToneDestination,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { parseAppContextPayload } from "./app-context.js";
-import { getCleanupPromptConfig } from "./prompt-config.js";
+import { CLEANUP_ROUTING, getCleanupPromptConfig } from "./prompt-config.js";
 
 export interface RewritePromptContext {
   destination: CleanupToneDestination;
@@ -67,12 +67,27 @@ export function getRewritePromptContext(
   }
 
   const routing = getCleanupPromptConfig().routing;
+  const developerAppNames =
+    routing?.developerAppNames ?? CLEANUP_ROUTING.developerAppNames;
+  const developerPatterns =
+    routing?.developerPatterns ?? CLEANUP_ROUTING.developerPatterns;
+  const emailAppNames = routing?.emailAppNames ?? CLEANUP_ROUTING.emailAppNames;
+  const emailPatterns = routing?.emailPatterns ?? CLEANUP_ROUTING.emailPatterns;
+  const workAppNames = routing?.workAppNames ?? CLEANUP_ROUTING.workAppNames;
+  const workPatterns = routing?.workPatterns ?? CLEANUP_ROUTING.workPatterns;
+  const personalAppNames =
+    routing?.personalAppNames ?? CLEANUP_ROUTING.personalAppNames;
+  const personalPatterns =
+    routing?.personalPatterns ?? CLEANUP_ROUTING.personalPatterns;
+  const discordPatterns =
+    routing?.discordPatterns ?? CLEANUP_ROUTING.discordPatterns;
+
   const ctx = parseAppContextPayload(rawContext);
   const appName = normalizeAppName(ctx?.app);
   const matchText = buildMatchContext(rawContext).toLowerCase();
   const personalSurface =
-    matchesAny(appName, routing.discordPatterns) ||
-    matchesAny(matchText, routing.discordPatterns)
+    matchesAny(appName, discordPatterns) ||
+    matchesAny(matchText, discordPatterns)
       ? "discord"
       : null;
 
@@ -86,25 +101,31 @@ export function getRewritePromptContext(
     };
   }
 
-  if (routing.emailAppNames.includes(appName)) {
+  if (developerAppNames.includes(appName)) {
+    return { destination: "developer", personalSurface: null };
+  }
+  if (emailAppNames.includes(appName)) {
     return { destination: "email", personalSurface: null };
   }
-  if (routing.workAppNames.includes(appName)) {
+  if (workAppNames.includes(appName)) {
     return { destination: "work", personalSurface: null };
   }
-  if (routing.personalAppNames.includes(appName)) {
+  if (personalAppNames.includes(appName)) {
     return { destination: "personal", personalSurface };
   }
 
   if (!matchText) return { destination: "overall", personalSurface: null };
 
-  if (matchesAny(matchText, routing.emailPatterns)) {
+  if (matchesAny(matchText, developerPatterns)) {
+    return { destination: "developer", personalSurface: null };
+  }
+  if (matchesAny(matchText, emailPatterns)) {
     return { destination: "email", personalSurface: null };
   }
-  if (matchesAny(matchText, routing.workPatterns)) {
+  if (matchesAny(matchText, workPatterns)) {
     return { destination: "work", personalSurface: null };
   }
-  if (matchesAny(matchText, routing.personalPatterns)) {
+  if (matchesAny(matchText, personalPatterns)) {
     return { destination: "personal", personalSurface };
   }
 

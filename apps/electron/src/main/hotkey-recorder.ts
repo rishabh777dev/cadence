@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Global hotkey rebinding — spawns a platform listener while the user picks a
  * new shortcut in Settings. Restores the recording IPC removed in #50.
  *
@@ -7,7 +7,7 @@
  */
 
 import { type ChildProcess, spawn } from "node:child_process";
-import { createAppLogger } from "@freestyle-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import type { WebContents } from "electron";
 import { getNativeBinaryPath } from "./native-binary";
 

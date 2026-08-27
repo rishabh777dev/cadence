@@ -41,13 +41,13 @@ if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
   });
 }
 
-  // Session Replay
-  replaysOnErrorSampleRate: 1.0,
-  replaysSessionSampleRate: 0.1,
+// Session Replay
+replaysOnErrorSampleRate: 1.0, replaysSessionSampleRate;
+: 0.1,
 
   // Logs
   enableLogs: true,
-});
+})
 
 SplashScreen.preventAutoHideAsync();
 

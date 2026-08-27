@@ -1,10 +1,10 @@
-import type { Plugin } from "freestyle-voice";
+﻿import type { Plugin } from "cadence-voice";
 import {
   createHookApi,
   FreestyleEventType,
   PluginRegistry,
   sortPlugins,
-} from "freestyle-voice";
+} from "cadence-voice";
 import { describe, expect, it, vi } from "vitest";
 
 describe("PluginRegistry", () => {

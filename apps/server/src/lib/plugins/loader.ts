@@ -1,15 +1,15 @@
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { createAppLogger } from "@cadence-voice/utils";
 import {
   parseDisabledPlugins,
   parsePluginsSetting,
   pluginEntryParts,
-} from "@freestyle-voice/validations";
-import type { HookFailure, Plugin, PluginEntry } from "freestyle-voice";
+} from "@cadence-voice/validations";
+import type { HookFailure, Plugin, PluginEntry } from "cadence-voice";
 import {
   defaultLocalPluginsDir,
   loadPlugins,
   type PluginRegistry,
-} from "freestyle-voice";
+} from "cadence-voice";
 import { readSetting } from "../db.js";
 import { captureException } from "../posthog.js";
 import { buildPluginContext } from "./context.js";

@@ -1,11 +1,14 @@
-import {
+﻿import {
   caCertPathSettingSchema,
   cleanupAppAssignmentsSchema,
   cleanupCustomPromptSchema,
+  cleanupDeveloperTagsSchema,
+  cleanupDeveloperToneSchema,
   cleanupEmailToneSchema,
   cleanupIntensitySchema,
   cleanupOverallToneSchema,
   cleanupPersonalToneSchema,
+  cleanupToneScopeSchema,
   cleanupWorkToneSchema,
   disabledPluginsSettingSchema,
   historyRetentionDaysSettingSchema,
@@ -15,7 +18,7 @@ import {
   pluginsSettingSchema,
   proxyUrlSettingSchema,
   settingValueSchema,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { getDb } from "../lib/db.js";
@@ -79,20 +82,61 @@ const settings = new Hono()
       if (!parsed.success) {
         return c.json({ error: "Invalid personal tone" }, 400);
       }
+    } else if (key === "cleanup_personal_tone_scope") {
+      const parsed = cleanupToneScopeSchema.safeParse(body.value);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid personal tone scope" }, 400);
+      }
     } else if (key === "cleanup_work_tone") {
       const parsed = cleanupWorkToneSchema.safeParse(body.value);
       if (!parsed.success) {
         return c.json({ error: "Invalid work tone" }, 400);
+      }
+    } else if (key === "cleanup_work_tone_scope") {
+      const parsed = cleanupToneScopeSchema.safeParse(body.value);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid work tone scope" }, 400);
       }
     } else if (key === "cleanup_email_tone") {
       const parsed = cleanupEmailToneSchema.safeParse(body.value);
       if (!parsed.success) {
         return c.json({ error: "Invalid email tone" }, 400);
       }
+    } else if (key === "cleanup_email_tone_scope") {
+      const parsed = cleanupToneScopeSchema.safeParse(body.value);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid email tone scope" }, 400);
+      }
     } else if (key === "cleanup_overall_tone") {
       const parsed = cleanupOverallToneSchema.safeParse(body.value);
       if (!parsed.success) {
         return c.json({ error: "Invalid overall tone" }, 400);
+      }
+    } else if (key === "cleanup_overall_tone_scope") {
+      const parsed = cleanupToneScopeSchema.safeParse(body.value);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid overall tone scope" }, 400);
+      }
+    } else if (key === "cleanup_developer_tone") {
+      const parsed = cleanupDeveloperToneSchema.safeParse(body.value);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid developer tone" }, 400);
+      }
+    } else if (key === "cleanup_developer_tone_scope") {
+      const parsed = cleanupToneScopeSchema.safeParse(body.value);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid developer tone scope" }, 400);
+      }
+    } else if (key === "cleanup_developer_tags") {
+      let parsedJson: unknown;
+      try {
+        parsedJson = JSON.parse(body.value);
+      } catch {
+        return c.json({ error: "Invalid developer tags setting" }, 400);
+      }
+      const parsed = cleanupDeveloperTagsSchema.safeParse(parsedJson);
+      if (!parsed.success) {
+        return c.json({ error: "Invalid developer tags setting" }, 400);
       }
     } else if (key === "cleanup_app_assignments") {
       let parsedJson: unknown;

@@ -1,4 +1,4 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -24,8 +24,8 @@ function writePackage(slug: string, pkg: Record<string, unknown>): string {
 
 describe("resolveLocalPackage", () => {
   it("resolves a scoped specifier to its slug folder + main entry", () => {
-    const pkgDir = writePackage(pluginSlug("@freestyle-voice/plugin-x"), {
-      name: "@freestyle-voice/plugin-x",
+    const pkgDir = writePackage(pluginSlug("@cadence-voice/plugin-x"), {
+      name: "@cadence-voice/plugin-x",
       main: "dist/index.js",
     });
     fs.mkdirSync(path.join(pkgDir, "dist"));
@@ -34,7 +34,7 @@ describe("resolveLocalPackage", () => {
       "export default 1;",
     );
 
-    expect(resolveLocalPackage(dir, "@freestyle-voice/plugin-x")).toBe(
+    expect(resolveLocalPackage(dir, "@cadence-voice/plugin-x")).toBe(
       path.join(pkgDir, "dist", "index.js"),
     );
   });
@@ -49,7 +49,7 @@ describe("resolveLocalPackage", () => {
   });
 
   it("returns null when the folder or entry is missing", () => {
-    expect(resolveLocalPackage(dir, "@freestyle-voice/absent")).toBeNull();
+    expect(resolveLocalPackage(dir, "@cadence-voice/absent")).toBeNull();
 
     // Folder + manifest exist, but the main file doesn't.
     writePackage(pluginSlug("plugin-z"), {

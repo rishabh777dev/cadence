@@ -34,7 +34,7 @@ export class ErrorBoundary extends Component<
 
   render(): ReactNode {
     if (!this.state.hasError) return this.props.children;
-    if (this.props.fallback) return this.props.fallback;
+    if (this.props.fallback !== undefined) return this.props.fallback;
 
     return (
       <div className="bg-background text-foreground flex h-screen w-screen flex-col items-center justify-center gap-5 p-10 text-center">

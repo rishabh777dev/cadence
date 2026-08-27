@@ -1397,7 +1397,7 @@ export default function AppPage(): React.JSX.Element {
 
   // ---- Hotkey handlers ----
   useEffect(() => {
-    const removeDown = window.api.onHotkeyDown(() => {
+    const removeDown = window.api?.onHotkeyDown?.(() => {
       // hidePill() clears pillActiveRef before React re-renders idle state.
       if (!pillActiveRef.current) {
         stateRef.current = "idle";
@@ -1422,7 +1422,7 @@ export default function AppPage(): React.JSX.Element {
         void startRecording(true);
       }
     });
-    const removeUp = window.api.onHotkeyUp(() => {
+    const removeUp = window.api?.onHotkeyUp?.(() => {
       if (!pillActiveRef.current) return;
       if (stateRef.current === "recording") {
         commitRecording();
@@ -1436,10 +1436,10 @@ export default function AppPage(): React.JSX.Element {
         hidePill();
       }
     });
-    const removeCancel = window.api.onPillCancel(() => {
+    const removeCancel = window.api?.onPillCancel?.(() => {
       if (stateRef.current !== "idle") cancelRecording();
     });
-    const removeMagicDown = window.api.onMagicEditDown((selectedText) => {
+    const removeMagicDown = window.api?.onMagicEditDown?.((selectedText) => {
       if (!pillActiveRef.current) {
         stateRef.current = "idle";
       }
@@ -1448,7 +1448,7 @@ export default function AppPage(): React.JSX.Element {
       setIsMagicEdit(true);
       void startRecording(false);
     });
-    const removeMagicUp = window.api.onMagicEditUp(() => {
+    const removeMagicUp = window.api?.onMagicEditUp?.(() => {
       if (!pillActiveRef.current) return;
       if (stateRef.current === "recording") {
         commitRecording();
@@ -1457,11 +1457,11 @@ export default function AppPage(): React.JSX.Element {
       }
     });
     return () => {
-      removeDown();
-      removeUp();
-      removeMagicDown();
-      removeMagicUp();
-      removeCancel();
+      removeDown?.();
+      removeUp?.();
+      removeMagicDown?.();
+      removeMagicUp?.();
+      removeCancel?.();
     };
   }, [
     startRecording,
@@ -1511,7 +1511,7 @@ export default function AppPage(): React.JSX.Element {
       viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
       style={
         {
-          display: "block",
+          display: showBars ? "block" : "none",
           flexShrink: 0,
           WebkitAppRegion: "no-drag",
           overflow: "visible",
@@ -1621,7 +1621,7 @@ export default function AppPage(): React.JSX.Element {
                   style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
                 />
               )}
-              {showBars && renderBars(barsSvgRef)}
+              {renderBars(barsSvgRef)}
             </>
           )}
 

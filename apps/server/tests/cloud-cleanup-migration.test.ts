@@ -95,7 +95,7 @@ describe("freestyle cloud cleanup migration (v14)", () => {
 
     const voiceRow = db
       .prepare(
-        "SELECT is_default FROM model_configs WHERE provider = 'freestyle-cloud' AND type = 'voice'",
+        "SELECT is_default FROM model_configs WHERE provider = 'cadence-cloud' AND type = 'voice'",
       )
       .get() as { is_default: number };
     expect(voiceRow.is_default).toBe(1);

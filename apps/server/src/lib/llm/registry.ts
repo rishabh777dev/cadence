@@ -1,11 +1,11 @@
-import type { GroqLanguageModelOptions } from "@ai-sdk/groq";
-import type { PostProcessParams } from "@freestyle-voice/stt";
+﻿import type { GroqLanguageModelOptions } from "@ai-sdk/groq";
+import type { PostProcessParams } from "@cadence-voice/stt";
 import type { LanguageModel } from "ai";
-import { getDb } from "../db.js";
 import {
   FREESTYLE_CLOUD_PROVIDER_ID,
   freestyleCloudUrl,
-} from "../freestyle-cloud.js";
+} from "../cadence-cloud.js";
+import { getDb } from "../db.js";
 
 /** The provider-options shape accepted by the cleanup `generateText` call. */
 type CleanupProviderOptions = NonNullable<PostProcessParams["providerOptions"]>;

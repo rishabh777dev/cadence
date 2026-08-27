@@ -1,13 +1,13 @@
-import { getDb } from "./db.js";
 import {
-  FREESTYLE_CLOUD_CLEANUP_MODEL_ID,
-  FREESTYLE_CLOUD_PROVIDER_ID,
-  FREESTYLE_CLOUD_TRANSCRIBE_MODEL_ID,
-} from "./freestyle-cloud.js";
+  CADENCE_CLOUD_CLEANUP_MODEL_ID,
+  CADENCE_CLOUD_PROVIDER_ID,
+  CADENCE_CLOUD_TRANSCRIBE_MODEL_ID,
+} from "./cadence-cloud.js";
+import { getDb } from "./db.js";
 
 const LOCAL_VOICE_PROVIDERS = ["local-mlx", "local-whisper"];
 
-export function applyFreestyleCloudDefaults(): void {
+export function applyCadenceCloudDefaults(): void {
   const db = getDb();
 
   const setDefault = (
@@ -22,30 +22,27 @@ export function applyFreestyleCloudDefaults(): void {
       `INSERT INTO model_configs (provider, model_id, model_name, type, is_default)
        VALUES (?, ?, ?, ?, 1)
        ON CONFLICT(provider, model_id, type) DO UPDATE SET is_default = 1`,
-    ).run(FREESTYLE_CLOUD_PROVIDER_ID, modelId, modelName, type);
+    ).run(CADENCE_CLOUD_PROVIDER_ID, modelId, modelName, type);
   };
 
-  setDefault(
-    FREESTYLE_CLOUD_TRANSCRIBE_MODEL_ID,
-    "Cadence Transcribe",
-    "voice",
-  );
-  setDefault(FREESTYLE_CLOUD_CLEANUP_MODEL_ID, "Cadence Cleanup", "llm");
+  setDefault(CADENCE_CLOUD_TRANSCRIBE_MODEL_ID, "Cadence Transcribe", "voice");
+  setDefault(CADENCE_CLOUD_CLEANUP_MODEL_ID, "Cadence Cleanup", "llm");
 
   db.prepare(
     `INSERT INTO settings (key, value, updated_at) VALUES ('llm_cleanup', 'true', datetime('now'))
      ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')`,
   ).run();
 }
+export const applyFreestyleCloudDefaults = applyCadenceCloudDefaults;
 
-export function revertFreestyleCloudDefaults(): void {
+export function revertCadenceCloudDefaults(): void {
   const db = getDb();
   const llm = db
     .prepare(
       "SELECT provider FROM model_configs WHERE type = 'llm' AND is_default = 1 LIMIT 1",
     )
     .get() as { provider: string } | undefined;
-  if (llm?.provider === FREESTYLE_CLOUD_PROVIDER_ID) {
+  if (llm?.provider === CADENCE_CLOUD_PROVIDER_ID) {
     db.prepare(
       `INSERT INTO settings (key, value, updated_at) VALUES ('llm_cleanup', 'false', datetime('now'))
        ON CONFLICT(key) DO UPDATE SET value = 'false', updated_at = datetime('now')`,
@@ -57,7 +54,7 @@ export function revertFreestyleCloudDefaults(): void {
       "SELECT provider FROM model_configs WHERE type = 'voice' AND is_default = 1 LIMIT 1",
     )
     .get() as { provider: string } | undefined;
-  if (!current || current.provider !== FREESTYLE_CLOUD_PROVIDER_ID) return;
+  if (!current || current.provider !== CADENCE_CLOUD_PROVIDER_ID) return;
 
   const placeholders = LOCAL_VOICE_PROVIDERS.map(() => "?").join(", ");
   const local = db
@@ -74,3 +71,4 @@ export function revertFreestyleCloudDefaults(): void {
     local.id,
   );
 }
+export const revertFreestyleCloudDefaults = revertCadenceCloudDefaults;

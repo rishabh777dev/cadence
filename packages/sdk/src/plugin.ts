@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from "hono";
+﻿import type { MiddlewareHandler } from "hono";
 import type { PluginContext } from "./context.js";
 import type { Hooks } from "./hooks.js";
 
@@ -25,7 +25,7 @@ export type PluginOptions = Record<string, unknown>;
  *
  * @example
  * ```ts
- * import type { Plugin } from "freestyle-voice";
+ * import type { Plugin } from "cadence-voice";
  *
  * export default function myPlugin(): Plugin {
  *   return {

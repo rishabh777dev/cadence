@@ -1,4 +1,4 @@
-{
+﻿{
   "expo": {
     "name": "Freestyle",
     "slug": "freestyle",
@@ -87,6 +87,6 @@
         }
       }
     },
-    "owner": "freestyle-voice"
+    "owner": "cadence-voice"
   }
 }

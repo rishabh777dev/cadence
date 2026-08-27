@@ -1,10 +1,25 @@
-import { sanitizeTranscriptText } from "@freestyle-voice/stt";
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { sanitizeTranscriptText } from "@cadence-voice/stt";
+import { createAppLogger } from "@cadence-voice/utils";
 import { generateText } from "ai";
+import { FREESTYLE_CLOUD_PROVIDER_ID } from "../cadence-cloud.js";
 import { getDb } from "../db.js";
-import { FREESTYLE_CLOUD_PROVIDER_ID } from "../freestyle-cloud.js";
+import {
+  getCleanupAppAssignments,
+  getCleanupDeveloperTags,
+  getCleanupDeveloperTone,
+  getCleanupDeveloperToneScope,
+  getCleanupEmailTone,
+  getCleanupEmailToneScope,
+  getCleanupOverallTone,
+  getCleanupOverallToneScope,
+  getCleanupPersonalTone,
+  getCleanupPersonalToneScope,
+  getCleanupWorkTone,
+  getCleanupWorkToneScope,
+} from "../post-process.js";
 import { createChatModel, getDefaultModels } from "../providers.js";
 import { parseAppContextPayload } from "./app-context.js";
+import { getRewritePromptContext } from "./rewrite-context.js";
 
 const log = createAppLogger("magic-edit");
 
@@ -28,6 +43,15 @@ export interface MagicEditResult {
   inputTokens: number;
   outputTokens: number;
   costUsd: number;
+}
+
+export function isReplyIntent(instruction: string): boolean {
+  const norm = instruction.toLowerCase().trim();
+  return (
+    /\b(reply|respond|response|answer|help me reply|what should i say|what to reply|how to reply|write a reply|draft a reply|tell (him|her|them)|say to (him|her|them)|say that|say yes|say no)\b/i.test(
+      norm,
+    ) || /^(reply|respond|answer)\b/i.test(norm)
+  );
 }
 
 export function buildMagicEditPrompt(params: {
@@ -60,6 +84,18 @@ export function buildMagicEditPrompt(params: {
   } else if (params.tone === "direct") {
     toneInstruction =
       "\nTone requirement: Deliver the message in direct, crisp, high-impact phrasing.";
+  } else if (params.tone === "commits") {
+    toneInstruction =
+      "\nTone requirement: Format in standard git conventional commit syntax (e.g. feat(scope): ..., fix: ...). Use imperative mood and remove conversational fluff.";
+  } else if (params.tone === "docstrings") {
+    toneInstruction =
+      "\nTone requirement: Write technical markdown/docstrings with inline backticks around all code symbols, functions, types, and file paths.";
+  } else if (params.tone === "terminal") {
+    toneInstruction =
+      "\nTone requirement: Extract and output exact, executable shell/CLI commands and flags without conversational words.";
+  } else if (params.tone === "technical") {
+    toneInstruction =
+      "\nTone requirement: High-density, concise engineer-to-engineer technical notes and bullet points.";
   }
 
   const customInstruction = params.customPrompt?.trim()
@@ -71,21 +107,21 @@ export function buildMagicEditPrompt(params: {
       ? "5. Output in the native script of the requested language unless specified otherwise."
       : "5. If Hindi or Hinglish is requested or spoken, output in natural, fluent Roman script (English alphabet). Never output in Devanagari or Arabic script unless explicitly instructed.";
 
-  // Mode B: Direct Content Generation / Ghostwriting / Prompt Creation (when no text was selected)
+  // Mode B: Direct Content Generation / Ghostwriting (when no text was selected)
   if (!params.selectedText.trim()) {
     const system = `You are an elite, highly capable AI ghostwriter, copywriter, and assistant.${appDesc}
 Your objective is to directly write, generate, or compose whatever the user requests in their spoken voice instruction.${toneInstruction}${customInstruction}
 
 CRITICAL RULES:
 1. GHOSTWRITER & FIRST-PERSON PERSPECTIVE:
-   - When the user asks to write, draft, or compose a letter, email, message, note, or reply to someone (e.g. "write a letter to my girlfriend", "email my manager", "send a message to my friend", "write a distress note"), ALWAYS write the message directly from the user's first-person perspective ("I" / "my") addressed directly to the recipient ("You" / "My love" / "Dear [Name]").
-   - NEVER talk about the recipient in the third person (e.g. NEVER say "tell you how amazing your friend is" or address an unrelated third party). Write the actual letter directly to the person.
+   - When the user asks to write, draft, or compose a letter, email, message, note, or reply to someone (e.g. "write a letter to my girlfriend", "email my manager", "send a message to my friend", "write a cold outreach"), ALWAYS write the message directly from the user's first-person perspective ("I" / "my") addressed directly to the recipient ("You" / "Dear [Name]").
+   - NEVER talk about the recipient in the third person. Write the actual message/letter directly.
    - Capture the authentic human emotion, warmth, urgency, depth, or professional tone requested by the user.
 2. DYNAMIC FULFILLMENT:
    - Fulfill ANY request dynamically like an expert assistant:
      - If the user asks for a prompt, generate the comprehensive prompt.
-     - If the user asks for a letter or email, write the full, expressive letter.
-     - If the user asks for code, generate the clean code.
+     - If the user asks for an email or letter, write the complete, expressive text with proper greetings and sign-offs.
+     - If the user asks for code, generate the clean, working code.
      - If the user asks for a summary, plan, or checklist, generate it directly.
 3. OUTPUT ONLY:
    - Output ONLY the final drafted text ready to be pasted directly into the user's active window/cursor.
@@ -104,7 +140,42 @@ Write the final generated text below:`;
     return { system, prompt };
   }
 
-  // Mode A: In-Place Text Rewrite / Edit (when text was selected)
+  // Mode C: Smart Contextual Reply (when text was selected and user wants to reply/respond)
+  if (isReplyIntent(params.instruction)) {
+    const system = `You are an elite AI communication partner and ghostwriter.${appDesc}
+The user has highlighted a message, email, or conversation they received (<incoming_message_to_reply_to>) and wants you to compose the perfect reply based on their instruction (<reply_instruction>).${toneInstruction}${customInstruction}
+
+CRITICAL RULES:
+1. FIRST-PERSON REPLY:
+   - Write the reply directly from the user's perspective ("I" / "we") addressing the sender ("you").
+   - Do NOT talk in the third person. Do NOT summarize or explain what you are doing.
+2. OPEN-ENDED & SPECIFIC INSTRUCTIONS:
+   - If the instruction is specific (e.g. "say yes and ask for Friday at 3pm"), fulfill all specified points cleanly.
+   - If the instruction is open-ended (e.g. "help me reply to this", "what should I say", "draft a response", "answer them"), analyze the incoming message, identify what the sender is asking for, and compose a warm, professional, engaging reply that advances the conversation and addresses their questions.
+3. PLATFORM & TONE MATCHING:
+   - Adapt formatting and layout to the active app (e.g. email with greetings/sign-offs, LinkedIn with polished professional networking tone, Slack with crisp friendly clarity, WhatsApp with conversational warmth).
+4. OUTPUT ONLY:
+   - Output ONLY the final drafted reply text ready to be pasted into the chat or email compose box.
+5. NO FILLER OR PREAMBLES:
+   - NEVER include conversational filler, preamble, notes, or quotes (e.g. NEVER output "Here is a reply:", "Sure, here's what you can say:"). Start immediately with the first line of the reply.
+6. NO FENCES:
+   - DO NOT wrap the output in markdown code blocks unless code formatting is explicitly requested.
+${scriptRule}`;
+
+    const prompt = `<reply_instruction>
+${params.instruction.trim()}
+</reply_instruction>
+
+<incoming_message_to_reply_to>
+${params.selectedText}
+</incoming_message_to_reply_to>
+
+Write the final reply below:`;
+
+    return { system, prompt };
+  }
+
+  // Mode A: In-Place Text Rewrite / Edit (when text was selected and user wants to edit/transform it)
   const system = `You are an elite, direct in-place text editor and copywriter.${appDesc}
 Your objective is to directly rewrite and transform the user's provided original text strictly following their requested instruction.${toneInstruction}${customInstruction}
 
@@ -324,6 +395,53 @@ export async function transformWithMagicEdit(
         .prepare("SELECT value FROM settings WHERE key = 'magic_edit_tone'")
         .get() as { value: string } | undefined;
       tone = row?.value;
+
+      // If no explicit magic_edit_tone override, dynamically inherit the active app's configured Tone setting
+      if (!tone && params.appContext) {
+        const { destination } = getRewritePromptContext(
+          params.appContext,
+          getCleanupAppAssignments(),
+        );
+
+        if (destination === "personal") {
+          const pTone = getCleanupPersonalTone();
+          const pScope = getCleanupPersonalToneScope();
+          if (pTone !== "off" && pScope !== "dictation") {
+            tone = pTone;
+          }
+        } else if (destination === "work") {
+          const wTone = getCleanupWorkTone();
+          const wScope = getCleanupWorkToneScope();
+          if (wTone !== "off" && wScope !== "dictation") {
+            tone = wTone;
+          }
+        } else if (destination === "email") {
+          const eTone = getCleanupEmailTone();
+          const eScope = getCleanupEmailToneScope();
+          if (eTone !== "off" && eScope !== "dictation") {
+            tone = eTone;
+          }
+        } else if (destination === "developer") {
+          const dTone = getCleanupDeveloperTone();
+          const dScope = getCleanupDeveloperToneScope();
+          if (dTone !== "off" && dScope !== "dictation") {
+            tone = dTone;
+          }
+          const tags = getCleanupDeveloperTags();
+          if (tags.length > 0) {
+            const tagsPrompt = `Active Tech Stack: ${tags.join(", ")}. Format code/identifiers accurately.`;
+            customPrompt = customPrompt
+              ? `${customPrompt}\n${tagsPrompt}`
+              : tagsPrompt;
+          }
+        } else if (destination === "overall") {
+          const oTone = getCleanupOverallTone();
+          const oScope = getCleanupOverallToneScope();
+          if (oTone !== "off" && oScope !== "dictation") {
+            tone = oTone;
+          }
+        }
+      }
     }
     if (!customPrompt) {
       const row = db

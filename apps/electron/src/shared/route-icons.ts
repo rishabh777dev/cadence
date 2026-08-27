@@ -9,7 +9,15 @@ export type BuiltinRouteIconId =
   | "gmail"
   | "outlook"
   | "apple_mail"
-  | "proton";
+  | "proton"
+  | "vscode"
+  | "terminal"
+  | "github"
+  | "cursor"
+  | "antigravity"
+  | "codex"
+  | "chatgpt"
+  | "claude";
 
 export function normalizeRouteIconHost(raw: string): string {
   return raw

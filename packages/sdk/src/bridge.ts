@@ -1,13 +1,13 @@
 /**
- * The bridge API injected into a plugin's UI page as `window.freestyle`. It is
+ * The bridge API injected into a plugin's UI page as `window.cadence`. It is
  * the only privileged surface available to plugin web content: a proxied way
  * to call the local server API, trigger a small set of host actions, observe
  * host events, and read theme tokens. Everything else in the page is sandboxed
  * web content with no Node or IPC access.
  */
-export interface FreestyleBridge {
+export interface CadenceBridge {
   /**
-   * Origin of the local Freestyle server the page is served from. Plugin UI is
+   * Origin of the local Cadence server the page is served from. Plugin UI is
    * served same-origin by the server now, so this is simply `location.origin`.
    */
   readonly serverUrl: string;
@@ -17,7 +17,7 @@ export interface FreestyleBridge {
    * from a plain `fetch`.
    *
    * @example
-   * const res = await window.freestyle.api("/api/transcribe", {
+   * const res = await window.cadence.api("/api/transcribe", {
    *   method: "POST",
    *   body: formData,
    * });
@@ -31,6 +31,8 @@ export interface FreestyleBridge {
   ): Promise<void>;
 }
 
+export type FreestyleBridge = CadenceBridge;
+
 /** Actions a plugin page can ask the host to perform. */
 export interface HostActions {
   /** Copy text to the clipboard. */
@@ -43,7 +45,9 @@ export interface HostActions {
 
 declare global {
   interface Window {
-    /** Present only inside a plugin UI page hosted by Freestyle. */
-    freestyle?: FreestyleBridge;
+    /** Present only inside a plugin UI page hosted by Cadence. */
+    cadence?: CadenceBridge;
+    /** Backward compatibility alias. */
+    freestyle?: CadenceBridge;
   }
 }

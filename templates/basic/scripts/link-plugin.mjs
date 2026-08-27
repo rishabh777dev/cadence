@@ -11,8 +11,8 @@
  * that symlinks back to the plugin's built output. This lets a dev copy coexist
  * alongside a production (npm-installed) copy of the same plugin:
  *
- *   <userData>/plugins/freestyle-voice-my-plugin/     <- npm install
- *   <userData>/plugins/freestyle-voice-my-plugin-dev/ <- this script
+ *   <userData>/plugins/freestyle-voice-profanity-filter/     ← npm install
+ *   <userData>/plugins/freestyle-voice-profanity-filter-dev/ ← this script
  *
  * On Windows, if symlinks fail (requires Developer Mode), the script falls back
  * to copying the built files instead.
@@ -22,7 +22,6 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,26 +47,49 @@ function pluginSlug(name) {
     .toLowerCase();
 }
 
-/** Resolve the Freestyle userData directory for the current OS. */
-function freestyleUserData() {
+/** Resolve the Cadence userData directory for the current OS. */
+function cadenceUserData() {
   const platform = os.platform();
   if (platform === "darwin") {
-    return path.join(
+    const cadencePath = path.join(
+      os.homedir(),
+      "Library",
+      "Application Support",
+      "Cadence",
+    );
+    const legacyPath = path.join(
       os.homedir(),
       "Library",
       "Application Support",
       "Freestyle",
     );
+    return fs.existsSync(cadencePath)
+      ? cadencePath
+      : fs.existsSync(legacyPath)
+        ? legacyPath
+        : cadencePath;
   }
   if (platform === "win32") {
     const appData = process.env.APPDATA;
     if (!appData) throw new Error("APPDATA environment variable is not set");
-    return path.join(appData, "Freestyle");
+    const cadencePath = path.join(appData, "Cadence");
+    const legacyPath = path.join(appData, "Freestyle");
+    return fs.existsSync(cadencePath)
+      ? cadencePath
+      : fs.existsSync(legacyPath)
+        ? legacyPath
+        : cadencePath;
   }
   // Linux / other: XDG_CONFIG_HOME or ~/.config
   const configHome =
     process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
-  return path.join(configHome, "Freestyle");
+  const cadencePath = path.join(configHome, "Cadence");
+  const legacyPath = path.join(configHome, "Freestyle");
+  return fs.existsSync(cadencePath)
+    ? cadencePath
+    : fs.existsSync(legacyPath)
+      ? legacyPath
+      : cadencePath;
 }
 
 /** Try to create a symlink; return false if it fails (e.g. Windows without dev mode). */
@@ -96,8 +118,8 @@ function copyDir(src, dest) {
 
 /**
  * Append `-dev` to a scoped or unscoped package name.
- * @freestyle-voice/profanity-filter -> @freestyle-voice/profanity-filter-dev
- * my-plugin -> my-plugin-dev
+ * @freestyle-voice/profanity-filter → @freestyle-voice/profanity-filter-dev
+ * my-plugin → my-plugin-dev
  */
 function devName(name) {
   return `${name}-dev`;
@@ -110,14 +132,13 @@ function devName(name) {
 const unlink = process.argv.includes("--unlink");
 const pm = detectPackageManager();
 
-// Resolve the plugin's root from this script's location (scripts/ is one level down).
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const pluginRoot = path.resolve(__dirname, "..");
+// Resolve the plugin's package.json from CWD (the plugin's root).
+const pluginRoot = process.cwd();
 const pkgJsonPath = path.join(pluginRoot, "package.json");
 
 if (!fs.existsSync(pkgJsonPath)) {
-  console.error("Error: no package.json found in the plugin root.");
+  console.error("Error: no package.json found in the current directory.");
+  console.error("Run this script from the plugin's root directory.");
   process.exit(1);
 }
 
@@ -129,21 +150,20 @@ if (!pluginName) {
   process.exit(1);
 }
 
-const slug = pluginSlug(pluginName);
-const devSlug = `${slug}-dev`;
-const pluginsDir = path.join(freestyleUserData(), "plugins");
+const pluginsDir = path.join(cadenceUserData(), "plugins");
+const devSlug = `${pluginSlug(pluginName)}-dev`;
 const devDir = path.join(pluginsDir, devSlug);
 
 // ---- Unlink ---------------------------------------------------------------
 
 if (unlink) {
   if (!fs.existsSync(devDir)) {
-    console.log(`Nothing to unlink — ${devDir} does not exist.`);
+    console.log(`No dev link found for ${pluginName} (${devSlug})`);
     process.exit(0);
   }
   fs.rmSync(devDir, { recursive: true, force: true });
   console.log(`Unlinked dev plugin: ${devSlug}`);
-  console.log("Restart Freestyle to apply changes.");
+  console.log("Restart Cadence to apply changes.");
   process.exit(0);
 }
 
@@ -185,13 +205,13 @@ fs.mkdirSync(devDir, { recursive: true });
 const devPkg = {
   name: devName(pluginName),
   version: pkg.version || "0.0.0-dev",
-  description: `[DEV] ${pkg.description || pluginName}`,
+  description: pkg.description || pluginName,
   main: pkg.main || "dist/index.js",
 };
 
-// Preserve the freestyle manifest (icon, pages) so the UI works.
-if (pkg.freestyle) {
-  devPkg.freestyle = pkg.freestyle;
+// Preserve the cadence manifest (icon, pages) so the UI works.
+if (pkg.cadence || pkg.freestyle) {
+  devPkg.cadence = pkg.cadence || pkg.freestyle;
 }
 
 fs.writeFileSync(
@@ -234,6 +254,6 @@ if (fs.lstatSync(distLink).isSymbolicLink()) {
 }
 console.log();
 console.log(
-  "Start (or restart) Freestyle to see the plugin in the Plugins page.",
+  "Start (or restart) Cadence to see the plugin in the Plugins page.",
 );
 console.log("Enable it from there to activate its hooks and middleware.");

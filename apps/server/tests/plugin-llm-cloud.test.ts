@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { FREESTYLE_CLOUD_PROVIDER_ID } from "../src/lib/freestyle-cloud.js";
-import { applyFreestyleCloudDefaults } from "../src/lib/freestyle-cloud-defaults.js";
+﻿import { afterEach, describe, expect, it } from "vitest";
+import { FREESTYLE_CLOUD_PROVIDER_ID } from "../src/lib/cadence-cloud.js";
+import { applyFreestyleCloudDefaults } from "../src/lib/cadence-cloud-defaults.js";
 import { getLlmProvider } from "../src/lib/llm/registry.js";
 import { buildPluginLlm } from "../src/lib/plugins/llm.js";
 import { createChatModel } from "../src/lib/providers.js";

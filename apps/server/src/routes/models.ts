@@ -1,14 +1,14 @@
-import { configureModelSchema } from "@freestyle-voice/validations";
+﻿import { configureModelSchema } from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { generateText } from "ai";
 import { Hono } from "hono";
-import { getDb } from "../lib/db.js";
-import { getLiveProviderModels } from "../lib/fetch-provider-models.js";
 import {
   FREESTYLE_CLOUD_CLEANUP_MODEL_ID,
   FREESTYLE_CLOUD_PROVIDER_ID,
   FREESTYLE_CLOUD_TRANSCRIBE_MODEL_ID,
-} from "../lib/freestyle-cloud.js";
+} from "../lib/cadence-cloud.js";
+import { getDb } from "../lib/db.js";
+import { getLiveProviderModels } from "../lib/fetch-provider-models.js";
 import {
   LEGACY_MLX_ASR_MODELS,
   MLX_ASR_MODELS,

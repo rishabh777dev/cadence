@@ -1,24 +1,24 @@
 {
-  "name": "create-freestyle-plugin",
+  "name": "create-cadence-plugin",
   "version": "0.0.2",
   "type": "module",
-  "description": "Create a Freestyle voice plugin from a starter template.",
+  "description": "Create a Cadence voice plugin from a starter template.",
   "license": "MIT",
-  "homepage": "https://github.com/freestyle-voice/freestyle/tree/main/packages/create-freestyle-plugin#readme",
+  "homepage": "https://github.com/rishabh777dev/cadence/tree/main/packages/create-cadence-plugin#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freestyle-voice/freestyle.git",
-    "directory": "packages/create-freestyle-plugin"
+    "url": "git+https://github.com/rishabh777dev/cadence.git",
+    "directory": "packages/create-cadence-plugin"
   },
   "keywords": [
-    "freestyle",
-    "freestyle-plugin",
+    "cadence",
+    "cadence-plugin",
     "create",
     "scaffold",
     "cli"
   ],
   "bin": {
-    "create-freestyle-plugin": "./dist/index.js"
+    "create-cadence-plugin": "./dist/index.js"
   },
   "files": [
     "dist"

@@ -1,13 +1,13 @@
-import { sanitizeTranscriptText } from "@freestyle-voice/stt";
-import { createAppLogger } from "@freestyle-voice/utils";
+﻿import { sanitizeTranscriptText } from "@cadence-voice/stt";
+import { createAppLogger } from "@cadence-voice/utils";
 import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
-import { getRewritePromptContext } from "../lib/editor/rewrite-context.js";
 import {
   FREESTYLE_CLOUD_PROVIDER_ID,
   FreestyleCloudAuthError,
   FreestyleCloudUsageError,
-} from "../lib/freestyle-cloud.js";
+} from "../lib/cadence-cloud.js";
+import { getRewritePromptContext } from "../lib/editor/rewrite-context.js";
 import { saveProcessedHistory, saveRawHistory } from "../lib/history-store.js";
 import { getLanguageSetting } from "../lib/language.js";
 import {

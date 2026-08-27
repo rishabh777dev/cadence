@@ -1,10 +1,10 @@
-import {
+﻿import {
   HISTORY_RETENTION_DAYS_MAX,
   type NetworkSettingsForm,
   networkSettingsFormSchema,
   parseRetentionDays,
   serverUrlSchema,
-} from "@freestyle-voice/validations";
+} from "@cadence-voice/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DragSpacer } from "@renderer/components/drag-spacer";
 import { KeyComboDisplay } from "@renderer/components/key-combo";

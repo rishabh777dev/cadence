@@ -1,4 +1,4 @@
----
+﻿---
 title: "Contributing"
 description: "Set up the project, understand the codebase, and open your first PR."
 ---
@@ -61,13 +61,13 @@ Thank you for considering contributing to Freestyle. Contributors mean a lot to 
 
 ```bash
 # macOS
-pnpm --filter @freestyle-voice/electron build:mac
+pnpm --filter @cadence-voice/electron build:mac
 
 # Windows
-pnpm --filter @freestyle-voice/electron build:win
+pnpm --filter @cadence-voice/electron build:win
 
 # Linux
-pnpm --filter @freestyle-voice/electron build:linux
+pnpm --filter @cadence-voice/electron build:linux
 ```
 
 ## Development workflow
@@ -75,7 +75,7 @@ pnpm --filter @freestyle-voice/electron build:linux
 1. Create a branch from `main`
 2. Make your changes
 3. Run `pnpm biome check .` to verify lint and formatting
-4. Run `pnpm --filter @freestyle-voice/electron typecheck:web` to verify types
+4. Run `pnpm --filter @cadence-voice/electron typecheck:web` to verify types
 5. Commit — husky runs Biome on staged files automatically
 6. Open a PR against `main`
 
