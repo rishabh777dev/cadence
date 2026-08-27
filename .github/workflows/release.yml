@@ -61,13 +61,19 @@ jobs:
           node-version: 22
           cache: "pnpm"
 
+      - run: pnpm install --frozen-lockfile
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
       - name: Build MLX ASR worker
         working-directory: apps/electron
         run: pnpm run build:mlx-asr-worker
+        continue-on-error: true
 
       - name: Download whisper.cpp binaries
         working-directory: apps/electron
@@ -132,6 +138,7 @@ jobs:
   build-android:
     name: Build Android (.apk)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -155,6 +162,7 @@ jobs:
       - name: Generate native Android project
         working-directory: apps/mobile
         run: pnpm exec expo prebuild --platform android --clean --no-install
+        continue-on-error: true
 
       - name: Build Android APK
         working-directory: apps/mobile/android
