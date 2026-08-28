@@ -1,4 +1,4 @@
-﻿import { sanitizeTranscriptText } from "@cadence-voice/stt";
+import { sanitizeTranscriptText } from "@cadence-voice/stt";
 import { createAppLogger } from "@cadence-voice/utils";
 import { Hono } from "hono";
 import {
@@ -53,6 +53,20 @@ import { WHISPER_PROVIDER_ID } from "../lib/whisper/constants.js";
 import { startInBackground } from "../lib/whisper/server.js";
 
 const log = createAppLogger("transcribe");
+
+export function isIgnorableSttError(err: unknown): boolean {
+  if (!err) return false;
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return (
+    msg.includes("too short") ||
+    msg.includes("minimum audio length") ||
+    msg.includes("no audio") ||
+    msg.includes("empty audio") ||
+    msg.includes("audio file is too short") ||
+    msg.includes("no speech") ||
+    msg.includes("silence")
+  );
+}
 
 function routeVoiceProviderCategory(
   providerId: string,
@@ -390,6 +404,10 @@ const transcribeRoute = new Hono().post("/", async (c) => {
             429,
           );
         }
+        if (isIgnorableSttError(err)) {
+          log.debug(`cloud STT skipped (short/empty audio): ${formatError(err)}`);
+          return suppressedResponse();
+        }
         log.error(
           `cloud transcribe failed (${voiceProvider}/${voiceModel}): ${formatError(err)}`,
         );
@@ -454,6 +472,10 @@ const transcribeRoute = new Hono().post("/", async (c) => {
         if (err instanceof CloudAuthError) {
           invalidateSession();
           return c.json({ error: "cloud_auth_required" }, 401);
+        }
+        if (isIgnorableSttError(err)) {
+          log.debug(`STT skipped (short/empty audio): ${formatError(err)}`);
+          return suppressedResponse();
         }
         log.error(
           `transcribe failed (${voiceProvider}/${voiceModel}): ${formatError(err)}`,

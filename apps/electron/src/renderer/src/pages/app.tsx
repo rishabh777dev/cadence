@@ -49,6 +49,24 @@ let _toneCtx: AudioContext | null = null;
  */
 let _beforeOutputHookPresent = false;
 
+function isIgnorableError(msg?: string): boolean {
+  if (!msg) return true;
+  const lower = msg.toLowerCase();
+  return (
+    lower.includes("too short") ||
+    lower.includes("minimum audio length") ||
+    lower.includes("no audio") ||
+    lower.includes("empty audio") ||
+    lower.includes("audio file is too short") ||
+    lower.includes("cancelled") ||
+    lower.includes("canceled") ||
+    lower.includes("aborted") ||
+    lower.includes("suppressed") ||
+    lower.includes("no speech") ||
+    lower.includes("silence")
+  );
+}
+
 async function refreshBeforeOutputHookPresence(): Promise<void> {
   try {
     const res = await getClient().api.output.hook.$get(
@@ -377,7 +395,7 @@ export default function AppPage(): React.JSX.Element {
           return;
         }
         const errMsg = results.find((r) => r.error)?.error;
-        if (errMsg) {
+        if (errMsg && !isIgnorableError(errMsg)) {
           hidePill();
           window.api.showErrorDialog("Transcription Failed", errMsg);
         } else if (wantsMicRef.current) {
@@ -660,14 +678,20 @@ export default function AppPage(): React.JSX.Element {
               void fallback.then(resolver);
               return;
             }
-            resolver({ raw: "", cleaned: "", error: msg });
+            resolver({
+              raw: "",
+              cleaned: "",
+              error: isIgnorableError(msg) ? undefined : msg,
+            });
             return;
           }
           if (!supportsSessionTransportRef.current) return;
           if (!pillActiveRef.current) return;
           if (wantsMicRef.current) return;
           hidePill();
-          window.api.showErrorDialog("Transcription Failed", msg);
+          if (msg && !isIgnorableError(msg)) {
+            window.api.showErrorDialog("Transcription Failed", msg);
+          }
         },
       });
     }
@@ -1043,7 +1067,7 @@ export default function AppPage(): React.JSX.Element {
     freqDataRef.current = null;
 
     const recordingDuration = Date.now() - startTimeRef.current;
-    if (recordingDuration < 250) {
+    if (recordingDuration < 300) {
       recorderRef.current.cancel();
       recorderRef.current.releaseStream();
       streamerRef.current?.cancel();
@@ -1114,17 +1138,19 @@ export default function AppPage(): React.JSX.Element {
           // Only show popup for critical setup errors (e.g. invalid API key), not for silent cancels or empty speech
           if (
             !errMsg.toLowerCase().includes("no spoken instruction") &&
-            !errMsg.toLowerCase().includes("no audio")
+            !errMsg.toLowerCase().includes("no audio") &&
+            !isIgnorableError(errMsg)
           ) {
             window.api.showErrorDialog("Magic Edit", errMsg);
           }
         }
       } catch (err) {
-        // Suppress benign abort/cancel errors
+        // Suppress benign abort/cancel/short audio errors
         const msg = err instanceof Error ? err.message : String(err);
         if (
           !msg.toLowerCase().includes("abort") &&
-          !msg.toLowerCase().includes("cancel")
+          !msg.toLowerCase().includes("cancel") &&
+          !isIgnorableError(msg)
         ) {
           window.api.showErrorDialog("Magic Edit", msg);
         }
@@ -1189,16 +1215,8 @@ export default function AppPage(): React.JSX.Element {
       return;
     }
 
-    if (!wavBlob) {
-      if (isTranscriptionIdle()) {
-        hidePill();
-        window.api.showErrorDialog(
-          "Recording Failed",
-          "No audio captured. Try recording again.",
-        );
-      } else {
-        resumeTranscribingOrHide();
-      }
+    if (!wavBlob || wavBlob.size <= 100 || recordingDuration < 300) {
+      resumeTranscribingOrHide();
       return;
     }
 
@@ -1254,6 +1272,13 @@ export default function AppPage(): React.JSX.Element {
             body?.detail ||
             body?.error ||
             `Transcription failed (${res.status})`;
+          if (isIgnorableError(msg)) {
+            return {
+              raw: "",
+              cleaned: "",
+              disposition: "suppressed" as const,
+            };
+          }
           return { raw: "", cleaned: "", error: msg };
         }
         const data = (await res.json()) as {
@@ -1271,6 +1296,13 @@ export default function AppPage(): React.JSX.Element {
       })
       .catch((err) => {
         const msg = err instanceof Error ? err.message : "Transcription failed";
+        if (isIgnorableError(msg)) {
+          return {
+            raw: "",
+            cleaned: "",
+            disposition: "suppressed" as const,
+          };
+        }
         const hint =
           msg.includes("fetch") || msg.includes("Failed")
             ? isRemoteServer()
