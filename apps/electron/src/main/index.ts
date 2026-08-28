@@ -1670,7 +1670,8 @@ async function checkForUpdatesFromMenu(): Promise<void> {
       });
     }
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "";
+    const msg = err instanceof Error ? err.message : String(err);
+    log.warn("Manual update check failed:", err);
     if (READ_ONLY_UPDATE_RE.test(msg) && isRunningFromReadOnlyLocation()) {
       showMoveToApplicationsDialog();
     } else {
@@ -1678,6 +1679,7 @@ async function checkForUpdatesFromMenu(): Promise<void> {
         type: "error",
         title: "Update Check Failed",
         message: "Unable to check for updates. Please try again later.",
+        detail: msg ? `Details: ${msg}` : undefined,
       });
     }
   }

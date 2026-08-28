@@ -45,7 +45,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: apps/electron/dist/*.exe
+          path: |
+            apps/electron/dist/*.exe
+            apps/electron/dist/*.blockmap
+            apps/electron/dist/latest*.yml
           if-no-files-found: error
 
   build-macos:
@@ -95,6 +98,8 @@ jobs:
           path: |
             apps/electron/dist/*.dmg
             apps/electron/dist/*.zip
+            apps/electron/dist/*.blockmap
+            apps/electron/dist/latest-mac.yml
           if-no-files-found: error
 
   build-linux:
@@ -133,6 +138,7 @@ jobs:
           path: |
             apps/electron/dist/*.AppImage
             apps/electron/dist/*.deb
+            apps/electron/dist/latest-linux.yml
           if-no-files-found: error
 
   build-android:
