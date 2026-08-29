@@ -15,7 +15,6 @@ win:
   executableName: Cadence
   icon: build/icon.ico
   forceCodeSigning: false
-  signAndEditExecutable: false
   extraResources:
     - from: "resources/whisper/win32-x64"
       to: "whisper/win32-x64"
@@ -26,6 +25,8 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
 mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
