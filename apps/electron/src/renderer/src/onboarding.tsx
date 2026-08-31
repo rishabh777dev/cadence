@@ -1,4 +1,4 @@
-﻿import { apiKeySchema } from "@cadence-voice/validations";
+import { apiKeySchema } from "@cadence-voice/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import markDark from "@renderer/assets/mark-dark.svg";
 import markLight from "@renderer/assets/mark-light.svg";
@@ -50,6 +50,7 @@ import {
   Check,
   ChevronLeft,
   ClipboardPaste,
+  Cloud,
   ExternalLink,
   HardDrive,
   Key,
@@ -57,6 +58,8 @@ import {
   Loader2,
   Mic,
   Shield,
+  ShieldCheck,
+  Sparkles,
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -1104,13 +1107,17 @@ function CloudStep({
         className="hidden h-14 w-14 dark:block"
       />
 
-      <h1 className="serif text-foreground mt-6 mb-0 text-[44px] leading-[1.0] font-normal tracking-[-0.025em]">
+      <h1 className="serif text-foreground mt-6 mb-0 text-[40px] leading-[1.05] font-normal tracking-[-0.025em]">
         <span>Welcome to </span>
         <span className="serif-italic text-primary">Cadence</span>
       </h1>
 
+      <p className="text-muted-foreground mt-3 max-w-[340px] text-[14px] leading-relaxed">
+        Fast, private voice dictation and AI text transformation.
+      </p>
+
       {user ? (
-        <div className="border-border bg-card mt-6 flex w-full items-center gap-3 rounded-[12px] border p-4 text-left">
+        <div className="border-border bg-card mt-6 flex w-full items-center gap-3 rounded-[12px] border p-4 text-left shadow-sm">
           {user.image ? (
             <img
               src={user.image}
@@ -1127,63 +1134,87 @@ function CloudStep({
               {user.name || user.email}
             </div>
             <div className="text-muted-foreground truncate text-[12px]">
-              {user.name ? `Signed in · ${user.email}` : "Signed in"}
+              {user.name
+                ? `Signed in · ${user.email}`
+                : "Signed in to Cadence Cloud"}
             </div>
           </div>
           <Check className="text-accent-foreground size-4 shrink-0" />
         </div>
       ) : (
-        <>
-          <p className="text-muted-foreground mt-3 max-w-[340px] text-[14px] leading-relaxed">
-            Do work 4X faster with voice. Sign in to get started.
-          </p>
+        <div className="mt-6 flex w-full flex-col gap-3">
+          {/* Primary Option: Free, Offline, Local AI */}
+          <button
+            type="button"
+            onClick={onSkip}
+            className="group flex w-full flex-col items-center justify-center rounded-[12px] bg-primary px-5 py-3.5 text-center text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-2 text-[14.5px] font-medium">
+              <Sparkles className="size-4 shrink-0 opacity-90" />
+              <span>Continue with On-Device AI</span>
+              <ArrowRight className="size-3.5 opacity-70 transition-transform group-hover:translate-x-0.5" />
+            </div>
+            <span className="mt-0.5 text-[11.5px] font-normal opacity-80">
+              100% Free · Private & Offline · No account needed
+            </span>
+          </button>
 
+          {/* Secondary Option: Cadence Cloud */}
           <button
             type="button"
             onClick={onSignIn}
             disabled={signingIn}
-            className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-[11px] bg-primary px-5 py-3 text-[14px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-60"
+            className="flex w-full items-center justify-between rounded-[11px] border border-border/80 bg-card/60 px-4 py-2.5 text-left text-[13px] font-medium text-foreground transition-colors hover:bg-muted/70 hover:border-border disabled:pointer-events-none disabled:opacity-60"
           >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Cloud className="size-4 shrink-0 text-muted-foreground" />
+              <div className="truncate">
+                <span>Sign in to Cadence Cloud</span>
+                <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground font-normal">
+                  Preview
+                </span>
+              </div>
+            </div>
             {signingIn ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Opening browser…
-              </>
+              <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
             ) : (
-              <>
-                Sign in via browser
-                <ExternalLink className="size-4 opacity-70" />
-              </>
+              <ExternalLink className="size-3.5 shrink-0 text-muted-foreground/60" />
             )}
           </button>
-        </>
+        </div>
       )}
 
       {error && (
-        <p className="text-destructive mt-3 text-[12px] leading-snug">
-          {error}
-        </p>
+        <div className="mt-4 w-full rounded-[10px] border border-border/60 bg-muted/40 p-3 text-left">
+          <div className="flex items-start gap-2">
+            <ShieldCheck className="size-4 shrink-0 text-primary mt-0.5" />
+            <div className="text-[12px] leading-snug">
+              <p className="font-medium text-foreground">
+                Cadence Cloud is in private preview
+              </p>
+              <p className="mt-0.5 text-muted-foreground">
+                {error.includes("private preview") ||
+                error.includes("unavailable")
+                  ? error
+                  : "You can continue immediately with fast on-device Whisper models without an account."}
+              </p>
+              <button
+                type="button"
+                onClick={onSkip}
+                className="mt-2 inline-flex items-center gap-1 font-medium text-primary hover:underline text-[12px]"
+              >
+                Continue locally now <ArrowRight className="size-3" />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {user ? (
+      {user && (
         <Button variant="ink" onClick={onContinue} className="mt-6 w-full">
           Continue
           <ArrowRight data-icon="inline-end" />
         </Button>
-      ) : (
-        // Skipping sign-in is a local-development affordance only — in
-        // production the browser sign-in is the sole way past this step.
-        import.meta.env.DEV && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onSkip}
-            disabled={signingIn}
-            className="text-muted-foreground mt-2 h-auto px-2 py-1 text-[12px]"
-          >
-            Skip for now (dev)
-          </Button>
-        )
       )}
     </div>
   );
@@ -1194,17 +1225,16 @@ function CloudTermsFooter(): React.JSX.Element {
     <p className="text-muted-foreground shrink-0 px-6 pb-8 text-center text-[11px] leading-[1.7]">
       By continuing, you agree to our{" "}
       <a
-        href="https://freestylevoice.com/terms"
+        href="https://cadencevoice.com/terms"
         target="_blank"
         rel="noreferrer"
         className="text-foreground underline underline-offset-2"
       >
         Terms of Service
-      </a>
-      <br />
+      </a>{" "}
       and{" "}
       <a
-        href="https://freestylevoice.com/privacy"
+        href="https://cadencevoice.com/privacy"
         target="_blank"
         rel="noreferrer"
         className="text-foreground underline underline-offset-2"

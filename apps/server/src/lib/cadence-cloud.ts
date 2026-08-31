@@ -253,13 +253,30 @@ function createCloudAuthClient() {
 }
 
 export async function requestDeviceCode(): Promise<DeviceCodeResult> {
-  const { data, error } = await createCloudAuthClient().device.code({
-    client_id: CLIENT_ID,
-  });
-  if (error || !data) {
-    throw new Error(authClientErrorMessage(error, "Could not start sign-in"));
+  try {
+    const { data, error } = await createCloudAuthClient().device.code({
+      client_id: CLIENT_ID,
+      fetchOptions: {
+        signal: AbortSignal.timeout(5000),
+      },
+    });
+    if (error || !data) {
+      throw new Error(
+        authClientErrorMessage(
+          error,
+          "Cadence Cloud is currently unavailable. You can continue with on-device AI.",
+        ),
+      );
+    }
+    return data;
+  } catch (err) {
+    if (err instanceof Error) {
+      throw err;
+    }
+    throw new Error(
+      "Cadence Cloud is currently in private preview. You can continue with on-device AI.",
+    );
   }
-  return data;
 }
 
 export async function pollDeviceToken(

@@ -90,9 +90,25 @@ function useCloudAuthState(): UseCloudAuth {
     setUserCode(null);
 
     const run = async (): Promise<CloudUser | null> => {
-      const codeRes = await getClient().api.auth.device.code.$post();
-      if (!codeRes.ok)
-        throw new Error(`Could not start sign-in (${codeRes.status})`);
+      let codeRes: Response;
+      try {
+        codeRes = await getClient().api.auth.device.code.$post();
+      } catch {
+        throw new Error(
+          "Cadence Cloud is currently in private preview. You can continue with on-device AI.",
+        );
+      }
+      if (!codeRes.ok) {
+        const body = (await codeRes.json().catch(() => null)) as {
+          error?: string;
+          message?: string;
+        } | null;
+        throw new Error(
+          body?.error ||
+            body?.message ||
+            "Cadence Cloud is currently in private preview. You can continue with on-device AI.",
+        );
+      }
       const code = await codeRes.json();
       setUserCode(code.user_code);
       await window.api.openExternal(
@@ -133,7 +149,21 @@ function useCloudAuthState(): UseCloudAuth {
     signInPromiseRef.current = run()
       .catch((err) => {
         if (!cancelledRef.current) {
-          setError(err instanceof Error ? err.message : "Sign-in failed");
+          const rawMsg = err instanceof Error ? err.message : "Sign-in failed";
+          if (
+            rawMsg.includes("500") ||
+            rawMsg.includes("Failed to fetch") ||
+            rawMsg.includes("network") ||
+            rawMsg.includes("start sign-in") ||
+            rawMsg.includes("ENOTFOUND") ||
+            rawMsg.includes("unavailable")
+          ) {
+            setError(
+              "Cadence Cloud is currently in private preview. You can continue with on-device AI.",
+            );
+          } else {
+            setError(rawMsg);
+          }
         }
         return null;
       })

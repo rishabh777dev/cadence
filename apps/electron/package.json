@@ -2,7 +2,7 @@
   "name": "@cadence-voice/electron",
   "productName": "Cadence",
   "desktopName": "cadence.desktop",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Voice-to-text that works everywhere",
   "author": "rishabh777dev",
   "homepage": "https://github.com/rishabh777dev/cadence",
