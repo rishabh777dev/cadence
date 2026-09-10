@@ -22,6 +22,7 @@ import {
   vocabularyTerms,
 } from "@/lib/entries";
 import { useHistory } from "@/lib/history";
+import { useModelConfig } from "@/lib/models";
 import { languageHint, tonesForCloud, useSettings } from "@/lib/settings";
 import {
   checkMicPermission,
@@ -74,6 +75,7 @@ export function useDictation({
   const { settings } = useSettings();
   const { vocabulary, dictionary } = useEntries();
   const { addHistory } = useHistory();
+  const { groqConfigured, openAiConfigured } = useModelConfig();
 
   const [micState, setMicState] = useState<MicState>("idle");
   const [partial, setPartial] = useState("");
@@ -160,9 +162,10 @@ export function useDictation({
     setMicState("recording");
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const isGuest = !signedIn;
+    const hasByokKey = groqConfigured || openAiConfigured;
+    const canTranscribe = signedIn || hasByokKey;
 
-    if (isGuest) {
+    if (!canTranscribe) {
       // Guest Demo Mode: Capture real microphone audio and animate live waveform
       setPartial("Listening to your voice…");
       try {
@@ -182,18 +185,9 @@ export function useDictation({
     }
 
     const headers = authHeaders();
-    if (!headers?.Cookie) {
-      recordingRef.current = false;
-      setMicState("idle");
-      Alert.alert(
-        "Sign-in required",
-        "Please sign in to Cadence Cloud to dictate.",
-      );
-      return;
-    }
 
     sessionRef.current = new CloudStreamSession({
-      cookie: headers.Cookie,
+      cookie: headers?.Cookie,
       language: languageHint(settings.language),
       vocabulary: vocabularyTerms(vocabulary),
       cleanup: {
@@ -270,6 +264,8 @@ export function useDictation({
     dictionary,
     teardownSession,
     signedIn,
+    groqConfigured,
+    openAiConfigured,
     level,
   ]);
 
@@ -286,7 +282,10 @@ export function useDictation({
       return;
     }
 
-    if (!signedIn) {
+    const hasByokKey = groqConfigured || openAiConfigured;
+    const canTranscribe = signedIn || hasByokKey;
+
+    if (!canTranscribe) {
       setMicState("finalizing");
       committedDurationRef.current = elapsed;
       setTimeout(() => {
@@ -310,7 +309,15 @@ export function useDictation({
     committedDurationRef.current = elapsed;
     sessionRef.current?.setAudioDurationMs(elapsed);
     sessionRef.current?.commit();
-  }, [recorder, teardownSession, level, signedIn, dictionary]);
+  }, [
+    recorder,
+    teardownSession,
+    level,
+    signedIn,
+    groqConfigured,
+    openAiConfigured,
+    dictionary,
+  ]);
   finishRecordingRef.current = finishRecording;
 
   const onPressIn = useCallback(() => {

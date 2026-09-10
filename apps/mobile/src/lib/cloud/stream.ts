@@ -56,7 +56,7 @@ export interface StreamCallbacks {
 
 export interface StreamSessionOptions {
   /** better-auth session cookie header value (from `authClient.getCookie()`). */
-  cookie: string;
+  cookie?: string;
   /** Normalized ISO-639-1 hint; omit for auto-detect. */
   language?: string;
   /** ASR recognition-bias terms (the user's vocabulary). */
@@ -92,12 +92,13 @@ export class CloudStreamSession {
     this.opts = opts;
 
     // React Native's WebSocket accepts a headers object as the third argument
-    // on both iOS and Android, which is how we pass the session cookie. The
-    // cloud resolves the user from the upgrade request headers.
+    // on both iOS and Android. If a session cookie is present, attach it.
     const WS = WebSocket as unknown as RNWebSocketCtor;
-    this.ws = new WS(cloudStreamWsUrl(), undefined, {
-      headers: { Cookie: opts.cookie },
-    });
+    const headers: Record<string, string> = {};
+    if (opts.cookie) {
+      headers.Cookie = opts.cookie;
+    }
+    this.ws = new WS(cloudStreamWsUrl(), undefined, { headers });
     this.ws.binaryType = "arraybuffer";
 
     this.ws.onopen = () => this.send(this.buildStartMessage());

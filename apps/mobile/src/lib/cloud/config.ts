@@ -6,7 +6,7 @@
 
 import Constants from "expo-constants";
 
-const DEFAULT_CLOUD_URL = "https://api.cadencevoice.com";
+const DEFAULT_CLOUD_URL = "https://cadence-server-5059.onrender.com";
 
 /**
  * Base URL for Cadence Cloud. Resolution order:

@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import {
   ChevronRight,
+  Cpu,
   Globe,
   Keyboard,
   Monitor,
@@ -51,6 +52,12 @@ export default function SettingsScreen() {
   return (
     <SettingsScreenScaffold title="Settings">
       <Card style={styles.navCard}>
+        <NavRow
+          icon={Cpu}
+          label="Models & Providers"
+          value="BYOK (Groq, OpenAI)"
+          onPress={() => router.push("/(app)/settings/models")}
+        />
         <NavRow
           icon={Globe}
           label="Language"
