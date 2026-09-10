@@ -2,9 +2,12 @@ import * as FileSystem from "expo-file-system/legacy";
 
 import type { CleanupIntensity } from "../cleanup-tones";
 
+import { executeDirectLLM } from "../direct-llm";
+import { getSecureApiKey, type ProviderId } from "../models";
+
 export interface DirectTranscribeOptions {
   fileUri: string;
-  provider: "groq" | "openai";
+  provider: "groq" | "openai" | "deepgram";
   apiKey: string;
   language?: string;
 }
@@ -16,11 +19,14 @@ export interface DirectTranscribeResult {
 
 export interface DirectCleanupOptions {
   text: string;
-  cleanupModel: "groq/llama-3.3-70b-versatile" | "openai/gpt-4o-mini" | "off";
+  cleanupModel?: string;
+  cleanupProvider?: ProviderId | "off";
+  apiKey?: string;
   groqKey?: string;
   openAiKey?: string;
   intensity?: CleanupIntensity | "light" | "standard" | "strong";
   customPrompt?: string;
+  customUrl?: string;
 }
 
 const CLEANUP_SYSTEM_PROMPT = `You are a precision voice dictation editor. Clean up the user's raw spoken transcript:
@@ -116,31 +122,71 @@ export async function directTranscribe({
 }
 
 /**
- * Perform LLM post-processing and text cleanup directly with Groq or OpenAI.
+ * Perform LLM post-processing and text cleanup directly with any configured provider.
  */
 export async function directCleanup({
   text,
   cleanupModel,
+  cleanupProvider,
+  apiKey,
   groqKey,
   openAiKey,
   intensity = "standard",
   customPrompt,
+  customUrl,
 }: DirectCleanupOptions): Promise<string> {
-  if (!text.trim() || cleanupModel === "off") {
+  if (!text.trim() || cleanupModel === "off" || cleanupProvider === "off") {
     return text;
   }
 
-  const isGroq = cleanupModel === "groq/llama-3.3-70b-versatile";
-  const apiKey = isGroq ? groqKey : openAiKey;
-  if (!apiKey?.trim()) {
-    return text; // Fallback to raw text if no key available
+  // Determine provider and model
+  let provider: ProviderId = "groq";
+  let model = cleanupModel || "llama-3.1-8b-instant";
+
+  if (cleanupProvider) {
+    provider = cleanupProvider;
+  } else if (cleanupModel) {
+    if (
+      cleanupModel.startsWith("openai/") ||
+      cleanupModel === "gpt-4o-mini" ||
+      cleanupModel === "gpt-4o"
+    ) {
+      provider = "openai";
+      model = cleanupModel.replace(/^openai\//, "");
+    } else if (cleanupModel.startsWith("anthropic/")) {
+      provider = "anthropic";
+      model = cleanupModel.replace(/^anthropic\//, "");
+    } else if (cleanupModel.startsWith("google/")) {
+      provider = "google";
+      model = cleanupModel.replace(/^google\//, "");
+    } else if (cleanupModel.startsWith("mistral/")) {
+      provider = "mistral";
+      model = cleanupModel.replace(/^mistral\//, "");
+    } else if (cleanupModel.startsWith("openrouter/")) {
+      provider = "openrouter";
+      model = cleanupModel.replace(/^openrouter\//, "");
+    } else if (cleanupModel.startsWith("groq/")) {
+      provider = "groq";
+      model = cleanupModel.replace(/^groq\//, "");
+    }
   }
 
-  const endpoint = isGroq
-    ? "https://api.groq.com/openai/v1/chat/completions"
-    : "https://api.openai.com/v1/chat/completions";
+  // Resolve API key
+  let resolvedKey = apiKey?.trim();
+  if (!resolvedKey) {
+    if (provider === "groq" && groqKey) resolvedKey = groqKey.trim();
+    else if (provider === "openai" && openAiKey) resolvedKey = openAiKey.trim();
+    else {
+      resolvedKey = (await getSecureApiKey(provider)) || undefined;
+    }
+  }
 
-  const model = isGroq ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+  if (!resolvedKey && provider !== "custom") {
+    console.log(
+      `[Direct Cleanup] No API key available for ${provider}. Returning raw transcript.`,
+    );
+    return text;
+  }
 
   let prompt = CLEANUP_SYSTEM_PROMPT;
   if (intensity === "low" || intensity === "light") {
@@ -156,40 +202,20 @@ export async function directCleanup({
   }
 
   try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey.trim()}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: prompt },
-          { role: "user", content: text },
-        ],
-        temperature: 0.1,
-      }),
+    const polished = await executeDirectLLM({
+      provider,
+      model,
+      systemPrompt: prompt,
+      messages: [{ role: "user", content: text }],
+      apiKey: resolvedKey,
+      customUrl,
+      temperature: 0.1,
     });
 
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "");
-      console.error(
-        `[Direct Cleanup Error] Status ${response.status}:`,
-        errText,
-      );
-      return text;
-    }
-
-    const data = (await response.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-
-    const polished = data.choices?.[0]?.message?.content?.trim();
     return polished || text;
   } catch (cleanErr) {
     console.error(
-      "[Direct Cleanup Error] Failed to contact AI cleanup endpoint:",
+      `[Direct Cleanup Error] Failed to polish transcript with ${provider}/${model}:`,
       cleanErr,
     );
     return text;

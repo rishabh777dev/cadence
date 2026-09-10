@@ -4,19 +4,22 @@ import { useRouter } from "expo-router";
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   Copy,
   FileText,
   Mic,
   RotateCcw,
   Sliders,
   Sparkles,
+  X,
   Zap,
 } from "lucide-react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -30,8 +33,16 @@ import { HeaderActions } from "@/components/header-actions";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Fonts, Radius, Spacing } from "@/constants/theme";
-import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
+import { directTranscribe } from "@/lib/audio/direct-transcribe";
+import { useRecorder } from "@/lib/audio/recorder";
+import { executeDirectLLM } from "@/lib/direct-llm";
+import {
+  ALL_PROVIDERS,
+  getSecureApiKey,
+  type ProviderId,
+  useModelConfig,
+} from "@/lib/models";
 
 const SAMPLE_TEXTS = {
   email:
@@ -50,53 +61,201 @@ const PROMPT_CHIPS = [
 export default function MagicEditScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { signedIn } = useAuth();
+
+  const {
+    provider: defaultVoiceProvider,
+    magicEditLlmProvider,
+    magicEditLlmModel,
+    cleanupProvider,
+    cleanupModel,
+    discoveredModels,
+    customServerUrl,
+    setMagicEditLlmProvider,
+    setMagicEditLlmModel,
+  } = useModelConfig();
 
   const [sourceText, setSourceText] = useState(SAMPLE_TEXTS.email);
   const [instruction, setInstruction] = useState("");
   const [resultText, setResultText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recordingVoice, setRecordingVoice] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
+  const [showModelPicker, setShowModelPicker] = useState(false);
+  const [lastMeta, setLastMeta] = useState<{
+    provider: string;
+    model: string;
+  } | null>(null);
 
-  // Settings
-  const [selectedModel, _setSelectedModel] = useState("Auto (Cadence Cloud)");
+  // Resolved active provider & model
+  const resolvedProvider: ProviderId = useMemo(() => {
+    if (magicEditLlmProvider && magicEditLlmProvider !== "auto") {
+      return magicEditLlmProvider as ProviderId;
+    }
+    if (cleanupProvider && cleanupProvider !== "off") {
+      return cleanupProvider as ProviderId;
+    }
+    return "groq";
+  }, [magicEditLlmProvider, cleanupProvider]);
+
+  const resolvedModel: string = useMemo(() => {
+    if (magicEditLlmModel) return magicEditLlmModel;
+    if (cleanupModel && cleanupModel !== "off") return cleanupModel;
+    return "llama-3.1-8b-instant";
+  }, [magicEditLlmModel, cleanupModel]);
+
+  const providerMeta = useMemo(
+    () =>
+      ALL_PROVIDERS.find((p) => p.id === resolvedProvider) || ALL_PROVIDERS[0],
+    [resolvedProvider],
+  );
+
+  const recorder = useRecorder({});
+
+  // Spoken voice instruction recording
+  const handleToggleVoiceInstruction = async () => {
+    if (recordingVoice) {
+      // Stop recording and transcribe
+      setRecordingVoice(false);
+      try {
+        const fileUri = await recorder.stop();
+        if (!fileUri) {
+          Alert.alert("Notice", "No audio detected.");
+          return;
+        }
+
+        const voiceProv = defaultVoiceProvider === "openai" ? "openai" : "groq";
+        const key = await getSecureApiKey(voiceProv);
+
+        if (!key) {
+          Alert.alert(
+            "API Key Required",
+            `Please configure your ${voiceProv.toUpperCase()} key in Settings > Models to transcribe voice instructions.`,
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Open Settings",
+                onPress: () => router.push("/settings/models"),
+              },
+            ],
+          );
+          return;
+        }
+
+        const res = await directTranscribe({
+          fileUri,
+          provider: voiceProv,
+          apiKey: key,
+        });
+
+        if (res.text?.trim()) {
+          setInstruction(res.text.trim());
+          void Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Success,
+          );
+        }
+      } catch (err) {
+        Alert.alert(
+          "Voice Error",
+          `Could not transcribe voice instruction: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    } else {
+      // Start recording
+      try {
+        await recorder.start();
+        setRecordingVoice(true);
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch {
+        Alert.alert(
+          "Permission",
+          "Microphone access is required for voice instructions.",
+        );
+      }
+    }
+  };
 
   const handleRunMagicEdit = useCallback(async () => {
-    if (!sourceText.trim()) {
-      Alert.alert("Empty text", "Please enter or paste text to edit.");
-      return;
-    }
-
     const effectiveInstruction =
-      instruction.trim() || "Polish tone and fix grammar";
+      instruction.trim() ||
+      "Polish grammar and make the text clear and professional";
+
     setLoading(true);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Simulate / execute transformation
-    setTimeout(() => {
-      let transformed = "";
-      const lower = effectiveInstruction.toLowerCase();
-
-      if (lower.includes("concise") || lower.includes("short")) {
-        transformed =
-          "Bob — Following up on yesterday: deployment is moved to Friday due to failing staging tests. Let me know if that works or if you'd like a quick debug call.";
-      } else if (lower.includes("bullet") || lower.includes("list")) {
-        transformed =
-          "• Deployment delayed to Friday due to failing staging tests.\n• Follow-up needed: confirm schedule or join quick call to debug.";
-      } else if (lower.includes("professional") || lower.includes("formal")) {
-        transformed =
-          "Hi Bob,\n\nFollowing up on our discussion yesterday, we will need to reschedule the deployment to Friday to resolve staging test failures. Please let me know if this aligns with your schedule, or if you would like to connect on a brief call to debug.\n\nBest regards,";
-      } else {
-        transformed =
-          "Hi Bob, following up on our chat from yesterday. We need to postpone deployment to Friday due to failing tests on staging. Let me know if that schedule works for you, or if we should hop on a call to debug.";
+    try {
+      const apiKey = await getSecureApiKey(resolvedProvider);
+      if (!apiKey && resolvedProvider !== "custom") {
+        Alert.alert(
+          "Missing Key",
+          `Please configure your ${resolvedProvider.toUpperCase()} API key in Settings > Models to use Magic Edit.`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Configure Key",
+              onPress: () => router.push("/settings/models"),
+            },
+          ],
+        );
+        setLoading(false);
+        return;
       }
 
+      let systemPrompt = "";
+      let userPrompt = "";
+
+      if (sourceText.trim()) {
+        systemPrompt = `You are an elite, highly capable AI editor and writing assistant.
+Your goal is to rewrite, refine, or transform the user's selected text according to their instruction: "${effectiveInstruction}".
+CRITICAL RULES:
+1. Output ONLY the final transformed text ready to paste directly.
+2. Do NOT include conversational commentary (e.g. "Here is the revised text:").
+3. Preserve key facts, names, and intent unless explicitly told to alter them.`;
+
+        userPrompt = `<text_to_transform>\n${sourceText.trim()}\n</text_to_transform>\n\nInstruction: ${effectiveInstruction}`;
+      } else {
+        systemPrompt = `You are an elite AI ghostwriter and assistant.
+Generate the text requested by the user: "${effectiveInstruction}".
+CRITICAL RULES:
+1. Write directly from the user's first-person perspective if writing an email, letter, or message.
+2. Output ONLY the completed text without conversational preambles.`;
+
+        userPrompt = effectiveInstruction;
+      }
+
+      const transformed = await executeDirectLLM({
+        provider: resolvedProvider,
+        model: resolvedModel,
+        systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
+        apiKey,
+        customUrl: customServerUrl,
+        temperature: 0.2,
+      });
+
       setResultText(transformed);
-      setLoading(false);
+      setLastMeta({
+        provider: resolvedProvider.toUpperCase(),
+        model: resolvedModel,
+      });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 900);
-  }, [sourceText, instruction]);
+    } catch (err) {
+      console.error("[Magic Edit Error]", err);
+      Alert.alert(
+        "Magic Edit Failed",
+        err instanceof Error ? err.message : String(err),
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    sourceText,
+    instruction,
+    resolvedProvider,
+    resolvedModel,
+    customServerUrl,
+    router,
+  ]);
 
   const copyResult = useCallback(async () => {
     if (!resultText) return;
@@ -118,6 +277,28 @@ export default function MagicEditScreen() {
             </ThemedText>
           </View>
           <HeaderActions />
+        </View>
+
+        {/* Model Selector Pill */}
+        <View style={styles.modelPillContainer}>
+          <Pressable
+            onPress={() => setShowModelPicker(true)}
+            style={[
+              styles.modelPill,
+              {
+                backgroundColor: theme.secondary,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <ThemedText style={styles.modelPillIcon}>
+              {providerMeta.icon}
+            </ThemedText>
+            <ThemedText style={styles.modelPillText} numberOfLines={1}>
+              {providerMeta.name}: {resolvedModel}
+            </ThemedText>
+            <ChevronDown size={14} color={theme.mutedForeground} />
+          </Pressable>
         </View>
 
         <KeyboardAvoidingView
@@ -195,7 +376,7 @@ export default function MagicEditScreen() {
               <TextInput
                 value={sourceText}
                 onChangeText={setSourceText}
-                placeholder="Paste or type text here to transform…"
+                placeholder="Paste or type text here to transform (or leave empty to ghostwrite)…"
                 placeholderTextColor={theme.mutedForeground}
                 multiline
                 numberOfLines={4}
@@ -276,7 +457,9 @@ export default function MagicEditScreen() {
                 style={[
                   styles.instructionBar,
                   {
-                    borderColor: theme.border,
+                    borderColor: recordingVoice
+                      ? theme.destructive
+                      : theme.border,
                     backgroundColor: theme.secondary,
                   },
                 ]}
@@ -284,30 +467,24 @@ export default function MagicEditScreen() {
                 <TextInput
                   value={instruction}
                   onChangeText={setInstruction}
-                  placeholder="e.g. 'Make it punchy and polite'…"
+                  placeholder={
+                    recordingVoice
+                      ? "Listening to voice instruction…"
+                      : "e.g. 'Make it punchy and polite'…"
+                  }
                   placeholderTextColor={theme.mutedForeground}
                   style={[styles.instructionInput, { color: theme.foreground }]}
                 />
                 <Pressable
-                  onPress={() => {
-                    if (!signedIn) {
-                      Alert.alert(
-                        "Sign in for Voice",
-                        "Spoken instructions use Cadence Cloud transcription. Sign in to dictate.",
-                        [
-                          { text: "Cancel", style: "cancel" },
-                          {
-                            text: "Sign In",
-                            onPress: () => router.push("/sign-in"),
-                          },
-                        ],
-                      );
-                      return;
-                    }
-                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setInstruction("Make this sound professional and concise");
-                  }}
-                  style={[styles.micBtn, { backgroundColor: theme.primary }]}
+                  onPress={handleToggleVoiceInstruction}
+                  style={[
+                    styles.micBtn,
+                    {
+                      backgroundColor: recordingVoice
+                        ? theme.destructive
+                        : theme.primary,
+                    },
+                  ]}
                 >
                   <Mic size={15} color={theme.primaryForeground} />
                 </Pressable>
@@ -400,6 +577,12 @@ export default function MagicEditScreen() {
                   </ThemedText>
                 )}
 
+                {lastMeta ? (
+                  <ThemedText style={styles.resultMeta}>
+                    Powered by {lastMeta.provider} · {lastMeta.model}
+                  </ThemedText>
+                ) : null}
+
                 <View style={styles.resultActions}>
                   <Pressable
                     onPress={copyResult}
@@ -426,8 +609,9 @@ export default function MagicEditScreen() {
               </View>
             ) : null}
 
-            {/* Model & Tone Setting Summary */}
-            <View
+            {/* Model & Settings Footer */}
+            <Pressable
+              onPress={() => router.push("/settings/models")}
               style={[
                 styles.settingsCard,
                 {
@@ -442,212 +626,386 @@ export default function MagicEditScreen() {
                   themeColor="mutedForeground"
                   style={styles.settingsLabel}
                 >
-                  Engine: {selectedModel} · App-Aware Tone
+                  Configure Providers & Discover Models in Settings
                 </ThemedText>
               </View>
-            </View>
+            </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {/* Model Selection Modal */}
+        <Modal
+          visible={showModelPicker}
+          animationType="slide"
+          transparent
+          onRequestClose={() => setShowModelPicker(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View
+              style={[
+                styles.modalContent,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <View style={styles.modalHeader}>
+                <ThemedText style={styles.modalTitle}>
+                  Select Magic Edit Model
+                </ThemedText>
+                <Pressable
+                  onPress={() => setShowModelPicker(false)}
+                  hitSlop={8}
+                  style={styles.modalCloseBtn}
+                >
+                  <X size={20} color={theme.foreground} />
+                </Pressable>
+              </View>
+
+              <ScrollView style={styles.modalScroll}>
+                {ALL_PROVIDERS.filter((p) => p.hasLlm).map((p) => {
+                  const models = (discoveredModels[p.id] || []).filter(
+                    (m) => m.type === "llm",
+                  );
+                  return (
+                    <View key={p.id} style={styles.modalProviderGroup}>
+                      <ThemedText style={styles.modalProviderTitle}>
+                        {p.icon} {p.name}
+                      </ThemedText>
+                      <View style={styles.modalModelList}>
+                        {models.map((m) => {
+                          const isCurrent =
+                            resolvedProvider === p.id && resolvedModel === m.id;
+                          return (
+                            <Pressable
+                              key={m.id}
+                              onPress={() => {
+                                setMagicEditLlmProvider(p.id);
+                                setMagicEditLlmModel(m.id);
+                                setShowModelPicker(false);
+                                void Haptics.impactAsync(
+                                  Haptics.ImpactFeedbackStyle.Light,
+                                );
+                              }}
+                              style={[
+                                styles.modalModelItem,
+                                {
+                                  backgroundColor: isCurrent
+                                    ? theme.accent
+                                    : theme.secondary,
+                                  borderColor: isCurrent
+                                    ? theme.primary
+                                    : theme.border,
+                                },
+                              ]}
+                            >
+                              <ThemedText
+                                style={[
+                                  styles.modalModelName,
+                                  {
+                                    color: isCurrent
+                                      ? theme.primary
+                                      : theme.foreground,
+                                    fontWeight: isCurrent ? "700" : "500",
+                                  },
+                                ]}
+                              >
+                                {m.name || m.id}
+                              </ThemedText>
+                              {isCurrent ? (
+                                <Check size={14} color={theme.primary} />
+                              ) : null}
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: { flex: 1 },
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.two,
-    paddingBottom: Spacing.two,
+    paddingVertical: Spacing.two,
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
   },
-  title: { fontSize: 24, lineHeight: 28 },
-  scrollContent: {
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  modelPillContainer: {
     paddingHorizontal: Spacing.four,
-    paddingBottom: 130,
+    paddingBottom: Spacing.two,
+  },
+  modelPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  modelPillIcon: {
+    fontSize: 12,
+  },
+  modelPillText: {
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    maxWidth: 220,
+  },
+  scrollContent: {
+    padding: Spacing.four,
     gap: Spacing.three,
   },
   heroSection: {
-    marginTop: Spacing.one,
-    marginBottom: Spacing.two,
-    gap: Spacing.one,
+    marginBottom: Spacing.one,
   },
   heroHeadline: {
+    fontSize: 28,
+    fontWeight: "700",
+    letterSpacing: -0.5,
     marginTop: 2,
   },
   heroSubtitle: {
-    fontSize: 14,
-    lineHeight: 20,
-    maxWidth: 340,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
   },
   card: {
-    borderRadius: Radius.xl,
     borderWidth: 1,
-    padding: Spacing.four,
-    gap: Spacing.two + 2,
+    borderRadius: Radius.lg,
+    padding: Spacing.three,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: Spacing.two,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: "600",
   },
   cardHint: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    marginBottom: Spacing.two,
   },
   sampleChipsRow: {
     flexDirection: "row",
-    gap: Spacing.one,
+    gap: 6,
+    alignItems: "center",
   },
   miniChip: {
     borderWidth: 1,
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: 3,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: Radius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   miniChipText: {
     fontSize: 11,
-    fontFamily: Fonts.sansMedium,
+    opacity: 0.8,
   },
   textArea: {
-    borderRadius: Radius.lg,
     borderWidth: 1,
+    borderRadius: Radius.md,
     padding: Spacing.three,
-    fontSize: 14,
-    lineHeight: 21,
     minHeight: 90,
+    fontSize: 13,
     textAlignVertical: "top",
-    fontFamily: Fonts.sans,
   },
   chipsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.two,
-    marginVertical: 2,
+    gap: 6,
+    marginBottom: Spacing.three,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.one + 2,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two - 1,
-    borderRadius: Radius.full,
+    gap: 4,
     borderWidth: 1,
+    borderRadius: Radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   chipText: {
-    fontFamily: Fonts.sansMedium,
     fontSize: 12,
   },
   instructionBar: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: Radius.full,
     borderWidth: 1,
-    paddingLeft: Spacing.three,
-    paddingRight: Spacing.one,
-    height: 46,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.two,
+    marginBottom: Spacing.three,
   },
   instructionInput: {
     flex: 1,
-    fontSize: 14,
-    fontFamily: Fonts.sans,
+    height: 40,
+    fontSize: 13,
   },
   micBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
+    alignItems: "center",
   },
   runButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.two,
-    height: 48,
-    borderRadius: Radius.full,
-    marginTop: Spacing.one,
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
   },
   runButtonText: {
-    fontFamily: Fonts.sansSemiBold,
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: "600",
   },
   resultBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.one + 2,
+    gap: 6,
   },
   resultBadgeText: {
-    fontFamily: Fonts.sansSemiBold,
-    fontSize: 14,
-  },
-  resultBody: {
-    fontSize: 15,
-    lineHeight: 23,
-    fontFamily: Fonts.sans,
-    marginVertical: Spacing.one,
+    fontSize: 13,
+    fontWeight: "600",
   },
   diffBox: {
-    gap: Spacing.two,
-    paddingVertical: Spacing.one,
+    gap: 8,
+    marginVertical: Spacing.two,
   },
   diffRaw: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 16,
+    textDecorationLine: "line-through",
+    opacity: 0.7,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
+    height: 1,
+    width: "100%",
   },
   diffCleaned: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  resultBody: {
     fontSize: 14,
-    lineHeight: 21,
-    fontFamily: Fonts.sansMedium,
+    lineHeight: 20,
+    marginVertical: Spacing.two,
+  },
+  resultMeta: {
+    fontSize: 11,
+    fontFamily: Fonts.mono,
+    opacity: 0.5,
+    marginBottom: Spacing.two,
   },
   resultActions: {
     flexDirection: "row",
-    gap: Spacing.two,
-    marginTop: Spacing.two,
+    justifyContent: "flex-end",
   },
   actionBtn: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.one + 2,
-    paddingHorizontal: Spacing.four,
-    height: 40,
-    borderRadius: Radius.full,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
   },
   actionBtnText: {
-    fontFamily: Fonts.sansSemiBold,
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: "600",
   },
   settingsCard: {
-    borderRadius: Radius.lg,
     borderWidth: 1,
+    borderRadius: Radius.md,
     padding: Spacing.three,
-    marginTop: Spacing.one,
+    marginTop: Spacing.two,
   },
   settingsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.two,
+    gap: 8,
   },
   settingsLabel: {
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    maxHeight: "75%",
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    borderTopWidth: 1,
+    padding: Spacing.four,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.three,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalScroll: {
+    marginBottom: Spacing.four,
+  },
+  modalProviderGroup: {
+    marginBottom: Spacing.three,
+  },
+  modalProviderTitle: {
+    fontSize: 13,
     fontFamily: Fonts.mono,
-    letterSpacing: 0.5,
+    fontWeight: "700",
+    marginBottom: 6,
+    opacity: 0.8,
+  },
+  modalModelList: {
+    gap: 6,
+  },
+  modalModelItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  modalModelName: {
+    fontSize: 13,
   },
 });

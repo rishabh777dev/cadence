@@ -66,7 +66,11 @@ export function useDictation({
   const { settings } = useSettings();
   const { dictionary } = useEntries();
   const { addHistory } = useHistory();
-  const { provider: modelProvider, cleanupModel } = useModelConfig();
+  const {
+    provider: modelProvider,
+    cleanupProvider,
+    cleanupModel,
+  } = useModelConfig();
 
   const [micState, setMicState] = useState<MicState>("idle");
   const [partial, setPartial] = useState("");
@@ -259,16 +263,19 @@ export function useDictation({
       }
 
       // Direct LLM Cleanup
-      if (settings.cleanup && cleanupModel !== "off") {
+      if (
+        settings.cleanup &&
+        cleanupModel !== "off" &&
+        cleanupProvider !== "off"
+      ) {
         setPartial("Polishing with AI…");
         console.log(
-          `[Cadence Dictation] Polishing transcript with ${cleanupModel}...`,
+          `[Cadence Dictation] Polishing transcript with ${cleanupProvider}/${cleanupModel}...`,
         );
         rawText = await directCleanup({
           text: rawText,
+          cleanupProvider,
           cleanupModel,
-          groqKey: groqKey || undefined,
-          openAiKey: openAiKey || undefined,
           intensity: settings.intensity,
           customPrompt: settings.customPrompt || undefined,
         });
@@ -295,7 +302,15 @@ export function useDictation({
       const msg = err instanceof Error ? err.message : "Transcription failed.";
       Alert.alert("Dictation Error", msg);
     }
-  }, [recorder, level, modelProvider, cleanupModel, settings, dictionary]);
+  }, [
+    recorder,
+    level,
+    modelProvider,
+    cleanupModel,
+    settings,
+    dictionary,
+    cleanupProvider,
+  ]);
   finishRecordingRef.current = finishRecording;
 
   const onPressIn = useCallback(() => {
