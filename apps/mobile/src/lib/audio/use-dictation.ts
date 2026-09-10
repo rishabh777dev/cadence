@@ -7,7 +7,7 @@
 
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert } from "react-native";
+import { Alert, Linking } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
 import type { MicState } from "@/components/mic-button";
@@ -111,7 +111,16 @@ export function useDictation({
         startingRef.current = false;
         Alert.alert(
           "Microphone access needed",
-          "Please enable microphone permission in Settings to use voice typing.",
+          "Please enable microphone permission in your device settings to use voice typing.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                void Linking.openSettings();
+              },
+            },
+          ],
         );
         return;
       }
