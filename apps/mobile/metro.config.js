@@ -1,10 +1,16 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
-const { getSentryExpoConfig } = require("@sentry/react-native/metro");
+const { getDefaultConfig } = require("expo/metro-config");
 
-const config = getSentryExpoConfig(__dirname, {
-  annotateReactComponents: true,
-  includeWebReplay: false,
-  includeWebFeedback: false,
-});
+let config;
+try {
+  const { getSentryExpoConfig } = require("@sentry/react-native/metro");
+  config = getSentryExpoConfig(__dirname, {
+    annotateReactComponents: true,
+    includeWebReplay: false,
+    includeWebFeedback: false,
+  });
+} catch {
+  config = getDefaultConfig(__dirname);
+}
 
 module.exports = config;
