@@ -137,12 +137,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUpWithEmail = useCallback(
     async (email: string, password: string, fullName?: string) => {
+      const cleanEmail = email.trim();
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password,
         options: {
           data: {
-            full_name: fullName?.trim() || email.split("@")[0],
+            full_name: fullName?.trim() || cleanEmail.split("@")[0],
           },
         },
       });
@@ -151,10 +152,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: error.message };
       }
 
+      // If active session was returned immediately
       if (data.session) {
+        setSession(data.session);
         setIsGuest(false);
         void setPref("guest_mode", "false");
+        return {};
       }
+
+      // If email confirmation is enabled on Supabase, data.session is null.
+      // Our database trigger immediately auto-confirms new users, so sign in now.
+      const { data: signInData, error: signInErr } =
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
+
+      if (signInErr) {
+        return {
+          error:
+            signInErr.message ||
+            "Account created! Please verify your email or sign in.",
+        };
+      }
+
+      if (signInData.session) {
+        setSession(signInData.session);
+        setIsGuest(false);
+        void setPref("guest_mode", "false");
+        return {};
+      }
+
       return {};
     },
     [],
@@ -162,8 +190,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
+      const cleanEmail = email.trim();
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: cleanEmail,
         password,
       });
 
@@ -172,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.session) {
+        setSession(data.session);
         setIsGuest(false);
         void setPref("guest_mode", "false");
       }
@@ -201,15 +231,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
         if (res.type === "success" && res.url) {
           const params = parseUrlParams(res.url);
+          if (params.error_description || params.error) {
+            return {
+              error:
+                params.error_description ||
+                params.error ||
+                `${provider} authentication failed.`,
+            };
+          }
           if (params.access_token && params.refresh_token) {
-            const { error: setErr } = await supabase.auth.setSession({
-              access_token: params.access_token,
-              refresh_token: params.refresh_token,
-            });
+            const { data: sessionData, error: setErr } =
+              await supabase.auth.setSession({
+                access_token: params.access_token,
+                refresh_token: params.refresh_token,
+              });
             if (setErr) return { error: setErr.message };
+            if (sessionData.session) {
+              setSession(sessionData.session);
+            }
             setIsGuest(false);
             void setPref("guest_mode", "false");
+            return {};
           }
+        } else if (res.type === "cancel" || res.type === "dismiss") {
+          return {
+            error:
+              provider === "google"
+                ? "Google Sign-In is not enabled in your Supabase project yet. Please sign in with Email & Password or enable Google in the Supabase Dashboard."
+                : `${provider} sign-in was cancelled or not enabled in Supabase.`,
+          };
         }
       }
       return {};

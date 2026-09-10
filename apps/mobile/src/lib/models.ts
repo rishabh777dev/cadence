@@ -41,17 +41,34 @@ export async function getSecureApiKey(
   provider: "groq" | "openai",
 ): Promise<string | null> {
   const keyName = provider === "groq" ? GROQ_SECURE_KEY : OPENAI_SECURE_KEY;
+
+  // 1. Check user-configured SecureStore
   try {
     const val = await SecureStore.getItemAsync(keyName);
-    if (val) return val;
+    if (val?.trim()) return val.trim();
   } catch {
     // fallback
   }
 
+  // 2. Check local preference (AsyncStorage fallback)
   const localVal = await getPref(keyName);
-  if (localVal) return localVal;
+  if (localVal?.trim()) return localVal.trim();
 
-  // If signed in, check Supabase
+  // 3. Check environment variables (.env / EXPO_PUBLIC_*)
+  if (provider === "groq") {
+    const envKey =
+      process.env.EXPO_PUBLIC_GROQ_API_KEY ||
+      process.env.GROQ_API_KEY ||
+      process.env.EXPO_PUBLIC_GROK_API_KEY ||
+      process.env.GROK_API_KEY;
+    if (envKey?.trim()) return envKey.trim();
+  } else if (provider === "openai") {
+    const envKey =
+      process.env.EXPO_PUBLIC_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (envKey?.trim()) return envKey.trim();
+  }
+
+  // 4. If signed in, check Supabase
   try {
     const {
       data: { user },
@@ -63,9 +80,11 @@ export async function getSecureApiKey(
         .eq("user_id", user.id)
         .eq("provider", provider)
         .single();
-      if (data?.api_key) {
-        await SecureStore.setItemAsync(keyName, data.api_key).catch(() => {});
-        return data.api_key;
+      if (data?.api_key?.trim()) {
+        await SecureStore.setItemAsync(keyName, data.api_key.trim()).catch(
+          () => {},
+        );
+        return data.api_key.trim();
       }
     }
   } catch {

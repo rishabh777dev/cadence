@@ -54,15 +54,26 @@ export async function directTranscribe({
 
   const model = provider === "groq" ? "whisper-large-v3-turbo" : "whisper-1";
 
+  // Normalize file URI for React Native FormData on Android and iOS
+  let normalizedUri = fileUri.trim();
+  if (normalizedUri.startsWith("/") && !normalizedUri.startsWith("file://")) {
+    normalizedUri = `file://${normalizedUri}`;
+  }
+
   // Derive filename and extension
-  const filename = fileUri.split("/").pop() || "recording.m4a";
+  const filename = normalizedUri.split("/").pop() || "recording.m4a";
   const extension = filename.split(".").pop()?.toLowerCase() || "m4a";
-  const mimeType = extension === "wav" ? "audio/wav" : "audio/m4a";
+  const mimeType =
+    extension === "wav"
+      ? "audio/wav"
+      : extension === "mp4"
+        ? "audio/mp4"
+        : "audio/m4a";
 
   const formData = new FormData();
   // React Native FormData file specification
   formData.append("file", {
-    uri: fileUri,
+    uri: normalizedUri,
     name: filename,
     type: mimeType,
   } as unknown as Blob);
