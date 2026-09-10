@@ -1,8 +1,4 @@
-/**
- * Direct client-side speech transcription & AI cleanup.
- * Sends recorded audio directly to Groq Whisper or OpenAI Whisper APIs
- * without passing through any intermediate server.
- */
+import * as FileSystem from "expo-file-system/legacy";
 
 import type { CleanupIntensity } from "../cleanup-tones";
 
@@ -36,6 +32,7 @@ const CLEANUP_SYSTEM_PROMPT = `You are a precision voice dictation editor. Clean
 
 /**
  * Transcribe an audio file directly with Groq or OpenAI Whisper.
+ * Uses native FileSystem.uploadAsync for robust multipart file streaming on Android & iOS.
  */
 export async function directTranscribe({
   fileUri,
@@ -54,13 +51,12 @@ export async function directTranscribe({
 
   const model = provider === "groq" ? "whisper-large-v3-turbo" : "whisper-1";
 
-  // Normalize file URI for React Native FormData on Android and iOS
+  // Normalize file URI
   let normalizedUri = fileUri.trim();
   if (normalizedUri.startsWith("/") && !normalizedUri.startsWith("file://")) {
     normalizedUri = `file://${normalizedUri}`;
   }
 
-  // Derive filename and extension
   const filename = normalizedUri.split("/").pop() || "recording.m4a";
   const extension = filename.split(".").pop()?.toLowerCase() || "m4a";
   const mimeType =
@@ -70,48 +66,47 @@ export async function directTranscribe({
         ? "audio/mp4"
         : "audio/m4a";
 
-  const formData = new FormData();
-  // React Native FormData file specification
-  formData.append("file", {
-    uri: normalizedUri,
-    name: filename,
-    type: mimeType,
-  } as unknown as Blob);
-
-  formData.append("model", model);
-  formData.append("response_format", "verbose_json");
+  const parameters: Record<string, string> = {
+    model,
+    response_format: "verbose_json",
+  };
 
   if (language && language !== "auto") {
-    formData.append("language", language);
+    parameters.language = language;
   }
 
-  const response = await fetch(endpoint, {
-    method: "POST",
+  console.log(
+    `[Direct Transcribe] Uploading via FileSystem.uploadAsync (${provider}): ${normalizedUri}`,
+  );
+
+  const uploadResult = await FileSystem.uploadAsync(endpoint, normalizedUri, {
+    fieldName: "file",
+    mimeType,
+    httpMethod: "POST",
+    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
     headers: {
       Authorization: `Bearer ${apiKey.trim()}`,
-      // Note: Omit 'Content-Type' so the runtime boundary is set automatically
     },
-    body: formData,
+    parameters,
   });
 
-  if (!response.ok) {
-    const errBody = await response.text().catch(() => "");
+  if (uploadResult.status < 200 || uploadResult.status >= 300) {
     console.error(
-      `[Direct Transcribe Error] ${provider.toUpperCase()} responded with status ${response.status}:`,
-      errBody || response.statusText,
+      `[Direct Transcribe Error] ${provider.toUpperCase()} responded with status ${uploadResult.status}:`,
+      uploadResult.body,
     );
     throw new Error(
-      `${provider.toUpperCase()} Transcription Error (${response.status}): ${errBody || response.statusText}`,
+      `${provider.toUpperCase()} Transcription Error (${uploadResult.status}): ${uploadResult.body}`,
     );
   }
 
-  const data = (await response.json()) as {
+  const data = JSON.parse(uploadResult.body) as {
     text: string;
     duration?: number;
   };
 
   console.log(
-    `[Direct Transcribe Success] Provider: ${provider}, Duration: ${data.duration ?? "unknown"}s, Text length: ${data.text?.length ?? 0}`,
+    `[Direct Transcribe Success] Provider: ${provider}, Duration: ${data.duration ?? "unknown"}s, Text: "${data.text?.trim()}"`,
   );
 
   return {
