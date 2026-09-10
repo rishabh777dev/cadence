@@ -1,13 +1,7 @@
 /**
- * Local dictation history for mobile.
- *
- * Freestyle Cloud has no per-user transcription history API — the desktop's
- * `/api/history` is a local SQLite store embedded in Electron, and the cloud
- * only tracks a credit-usage ledger (no transcript text). So mobile keeps its
- * own lightweight history in AsyncStorage: every successful dictation is saved
- * with the final (post-cleanup, post-dictionary) text, a timestamp, and the
- * recording duration. That's all the client has — voice/LLM model, tokens, and
- * cost live server-side and never come back over the wire.
+ * Dictation history for Cadence Mobile.
+ * Keeps a local store in AsyncStorage, and automatically synchronizes
+ * with Supabase `cadence_history` whenever the user is signed in.
  */
 
 import {
@@ -21,13 +15,13 @@ import {
 } from "react";
 
 import { getJsonPref, setJsonPref } from "./storage";
+import { supabase } from "./supabase";
 
-/** Cap the store so AsyncStorage doesn't grow unbounded; oldest pruned first. */
 export const HISTORY_MAX = 500;
 
 export interface HistoryEntry {
   id: string;
-  /** Final transcript, after cloud cleanup and local dictionary replacement. */
+  /** Final transcript, after AI cleanup and local dictionary replacement. */
   text: string;
   /** Unix epoch (ms) when the dictation completed. */
   createdAt: number;
@@ -55,11 +49,51 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [ready, setReady] = useState(false);
 
+  // Load from local storage and optionally sync with Supabase
   useEffect(() => {
     (async () => {
       const stored = await getJsonPref<HistoryEntry[]>(HISTORY_KEY, []);
       setHistory(stored);
       setReady(true);
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          const { data, error } = await supabase
+            .from("cadence_history")
+            .select("id, text, duration_ms, created_at")
+            .order("created_at", { ascending: false })
+            .limit(100);
+
+          if (!error && data && data.length > 0) {
+            const cloudEntries: HistoryEntry[] = data.map((row) => ({
+              id: row.id,
+              text: row.text,
+              createdAt: new Date(row.created_at).getTime(),
+              durationMs: row.duration_ms || 0,
+            }));
+
+            // Merge local and cloud, avoiding duplicates by matching text + approx timestamp
+            const map = new Map<string, HistoryEntry>();
+            for (const item of [...cloudEntries, ...stored]) {
+              map.set(
+                `${item.text}_${Math.floor(item.createdAt / 5000)}`,
+                item,
+              );
+            }
+            const merged = Array.from(map.values())
+              .sort((a, b) => b.createdAt - a.createdAt)
+              .slice(0, HISTORY_MAX);
+
+            setHistory(merged);
+            void setJsonPref(HISTORY_KEY, merged);
+          }
+        }
+      } catch {
+        // Offline
+      }
     })();
   }, []);
 
@@ -81,11 +115,55 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
           createdAt: Date.now(),
           durationMs,
         };
-        // Newest first, capped at HISTORY_MAX (drop the oldest tail).
-        persist([entry, ...history].slice(0, HISTORY_MAX));
+        const next = [entry, ...history].slice(0, HISTORY_MAX);
+        persist(next);
+
+        // Sync to Supabase in background
+        void (async () => {
+          try {
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) {
+              await supabase.from("cadence_history").insert({
+                user_id: user.id,
+                text: trimmed,
+                duration_ms: durationMs,
+              });
+            }
+          } catch {
+            // Non-blocking
+          }
+        })();
       },
-      removeHistory: (id) => persist(history.filter((e) => e.id !== id)),
-      clearHistory: () => persist([]),
+      removeHistory: (id) => {
+        persist(history.filter((e) => e.id !== id));
+        void (async () => {
+          try {
+            await supabase.from("cadence_history").delete().eq("id", id);
+          } catch {
+            // Non-blocking
+          }
+        })();
+      },
+      clearHistory: () => {
+        persist([]);
+        void (async () => {
+          try {
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) {
+              await supabase
+                .from("cadence_history")
+                .delete()
+                .eq("user_id", user.id);
+            }
+          } catch {
+            // Non-blocking
+          }
+        })();
+      },
     }),
     [history, ready, persist],
   );
@@ -95,7 +173,6 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** Access dictation history. Must be used under a `HistoryProvider`. */
 export function useHistory(): HistoryContextValue {
   const ctx = useContext(HistoryContext);
   if (!ctx) {

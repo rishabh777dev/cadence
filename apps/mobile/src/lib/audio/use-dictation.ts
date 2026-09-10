@@ -1,11 +1,8 @@
 /**
- * Shared recording orchestration for the dictation screens.
+ * Shared recording orchestration for Cadence Mobile.
  *
- * Owns the mic permission flow, the cloud streaming session lifecycle, and the
- * hold-vs-tap gesture handling so the main voice screen and the keyboard-handoff
- * screen behave identically. Callers supply what to do with the final
- * transcript (accumulate on screen vs. hand to the keyboard) and, for the
- * keyboard flow, whether to auto-start on mount.
+ * Runs 100% direct client-side speech recognition using Groq Whisper or
+ * OpenAI Whisper with optional LLM cleanup, with zero middleman servers.
  */
 
 import * as Haptics from "expo-haptics";
@@ -14,24 +11,18 @@ import { Alert } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
 import type { MicState } from "@/components/mic-button";
-import { cadenceServerUrl, cloudStreamWsUrl } from "@/lib/cloud/config";
-import { authHeaders } from "@/lib/cloud/session";
-import { CloudStreamSession } from "@/lib/cloud/stream";
-import {
-  applyDictionaryReplacements,
-  useEntries,
-  vocabularyTerms,
-} from "@/lib/entries";
+import { applyDictionaryReplacements, useEntries } from "@/lib/entries";
 import { useHistory } from "@/lib/history";
-import { useModelConfig } from "@/lib/models";
-import { languageHint, tonesForCloud, useSettings } from "@/lib/settings";
+import { getSecureApiKey, useModelConfig } from "@/lib/models";
+import { languageHint, useSettings } from "@/lib/settings";
+import { directCleanup, directTranscribe } from "./direct-transcribe";
 import {
   checkMicPermission,
   requestMicPermission,
   useRecorder,
 } from "./recorder";
 
-/** Debounce so an accidental tap/hold doesn't open a pointless session. */
+/** Debounce so an accidental tap/hold doesn't start a pointless session. */
 const MIN_RECORDING_MS = 350;
 /**
  * Hold threshold: pressing longer than this and releasing = hold-to-talk (stop
@@ -43,7 +34,7 @@ const GUEST_SAMPLE_TRANSCRIPTS = [
   "Pushing the product sync to tomorrow morning at ten.",
   "Cadence voice dictation test. Real-time speech recognition that works everywhere.",
   "Let's deploy the staging release on Friday once all tests pass.",
-  "Reviewing the mobile interface design and keyboard extension integration.",
+  "Reviewing the mobile interface design and Supabase data sync.",
 ];
 
 interface UseDictationOptions {
@@ -68,43 +59,25 @@ export interface Dictation {
 }
 
 export function useDictation({
-  signedIn,
   onFinal,
   onRecordingStart,
   autoStart = false,
 }: UseDictationOptions): Dictation {
   const { settings } = useSettings();
-  const { vocabulary, dictionary } = useEntries();
+  const { dictionary } = useEntries();
   const { addHistory } = useHistory();
-  const {
-    provider: modelProvider,
-    groqConfigured,
-    openAiConfigured,
-    customServerUrl,
-  } = useModelConfig();
+  const { provider: modelProvider, cleanupModel } = useModelConfig();
 
   const [micState, setMicState] = useState<MicState>("idle");
   const [partial, setPartial] = useState("");
-  // Mic level as a shared value so the mic button + waveform animate on the UI
-  // thread (smooth) rather than re-rendering React on every audio buffer.
   const level = useSharedValue(0);
 
-  const sessionRef = useRef<CloudStreamSession | null>(null);
   const startedAt = useRef(0);
-  // Recording length captured at commit time, read back when the final arrives
-  // so the saved history entry records how long the dictation actually was.
-  const committedDurationRef = useRef(0);
   const recordingRef = useRef(false);
-  // Set synchronously on press-in so a rapid double-tap can't kick off two
-  // recordings before the async permission check flips `recordingRef`.
   const startingRef = useRef(false);
-  // Timestamp of the last press-in, used to tell a hold (stop on release) from
-  // a quick tap (toggle: stop on the next tap).
   const pressInAt = useRef(0);
-  // Tracks active touch press state to resolve quick hold/release races.
   const isPressingRef = useRef(false);
 
-  // Keep the latest onFinal without re-creating beginRecording each render.
   const onFinalRef = useRef(onFinal);
   useEffect(() => {
     onFinalRef.current = onFinal;
@@ -113,149 +86,44 @@ export function useDictation({
   useEffect(() => {
     onStartRef.current = onRecordingStart;
   });
-  // Keep the latest addHistory so saving doesn't rebuild beginRecording.
   const addHistoryRef = useRef(addHistory);
   useEffect(() => {
     addHistoryRef.current = addHistory;
   });
+
   const finishRecordingRef = useRef<() => void>(() => {});
 
   const recorder = useRecorder({
-    onFrame: (frame) => sessionRef.current?.sendAudio(frame),
-    onLevel: (v) => {
-      level.value = v;
+    onFrame: () => {},
+    onLevel: (l) => {
+      level.value = l;
     },
   });
 
-  const teardownSession = useCallback(() => {
-    sessionRef.current?.close();
-    sessionRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (recordingRef.current) {
-        recordingRef.current = false;
-        level.value = 0;
-        recorder.stop();
-      }
-      teardownSession();
-    };
-  }, [recorder, teardownSession, level]);
-
-  const beginRecording = useCallback(async () => {
+  const startRecording = useCallback(async () => {
     if (recordingRef.current || startingRef.current) return;
     startingRef.current = true;
 
-    const perm =
-      (await checkMicPermission()) === "granted"
-        ? "granted"
-        : await requestMicPermission();
-    if (perm !== "granted") {
-      startingRef.current = false;
-      Alert.alert(
-        "Microphone needed",
-        "Enable microphone access in Settings to dictate.",
-      );
-      return;
+    let permission = await checkMicPermission();
+    if (permission !== "granted") {
+      permission = await requestMicPermission();
+      if (permission !== "granted") {
+        startingRef.current = false;
+        Alert.alert(
+          "Microphone access needed",
+          "Please enable microphone permission in Settings to use voice typing.",
+        );
+        return;
+      }
     }
 
     recordingRef.current = true;
     startingRef.current = false;
     startedAt.current = Date.now();
-    setPartial("");
+    setPartial("Listening to your voice…");
     onStartRef.current?.();
     setMicState("recording");
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    const hasByokKey =
-      (modelProvider === "groq" && groqConfigured) ||
-      (modelProvider === "openai" && openAiConfigured) ||
-      (!signedIn && (groqConfigured || openAiConfigured));
-    const canTranscribe = signedIn || hasByokKey;
-
-    if (!canTranscribe) {
-      // Guest Demo Mode: Capture real microphone audio and animate live waveform
-      setPartial("Listening to your voice…");
-      try {
-        await recorder.start();
-        if (
-          !isPressingRef.current &&
-          Date.now() - pressInAt.current >= HOLD_THRESHOLD_MS
-        ) {
-          finishRecordingRef.current();
-        }
-      } catch {
-        recordingRef.current = false;
-        setMicState("idle");
-        Alert.alert("Recording failed", "Could not start the microphone.");
-      }
-      return;
-    }
-
-    const isByok = hasByokKey && (!signedIn || modelProvider !== "cadence");
-    const wsUrl = isByok
-      ? cloudStreamWsUrl(customServerUrl || cadenceServerUrl())
-      : cloudStreamWsUrl();
-
-    const headers = authHeaders();
-
-    sessionRef.current = new CloudStreamSession({
-      wsUrl,
-      cookie: headers?.Cookie,
-      language: languageHint(settings.language),
-      vocabulary: vocabularyTerms(vocabulary),
-      cleanup: {
-        skipPostProcess: !settings.cleanup,
-        intensity: settings.intensity,
-        customPrompt: settings.customPrompt || undefined,
-        ...tonesForCloud(settings),
-      },
-      callbacks: {
-        onReady: () => {},
-        onPartial: (t) => setPartial(t),
-        onFinal: (t) => {
-          setPartial("");
-          setMicState("idle");
-          teardownSession();
-          // Dictionary replacement runs locally on the final transcript, after
-          // the cloud's cleanup — mirroring the desktop. Entries never leave
-          // the device.
-          const text = applyDictionaryReplacements(t.trim(), dictionary).trim();
-          if (text) {
-            // Persist to local history before handing off to the caller.
-            addHistoryRef.current(text, committedDurationRef.current);
-            onFinalRef.current(text);
-          }
-          void Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Success,
-          );
-        },
-        onError: (message, code) => {
-          recordingRef.current = false;
-          level.value = 0;
-          recorder.stop();
-          setMicState("idle");
-          teardownSession();
-          if (code === "usage_exceeded") {
-            Alert.alert(
-              "Out of credits",
-              "You've used your free Cadence credits for now.",
-            );
-          } else {
-            Alert.alert("Transcription failed", message);
-          }
-          void Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Error,
-          );
-        },
-        onClose: () => {
-          // If the socket drops while we're still waiting on the final
-          // transcript, don't leave the UI stuck in "finalizing".
-          setMicState((s) => (s === "finalizing" ? "idle" : s));
-        },
-      },
-    });
 
     try {
       await recorder.start();
@@ -267,47 +135,44 @@ export function useDictation({
       }
     } catch {
       recordingRef.current = false;
-      startingRef.current = false;
       setMicState("idle");
-      teardownSession();
+      setPartial("");
       Alert.alert("Recording failed", "Could not start the microphone.");
     }
-  }, [
-    recorder,
-    settings,
-    vocabulary,
-    dictionary,
-    teardownSession,
-    signedIn,
-    modelProvider,
-    groqConfigured,
-    openAiConfigured,
-    customServerUrl,
-    level,
-  ]);
+  }, [recorder]);
 
-  const finishRecording = useCallback(() => {
+  const finishRecording = useCallback(async () => {
     if (!recordingRef.current) return;
     recordingRef.current = false;
     level.value = 0;
-    recorder.stop();
+    setMicState("finalizing");
 
     const elapsed = Date.now() - startedAt.current;
+    let fileUri: string | null = null;
+    try {
+      fileUri = await recorder.stop();
+    } catch {
+      // Ignored
+    }
+
     if (elapsed < MIN_RECORDING_MS) {
-      teardownSession();
       setMicState("idle");
+      setPartial("");
       return;
     }
 
-    const hasByokKey =
-      (modelProvider === "groq" && groqConfigured) ||
-      (modelProvider === "openai" && openAiConfigured) ||
-      (!signedIn && (groqConfigured || openAiConfigured));
-    const canTranscribe = signedIn || hasByokKey;
+    // Retrieve active keys
+    const groqKey = await getSecureApiKey("groq");
+    const openAiKey = await getSecureApiKey("openai");
 
-    if (!canTranscribe) {
-      setMicState("finalizing");
-      committedDurationRef.current = elapsed;
+    const activeProvider = modelProvider === "openai" ? "openai" : "groq";
+    const activeKey = activeProvider === "openai" ? openAiKey : groqKey;
+
+    const hasKey = Boolean(activeKey?.trim());
+
+    if (!hasKey) {
+      // Guest Demo Mode: Instant sample text with full tactile haptic feel
+      setPartial("Polishing speech…");
       setTimeout(() => {
         setPartial("");
         setMicState("idle");
@@ -321,60 +186,115 @@ export function useDictation({
         void Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Success,
         );
-      }, 500);
+      }, 400);
       return;
     }
 
-    setMicState("finalizing");
-    committedDurationRef.current = elapsed;
-    sessionRef.current?.setAudioDurationMs(elapsed);
-    sessionRef.current?.commit();
-  }, [
-    recorder,
-    teardownSession,
-    level,
-    signedIn,
-    modelProvider,
-    groqConfigured,
-    openAiConfigured,
-    dictionary,
-  ]);
+    if (!fileUri) {
+      setMicState("idle");
+      setPartial("");
+      Alert.alert("Error", "No audio recorded.");
+      return;
+    }
+
+    // Direct Speech Recognition
+    try {
+      setPartial(
+        activeProvider === "groq"
+          ? "Transcribing with Groq Whisper…"
+          : "Transcribing with OpenAI…",
+      );
+
+      const result = await directTranscribe({
+        fileUri,
+        provider: activeProvider,
+        apiKey: activeKey as string,
+        language: languageHint(settings.language),
+      });
+
+      let rawText = result.text.trim();
+      if (!rawText) {
+        setMicState("idle");
+        setPartial("");
+        return;
+      }
+
+      // Direct LLM Cleanup
+      if (settings.cleanup && cleanupModel !== "off") {
+        setPartial("Polishing with AI…");
+        rawText = await directCleanup({
+          text: rawText,
+          cleanupModel,
+          groqKey: groqKey || undefined,
+          openAiKey: openAiKey || undefined,
+          intensity: settings.intensity,
+          customPrompt: settings.customPrompt || undefined,
+        });
+      }
+
+      // Custom dictionary replacement
+      const finalText = applyDictionaryReplacements(rawText, dictionary).trim();
+
+      setPartial("");
+      setMicState("idle");
+
+      if (finalText) {
+        addHistoryRef.current(finalText, elapsed);
+        onFinalRef.current(finalText);
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+      }
+    } catch (err: unknown) {
+      setMicState("idle");
+      setPartial("");
+      const msg = err instanceof Error ? err.message : "Transcription failed";
+      Alert.alert("Dictation Error", msg);
+    }
+  }, [recorder, level, modelProvider, cleanupModel, settings, dictionary]);
   finishRecordingRef.current = finishRecording;
 
   const onPressIn = useCallback(() => {
     isPressingRef.current = true;
-    // A press while already recording is the second tap of a tap-to-toggle
-    // interaction → stop.
     if (recordingRef.current) {
       finishRecording();
       return;
     }
     pressInAt.current = Date.now();
-    void beginRecording();
-  }, [beginRecording, finishRecording]);
+    void startRecording();
+  }, [startRecording, finishRecording]);
 
   const onPressOut = useCallback(() => {
     isPressingRef.current = false;
     if (!recordingRef.current) return;
-    // Long enough to count as a hold → finish on release. Otherwise it was a
-    // tap: leave recording running until the next tap.
-    if (Date.now() - pressInAt.current >= HOLD_THRESHOLD_MS) {
+    const elapsed = Date.now() - pressInAt.current;
+    if (elapsed >= HOLD_THRESHOLD_MS) {
       finishRecording();
     }
   }, [finishRecording]);
 
   const toggle = useCallback(() => {
-    if (recordingRef.current) finishRecording();
-    else void beginRecording();
-  }, [beginRecording, finishRecording]);
+    if (recordingRef.current) {
+      finishRecording();
+    } else {
+      void startRecording();
+    }
+  }, [startRecording, finishRecording]);
 
-  // Auto-start recording as soon as the screen opens (keyboard-handoff flow).
   const autoStarted = useRef(false);
   useEffect(() => {
-    if (!autoStart || autoStarted.current || !signedIn) return;
-    autoStarted.current = true;
-    void beginRecording();
-  }, [autoStart, beginRecording, signedIn]);
+    if (autoStart && !autoStarted.current) {
+      autoStarted.current = true;
+      void startRecording();
+    }
+  }, [autoStart, startRecording]);
 
-  return { micState, partial, level, onPressIn, onPressOut, toggle };
+  return {
+    micState,
+    partial,
+    level,
+    onPressIn,
+    onPressOut,
+    toggle,
+  };
 }

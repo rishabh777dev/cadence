@@ -26,7 +26,6 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { cadenceServerUrl } from "@/lib/cloud/config";
 import {
   type CleanupModelId,
   type TranscriptionProvider,
@@ -45,7 +44,7 @@ const PROVIDERS: {
     title: "Groq Whisper",
     model: "whisper-large-v3-turbo",
     description:
-      "Ultra-fast cloud dictation (~200ms). Requires free Groq API key.",
+      "Ultra-fast direct dictation (~200ms). Requires free Groq API key.",
     badge: "RECOMMENDED",
   },
   {
@@ -53,13 +52,6 @@ const PROVIDERS: {
     title: "OpenAI Whisper",
     model: "whisper-1",
     description: "Industry-standard accuracy. Requires OpenAI API key.",
-  },
-  {
-    id: "cadence",
-    title: "Cadence Cloud",
-    model: "cadence/stt",
-    description:
-      "Default cloud backend deployed on Render with real-time streaming.",
   },
 ];
 
@@ -154,10 +146,8 @@ export default function ModelsSettingsScreen() {
     cleanupModel,
     groqConfigured,
     openAiConfigured,
-    customServerUrl,
     setProvider,
     setCleanupModel,
-    setCustomServerUrl,
     saveApiKey,
     deleteApiKey,
   } = useModelConfig();
@@ -166,8 +156,6 @@ export default function ModelsSettingsScreen() {
   const [openAiInput, setOpenAiInput] = useState("");
   const [savingGroq, setSavingGroq] = useState(false);
   const [savingOpenAi, setSavingOpenAi] = useState(false);
-  const [serverInput, setServerInput] = useState(customServerUrl);
-  const [savingServer, setSavingServer] = useState(false);
 
   const handleSaveGroq = async () => {
     if (!groqInput.trim()) return;
@@ -175,7 +163,7 @@ export default function ModelsSettingsScreen() {
     try {
       await saveApiKey("groq", groqInput);
       setGroqInput("");
-      Alert.alert("Saved", "Groq API key configured and synced to server.");
+      Alert.alert("Saved", "Groq API key configured.");
     } catch {
       Alert.alert("Error", "Could not save Groq API key.");
     } finally {
@@ -200,7 +188,7 @@ export default function ModelsSettingsScreen() {
     try {
       await saveApiKey("openai", openAiInput);
       setOpenAiInput("");
-      Alert.alert("Saved", "OpenAI API key configured and synced to server.");
+      Alert.alert("Saved", "OpenAI API key configured.");
     } catch {
       Alert.alert("Error", "Could not save OpenAI API key.");
     } finally {
@@ -221,16 +209,6 @@ export default function ModelsSettingsScreen() {
         },
       ],
     );
-  };
-
-  const handleSaveServer = async () => {
-    setSavingServer(true);
-    try {
-      await setCustomServerUrl(serverInput.trim());
-      Alert.alert("Saved", "Server endpoint updated.");
-    } finally {
-      setSavingServer(false);
-    }
   };
 
   return (
@@ -539,60 +517,24 @@ export default function ModelsSettingsScreen() {
         </View>
       </Card>
 
-      {/* 5. Server Connection Endpoint */}
+      {/* 5. Cloud Sync & Architecture */}
       <Card>
-        <SectionTitle icon={Server} title="Server Endpoint" />
+        <SectionTitle icon={Server} title="Cloud Architecture" />
         <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
-          Cadence server URL handling streaming STT, database sync, and user
-          data.
+          100% Serverless architecture. Direct client-side speech recognition
+          with Groq & OpenAI (zero cold starts). User data synced securely with
+          Supabase.
         </ThemedText>
 
         <View style={styles.serverInfoCard}>
           <ThemedText style={styles.serverCurrentLabel}>
-            Active Host:
+            Database & Auth:
           </ThemedText>
           <ThemedText
             style={[styles.serverCurrentUrl, { color: theme.primary }]}
           >
-            {cadenceServerUrl()}
+            Supabase (Connected)
           </ThemedText>
-        </View>
-
-        <View style={styles.inputRow}>
-          <TextInput
-            value={serverInput}
-            onChangeText={setServerInput}
-            placeholder="Custom URL (e.g. http://192.168.1.x:4649)"
-            placeholderTextColor={theme.mutedForeground}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: theme.secondary,
-                color: theme.foreground,
-                borderColor: theme.border,
-              },
-            ]}
-          />
-          <Pressable
-            onPress={handleSaveServer}
-            disabled={savingServer}
-            style={[styles.actionBtn, { backgroundColor: theme.primary }]}
-          >
-            {savingServer ? (
-              <ActivityIndicator size="small" color={theme.primaryForeground} />
-            ) : (
-              <ThemedText
-                style={[
-                  styles.actionBtnText,
-                  { color: theme.primaryForeground },
-                ]}
-              >
-                Update
-              </ThemedText>
-            )}
-          </Pressable>
         </View>
       </Card>
     </SettingsScreenScaffold>

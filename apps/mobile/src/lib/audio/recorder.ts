@@ -7,7 +7,9 @@
 import {
   AudioModule,
   type AudioStreamBuffer,
+  RecordingPresets,
   setAudioModeAsync,
+  useAudioRecorder,
   useAudioStream,
 } from "expo-audio";
 import { useCallback, useEffect, useRef } from "react";
@@ -61,19 +63,21 @@ function peakLevel(data: ArrayBuffer): number {
 
 export interface Recorder {
   start: () => Promise<void>;
-  stop: () => void;
+  stop: () => Promise<string | null>;
 }
 
 /**
  * Hook returning a recorder that streams conditioned PCM frames to the given
- * callbacks. Requests a mono 16 kHz Int16 stream; the hardware may deliver a
- * different rate, so each frame is downmixed/resampled before delivery.
+ * callbacks for waveform visualization, and records audio to a file for direct
+ * transcription.
  */
 export function useRecorder(callbacks: RecorderCallbacks): Recorder {
   const cb = useRef(callbacks);
   useEffect(() => {
     cb.current = callbacks;
   });
+
+  const fileRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
 
   const handleBuffer = useCallback((buffer: AudioStreamBuffer) => {
     const frame = toCloudFrame(buffer.data, buffer.sampleRate, buffer.channels);
@@ -90,12 +94,23 @@ export function useRecorder(callbacks: RecorderCallbacks): Recorder {
 
   const start = useCallback(async () => {
     await enableRecordingMode();
+    try {
+      fileRecorder.record();
+    } catch {
+      // Stream continues even if file recorder throws
+    }
     await stream.start();
-  }, [stream]);
+  }, [stream, fileRecorder]);
 
-  const stop = useCallback(() => {
+  const stop = useCallback(async (): Promise<string | null> => {
     stream.stop();
-  }, [stream]);
+    try {
+      await fileRecorder.stop();
+      return fileRecorder.uri;
+    } catch {
+      return fileRecorder.uri ?? null;
+    }
+  }, [stream, fileRecorder]);
 
   return { start, stop };
 }

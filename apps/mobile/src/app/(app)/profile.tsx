@@ -1,29 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { LogIn, LogOut } from "lucide-react-native";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 
 import { CadenceMark } from "@/components/cadence-mark";
 import { Card, SettingsScreenScaffold } from "@/components/settings-ui";
-import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Radius, Spacing } from "@/constants/theme";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
-import { fetchCloudUsage } from "@/lib/cloud/usage";
 import { initialsFor } from "@/lib/initials";
 
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { user, signedIn, signOut, leaveGuestMode } = useAuth();
-
-  const { data: usage, isLoading: usageLoading } = useQuery({
-    queryKey: ["cloud-usage"],
-    queryFn: fetchCloudUsage,
-    enabled: signedIn,
-    retry: 1,
-  });
+  const { user, signedIn, signOut } = useAuth();
 
   return (
     <SettingsScreenScaffold title="Profile">
@@ -60,7 +50,7 @@ export default function ProfileScreen() {
             >
               {signedIn
                 ? (user?.email ?? "")
-                : "Browsing Cadence without an account"}
+                : "Local storage active (sign-in optional)"}
             </ThemedText>
           </View>
         </View>
@@ -69,23 +59,11 @@ export default function ProfileScreen() {
 
         <View style={styles.inlineRow}>
           <ThemedText themeColor="mutedForeground" style={styles.rowLabel}>
-            {signedIn ? "Credits" : "Voice Dictation"}
+            {signedIn ? "Cloud Sync" : "Data Storage"}
           </ThemedText>
-          {signedIn ? (
-            usageLoading ? (
-              <Skeleton width={72} height={16} />
-            ) : (
-              <ThemedText style={styles.rowValue}>
-                {usage ? `${usage.remaining} / ${usage.limit}` : "—"}
-              </ThemedText>
-            )
-          ) : (
-            <ThemedText
-              style={[styles.rowValue, { color: theme.mutedForeground }]}
-            >
-              Sign in to dictate
-            </ThemedText>
-          )}
+          <ThemedText style={styles.rowValue}>
+            {signedIn ? "Supabase (Synced)" : "Local App Data"}
+          </ThemedText>
         </View>
       </Card>
 
@@ -93,7 +71,7 @@ export default function ProfileScreen() {
       {signedIn ? (
         <Pressable
           onPress={() => {
-            void signOut().then(() => router.replace("/sign-in"));
+            void signOut().then(() => router.replace("/(app)/(tabs)"));
           }}
           style={({ pressed }) => [
             styles.signOutCard,
@@ -127,27 +105,7 @@ export default function ProfileScreen() {
             <ThemedText
               style={[styles.signInText, { color: theme.primaryForeground }]}
             >
-              Sign in to Cadence
-            </ThemedText>
-          </Pressable>
-
-          <Pressable
-            onPress={() => {
-              leaveGuestMode();
-              router.replace("/sign-in");
-            }}
-            style={({ pressed }) => [
-              styles.leaveGuestCard,
-              {
-                borderColor: theme.border,
-                backgroundColor: pressed ? theme.secondary : "transparent",
-              },
-            ]}
-          >
-            <ThemedText
-              style={[styles.leaveGuestText, { color: theme.mutedForeground }]}
-            >
-              Return to Welcome Screen
+              Sign In or Create Account (Optional)
             </ThemedText>
           </Pressable>
         </View>

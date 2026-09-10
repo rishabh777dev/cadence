@@ -1,6 +1,5 @@
-import { Redirect, Stack } from "expo-router";
+import { Stack } from "expo-router";
 
-import { useAuth } from "@/hooks/use-auth";
 import { EntriesProvider } from "@/lib/entries";
 import { HistoryProvider } from "@/lib/history";
 import { SettingsProvider } from "@/lib/settings";
@@ -12,12 +11,6 @@ import { SettingsProvider } from "@/lib/settings";
  * tab was active — not always Home.
  */
 export default function AppLayout() {
-  const { signedIn, isGuest, loading } = useAuth();
-
-  // The root index shows the spinner during restore; once resolved, bounce
-  // unauthenticated users back to sign-in unless guest mode is active.
-  if (!loading && !signedIn && !isGuest) return <Redirect href="/sign-in" />;
-
   return (
     <SettingsProvider>
       <EntriesProvider>
@@ -30,10 +23,6 @@ export default function AppLayout() {
             <Stack.Screen
               name="dictate"
               options={{
-                // Present as a full-screen modal so it sits above the tab
-                // stack and pops off cleanly — the user always returns to
-                // wherever they were (home, history, etc.), never to a stale
-                // dictate screen left in the stack.
                 presentation: "fullScreenModal",
               }}
             />

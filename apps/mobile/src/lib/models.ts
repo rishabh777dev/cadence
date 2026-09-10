@@ -13,10 +13,10 @@
 
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
-import { cadenceServerUrl } from "./cloud/config";
 import { getPref, setPref } from "./storage";
+import { supabase } from "./supabase";
 
-export type TranscriptionProvider = "groq" | "openai" | "cadence";
+export type TranscriptionProvider = "groq" | "openai";
 export type CleanupModelId =
   | "groq/llama-3.3-70b-versatile"
   | "openai/gpt-4o-mini"
@@ -42,10 +42,37 @@ export async function getSecureApiKey(
 ): Promise<string | null> {
   const keyName = provider === "groq" ? GROQ_SECURE_KEY : OPENAI_SECURE_KEY;
   try {
-    return await SecureStore.getItemAsync(keyName);
+    const val = await SecureStore.getItemAsync(keyName);
+    if (val) return val;
   } catch {
-    return getPref(keyName);
+    // fallback
   }
+
+  const localVal = await getPref(keyName);
+  if (localVal) return localVal;
+
+  // If signed in, check Supabase
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase
+        .from("cadence_api_keys")
+        .select("api_key")
+        .eq("user_id", user.id)
+        .eq("provider", provider)
+        .single();
+      if (data?.api_key) {
+        await SecureStore.setItemAsync(keyName, data.api_key).catch(() => {});
+        return data.api_key;
+      }
+    }
+  } catch {
+    // offline
+  }
+
+  return null;
 }
 
 export async function setSecureApiKey(
@@ -59,16 +86,24 @@ export async function setSecureApiKey(
     await setPref(keyName, key);
   }
 
-  // Also sync with the Cadence server's /api/keys endpoint
+  // Sync to Supabase if authenticated
   try {
-    const base = cadenceServerUrl();
-    await fetch(`${base}/api/keys`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, key }),
-    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("cadence_api_keys").upsert(
+        {
+          user_id: user.id,
+          provider,
+          api_key: key,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,provider" },
+      );
+    }
   } catch {
-    // Non-blocking local fallback
+    // Non-blocking
   }
 }
 
@@ -83,18 +118,22 @@ export async function removeSecureApiKey(
   }
 
   try {
-    const base = cadenceServerUrl();
-    await fetch(`${base}/api/keys/${provider}`, {
-      method: "DELETE",
-    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("cadence_api_keys")
+        .delete()
+        .match({ user_id: user.id, provider });
+    }
   } catch {
     // Non-blocking
   }
 }
 
 export function useModelConfig() {
-  const [provider, setProviderState] =
-    useState<TranscriptionProvider>("cadence");
+  const [provider, setProviderState] = useState<TranscriptionProvider>("groq");
   const [cleanupModel, setCleanupModelState] = useState<CleanupModelId>(
     "groq/llama-3.3-70b-versatile",
   );
