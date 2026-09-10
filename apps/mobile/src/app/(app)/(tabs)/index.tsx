@@ -12,6 +12,7 @@ import {
 } from "lucide-react-native";
 import { useCallback, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Pressable,
@@ -128,17 +129,6 @@ export default function TodayScreen() {
     },
     [removeHistory],
   );
-
-  const status =
-    micState === "recording"
-      ? "Listening"
-      : micState === "finalizing"
-        ? "Polishing"
-        : !signedIn
-          ? "Guest Mode — Tap to Sign In"
-          : liveText
-            ? "Tap mic to dictate again"
-            : "Hold or tap to speak";
 
   const renderHeader = () => (
     <View style={styles.listHeader}>
@@ -367,10 +357,26 @@ export default function TodayScreen() {
           {micState === "recording" && (
             <Waveform level={level} active={micState === "recording"} />
           )}
-          {micState !== "idle" && (
-            <ThemedText themeColor="mutedForeground" style={styles.status}>
-              {status}
-            </ThemedText>
+          {micState === "finalizing" && (
+            <View
+              style={[
+                styles.finalizingPill,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardRing,
+                },
+              ]}
+            >
+              <ActivityIndicator size="small" color={theme.primary} />
+              <ThemedText
+                style={[
+                  styles.finalizingText,
+                  { color: theme.mutedForeground },
+                ]}
+              >
+                TRANSCRIBING…
+              </ThemedText>
+            </View>
           )}
           <MicButton
             state={micState}
@@ -557,10 +563,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.two,
   },
-  status: {
+  finalizingPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  finalizingText: {
     fontFamily: Fonts.mono,
-    fontSize: 11,
-    letterSpacing: 1.2,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    fontWeight: "600",
     textTransform: "uppercase",
   },
 });

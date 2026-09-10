@@ -23,7 +23,7 @@ interface MicButtonProps {
   onPressOut: () => void;
 }
 
-const SIZE = 92;
+const SIZE = 60;
 
 /** The primary press-and-hold / tap-to-toggle record control. */
 export function MicButton({
@@ -41,12 +41,12 @@ export function MicButton({
 
   useEffect(() => {
     recording.value = withTiming(state === "recording" ? 1 : 0, {
-      duration: 260,
+      duration: 240,
     });
     if (state === "recording") {
-      breathe.value = withRepeat(withTiming(1, { duration: 1400 }), -1, true);
+      breathe.value = withRepeat(withTiming(1, { duration: 1300 }), -1, true);
     } else {
-      breathe.value = withTiming(0, { duration: 300 });
+      breathe.value = withTiming(0, { duration: 250 });
     }
   }, [state, breathe, recording]);
 
@@ -58,28 +58,28 @@ export function MicButton({
   // with breathe + live level and fades as it grows.
   const ringOuter = useAnimatedStyle(() => {
     const drive = (breathe.value + level.value * 1.2) * recording.value;
-    const scale = 1 + interpolate(drive, [0, 1.2], [0.05, 0.7]);
+    const scale = 1 + interpolate(drive, [0, 1.2], [0.05, 0.55]);
     return {
       transform: [{ scale }],
-      opacity: recording.value * interpolate(scale, [1, 1.7], [0.5, 0]),
+      opacity: recording.value * interpolate(scale, [1, 1.55], [0.45, 0]),
     };
   });
 
   const ringInner = useAnimatedStyle(() => {
     const drive = (breathe.value + level.value * 1.2) * recording.value;
-    const scale = 1 + interpolate(drive, [0, 1.2], [0.05, 0.7]) * 0.6;
+    const scale = 1 + interpolate(drive, [0, 1.2], [0.05, 0.55]) * 0.55;
     return {
       transform: [{ scale }],
-      opacity: recording.value * interpolate(scale, [1, 1.42], [0.6, 0]),
+      opacity: recording.value * interpolate(scale, [1, 1.32], [0.55, 0]),
     };
   });
 
   const handlePressIn = () => {
-    press.value = withTiming(0.93, { duration: 90 });
+    press.value = withTiming(0.92, { duration: 80 });
     onPressIn();
   };
   const handlePressOut = () => {
-    press.value = withTiming(1, { duration: 140 });
+    press.value = withTiming(1, { duration: 120 });
     onPressOut();
   };
 
@@ -116,9 +116,9 @@ export function MicButton({
           ]}
         >
           {state === "recording" ? (
-            <Square color={fg} fill={fg} size={22} />
+            <Square color={fg} fill={fg} size={16} />
           ) : (
-            <Mic color={fg} size={30} />
+            <Mic color={fg} size={24} />
           )}
         </Pressable>
       </Animated.View>
@@ -128,8 +128,8 @@ export function MicButton({
 
 const styles = StyleSheet.create({
   container: {
-    width: SIZE * 2,
-    height: SIZE * 2,
+    width: SIZE * 1.7,
+    height: SIZE * 1.7,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -146,9 +146,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     // Soft colored glow lifts the button off the dark background.
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 8,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
 });

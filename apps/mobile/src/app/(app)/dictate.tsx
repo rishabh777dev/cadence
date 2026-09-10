@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { CadenceMark } from "@/components/cadence-mark";
@@ -123,10 +123,35 @@ export default function DictateScreen() {
         ) : null}
 
         <View style={styles.footer}>
-          <Waveform level={level} active={micState === "recording"} />
-          <ThemedText themeColor="mutedForeground" style={styles.status}>
-            {status}
-          </ThemedText>
+          {micState === "recording" && (
+            <Waveform level={level} active={micState === "recording"} />
+          )}
+          {micState === "finalizing" && (
+            <View
+              style={[
+                styles.finalizingPill,
+                {
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardRing,
+                },
+              ]}
+            >
+              <ActivityIndicator size="small" color={theme.primary} />
+              <ThemedText
+                style={[
+                  styles.finalizingText,
+                  { color: theme.mutedForeground },
+                ]}
+              >
+                TRANSCRIBING…
+              </ThemedText>
+            </View>
+          )}
+          {micState === "idle" && (
+            <ThemedText themeColor="mutedForeground" style={styles.status}>
+              {status}
+            </ThemedText>
+          )}
           <MicButton
             state={micState}
             level={level}
@@ -183,6 +208,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.three,
     paddingBottom: Spacing.three,
+  },
+  finalizingPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  finalizingText: {
+    fontFamily: Fonts.mono,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   status: {
     fontFamily: Fonts.mono,
