@@ -136,13 +136,18 @@ export function useDictation({
 
     try {
       await recorder.start();
+      console.log("[Cadence Dictation] Recording started successfully");
       if (
         !isPressingRef.current &&
         Date.now() - pressInAt.current >= HOLD_THRESHOLD_MS
       ) {
         finishRecordingRef.current();
       }
-    } catch {
+    } catch (startErr) {
+      console.error(
+        "[Cadence Dictation Error] Could not start microphone:",
+        startErr,
+      );
       recordingRef.current = false;
       setMicState("idle");
       setPartial("");
@@ -160,11 +165,21 @@ export function useDictation({
     let fileUri: string | null = null;
     try {
       fileUri = await recorder.stop();
-    } catch {
-      // Ignored
+    } catch (stopErr) {
+      console.error(
+        "[Cadence Dictation Error] Error stopping recorder:",
+        stopErr,
+      );
     }
 
+    console.log(
+      `[Cadence Dictation] Stopped recording. Elapsed: ${elapsed}ms, fileUri: ${fileUri}`,
+    );
+
     if (elapsed < MIN_RECORDING_MS) {
+      console.log(
+        "[Cadence Dictation] Recording discarded (below minimum duration)",
+      );
       setMicState("idle");
       setPartial("");
       return;
@@ -178,9 +193,15 @@ export function useDictation({
     const activeKey = activeProvider === "openai" ? openAiKey : groqKey;
 
     const hasKey = Boolean(activeKey?.trim());
+    console.log(
+      `[Cadence Dictation] Provider: ${activeProvider}, hasKey: ${hasKey}`,
+    );
 
     if (!hasKey) {
       // Guest Demo Mode: Instant sample text with full tactile haptic feel
+      console.log(
+        "[Cadence Dictation] No API key configured. Running guest demo preview.",
+      );
       setPartial("Polishing speech…");
       setTimeout(() => {
         setPartial("");
@@ -200,6 +221,9 @@ export function useDictation({
     }
 
     if (!fileUri) {
+      console.error(
+        "[Cadence Dictation Error] fileUri is null/empty after recording stopped",
+      );
       setMicState("idle");
       setPartial("");
       Alert.alert("Error", "No audio recorded.");
@@ -214,6 +238,9 @@ export function useDictation({
           : "Transcribing with OpenAI…",
       );
 
+      console.log(
+        `[Cadence Dictation] Uploading audio to ${activeProvider} Whisper...`,
+      );
       const result = await directTranscribe({
         fileUri,
         provider: activeProvider,
@@ -222,7 +249,10 @@ export function useDictation({
       });
 
       let rawText = result.text.trim();
+      console.log("[Cadence Dictation] Raw transcript received:", rawText);
+
       if (!rawText) {
+        console.log("[Cadence Dictation] Received empty transcript from model");
         setMicState("idle");
         setPartial("");
         return;
@@ -231,6 +261,9 @@ export function useDictation({
       // Direct LLM Cleanup
       if (settings.cleanup && cleanupModel !== "off") {
         setPartial("Polishing with AI…");
+        console.log(
+          `[Cadence Dictation] Polishing transcript with ${cleanupModel}...`,
+        );
         rawText = await directCleanup({
           text: rawText,
           cleanupModel,
@@ -239,6 +272,7 @@ export function useDictation({
           intensity: settings.intensity,
           customPrompt: settings.customPrompt || undefined,
         });
+        console.log("[Cadence Dictation] Polished text:", rawText);
       }
 
       // Custom dictionary replacement
@@ -255,9 +289,10 @@ export function useDictation({
         );
       }
     } catch (err: unknown) {
+      console.error("[Cadence Dictation Error] Processing failed:", err);
       setMicState("idle");
       setPartial("");
-      const msg = err instanceof Error ? err.message : "Transcription failed";
+      const msg = err instanceof Error ? err.message : "Transcription failed.";
       Alert.alert("Dictation Error", msg);
     }
   }, [recorder, level, modelProvider, cleanupModel, settings, dictionary]);

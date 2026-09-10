@@ -138,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUpWithEmail = useCallback(
     async (email: string, password: string, fullName?: string) => {
       const cleanEmail = email.trim();
+      console.log(`[Supabase Auth] Signing up user: ${cleanEmail}`);
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -149,11 +150,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
+        console.error("[Supabase Auth Error] Sign up failed:", error.message);
         return { error: error.message };
       }
 
       // If active session was returned immediately
       if (data.session) {
+        console.log(
+          `[Supabase Auth] Sign up successful with immediate session for ${cleanEmail}`,
+        );
         setSession(data.session);
         setIsGuest(false);
         void setPref("guest_mode", "false");
@@ -162,6 +167,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // If email confirmation is enabled on Supabase, data.session is null.
       // Our database trigger immediately auto-confirms new users, so sign in now.
+      console.log(
+        "[Supabase Auth] Auto-confirming session via password authentication...",
+      );
       const { data: signInData, error: signInErr } =
         await supabase.auth.signInWithPassword({
           email: cleanEmail,
@@ -169,6 +177,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
       if (signInErr) {
+        console.error(
+          "[Supabase Auth Error] Auto-login after sign-up failed:",
+          signInErr.message,
+        );
         return {
           error:
             signInErr.message ||
@@ -177,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (signInData.session) {
+        console.log(`[Supabase Auth] Session established for ${cleanEmail}`);
         setSession(signInData.session);
         setIsGuest(false);
         void setPref("guest_mode", "false");
@@ -191,16 +204,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = useCallback(
     async (email: string, password: string) => {
       const cleanEmail = email.trim();
+      console.log(`[Supabase Auth] Signing in user: ${cleanEmail}`);
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
         password,
       });
 
       if (error) {
+        console.error("[Supabase Auth Error] Sign in failed:", error.message);
         return { error: error.message };
       }
 
       if (data.session) {
+        console.log(`[Supabase Auth] Sign in successful for ${cleanEmail}`);
         setSession(data.session);
         setIsGuest(false);
         void setPref("guest_mode", "false");
@@ -232,6 +248,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.type === "success" && res.url) {
           const params = parseUrlParams(res.url);
           if (params.error_description || params.error) {
+            console.error(
+              `[Supabase OAuth Error] ${provider} redirect error:`,
+              params.error_description || params.error,
+            );
             return {
               error:
                 params.error_description ||
@@ -245,8 +265,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 access_token: params.access_token,
                 refresh_token: params.refresh_token,
               });
-            if (setErr) return { error: setErr.message };
+            if (setErr) {
+              console.error(
+                "[Supabase OAuth Error] setSession failed:",
+                setErr.message,
+              );
+              return { error: setErr.message };
+            }
             if (sessionData.session) {
+              console.log(
+                `[Supabase OAuth] ${provider} session successfully active`,
+              );
               setSession(sessionData.session);
             }
             setIsGuest(false);
@@ -254,6 +283,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return {};
           }
         } else if (res.type === "cancel" || res.type === "dismiss") {
+          console.warn(
+            `[Supabase OAuth Notice] User dismissed or cancelled ${provider} OAuth browser modal.`,
+          );
           return {
             error:
               provider === "google"
@@ -264,6 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return {};
     } catch (err: unknown) {
+      console.error("[Supabase OAuth Exception]", err);
       return {
         error: err instanceof Error ? err.message : "OAuth sign-in failed",
       };

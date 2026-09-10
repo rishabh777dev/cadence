@@ -83,10 +83,21 @@ export function useRecorder(callbacks: RecorderCallbacks): Recorder {
     await enableRecordingMode();
 
     // 1. Prepare native recording file and hardware input
-    await fileRecorder.prepareToRecordAsync();
+    console.log("[Cadence Audio] Preparing hardware recording...");
+    try {
+      await fileRecorder.prepareToRecordAsync();
+      console.log("[Cadence Audio] Hardware recorder prepared successfully");
+    } catch (prepErr) {
+      console.error(
+        "[Cadence Audio Error] prepareToRecordAsync failed:",
+        prepErr,
+      );
+      throw prepErr;
+    }
 
     // 2. Start hardware recording
     fileRecorder.record();
+    console.log("[Cadence Audio] Recording started");
 
     // 3. Clear any existing metering timer
     if (meterIntervalRef.current) {
@@ -123,8 +134,10 @@ export function useRecorder(callbacks: RecorderCallbacks): Recorder {
     try {
       await fileRecorder.stop();
       const finalUri = fileRecorder.uri ?? fileRecorder.getStatus().url ?? null;
+      console.log("[Cadence Audio] Recording stopped. Output URI:", finalUri);
       return finalUri;
-    } catch {
+    } catch (stopErr) {
+      console.error("[Cadence Audio Error] recorder.stop() failed:", stopErr);
       return fileRecorder.uri ?? null;
     }
   }, [fileRecorder]);

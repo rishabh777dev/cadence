@@ -96,6 +96,10 @@ export async function directTranscribe({
 
   if (!response.ok) {
     const errBody = await response.text().catch(() => "");
+    console.error(
+      `[Direct Transcribe Error] ${provider.toUpperCase()} responded with status ${response.status}:`,
+      errBody || response.statusText,
+    );
     throw new Error(
       `${provider.toUpperCase()} Transcription Error (${response.status}): ${errBody || response.statusText}`,
     );
@@ -105,6 +109,10 @@ export async function directTranscribe({
     text: string;
     duration?: number;
   };
+
+  console.log(
+    `[Direct Transcribe Success] Provider: ${provider}, Duration: ${data.duration ?? "unknown"}s, Text length: ${data.text?.length ?? 0}`,
+  );
 
   return {
     text: data.text?.trim() || "",
@@ -170,6 +178,11 @@ export async function directCleanup({
     });
 
     if (!response.ok) {
+      const errText = await response.text().catch(() => "");
+      console.error(
+        `[Direct Cleanup Error] Status ${response.status}:`,
+        errText,
+      );
       return text;
     }
 
@@ -179,7 +192,11 @@ export async function directCleanup({
 
     const polished = data.choices?.[0]?.message?.content?.trim();
     return polished || text;
-  } catch {
+  } catch (cleanErr) {
+    console.error(
+      "[Direct Cleanup Error] Failed to contact AI cleanup endpoint:",
+      cleanErr,
+    );
     return text;
   }
 }
