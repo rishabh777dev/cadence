@@ -1,15 +1,17 @@
+import * as Haptics from "expo-haptics";
 import {
   Check,
   Cpu,
   ExternalLink,
   Key,
+  Mic,
   RefreshCw,
   Server,
   Sparkles,
   Trash2,
   Wand2,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -31,67 +33,60 @@ import { Fonts, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import {
   ALL_PROVIDERS,
+  type CleanupProviderId,
   type ProviderId,
   type TranscriptionProvider,
   useModelConfig,
 } from "@/lib/models";
 
-function SelectableModelCard({
-  title,
-  description,
-  active,
-  onPress,
-  children,
-}: {
-  title: string;
-  description: string;
-  active: boolean;
-  onPress: () => void;
-  children?: React.ReactNode;
-}) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityState={active ? { selected: true } : {}}
-      style={[
-        styles.selectableCard,
-        {
-          borderColor: active ? theme.primary : theme.border,
-          backgroundColor: active ? theme.accent : "transparent",
-        },
-      ]}
-    >
-      {active ? (
-        <View
-          style={[styles.selectableMarker, { backgroundColor: theme.primary }]}
-        />
-      ) : null}
-      <View style={styles.selectableContent}>
-        <ThemedText
-          style={[
-            styles.selectableTitle,
-            { color: active ? theme.accentForeground : theme.foreground },
-          ]}
-        >
-          {title}
-        </ThemedText>
-        <ThemedText
-          style={[
-            styles.selectableDesc,
-            {
-              color: active ? theme.accentForeground : theme.mutedForeground,
-            },
-          ]}
-        >
-          {description}
-        </ThemedText>
-        {children}
-      </View>
-    </Pressable>
-  );
-}
+const VOICE_PROVIDERS: {
+  id: TranscriptionProvider;
+  name: string;
+  desc: string;
+  icon: string;
+  defaultModel: string;
+  keyUrl: string;
+}[] = [
+  {
+    id: "groq",
+    name: "Groq Whisper",
+    desc: "Ultra-fast direct speech recognition (~200ms)",
+    icon: "⚡",
+    defaultModel: "whisper-large-v3-turbo",
+    keyUrl: "https://console.groq.com/keys",
+  },
+  {
+    id: "openai",
+    name: "OpenAI Whisper",
+    desc: "Industry-standard accuracy across 99+ languages",
+    icon: "🤖",
+    defaultModel: "whisper-1",
+    keyUrl: "https://platform.openai.com/api-keys",
+  },
+  {
+    id: "deepgram",
+    name: "Deepgram Nova-3",
+    desc: "Fast streaming speech-to-text model",
+    icon: "🎙️",
+    defaultModel: "nova-3",
+    keyUrl: "https://console.deepgram.com",
+  },
+];
+
+const CLEANUP_PROVIDER_LIST: {
+  id: CleanupProviderId;
+  name: string;
+  icon: string;
+}[] = [
+  { id: "groq", name: "Groq", icon: "⚡" },
+  { id: "openai", name: "OpenAI", icon: "🤖" },
+  { id: "anthropic", name: "Anthropic", icon: "🧠" },
+  { id: "google", name: "Gemini", icon: "🌐" },
+  { id: "mistral", name: "Mistral", icon: "🌪️" },
+  { id: "openrouter", name: "OpenRouter", icon: "🔀" },
+  { id: "custom", name: "Custom LLM", icon: "🦙" },
+  { id: "off", name: "Off (Raw)", icon: "🚫" },
+];
 
 export default function ModelsSettingsScreen() {
   const theme = useTheme();
@@ -100,7 +95,6 @@ export default function ModelsSettingsScreen() {
     cleanupProvider,
     cleanupModel,
     magicEditLlmProvider,
-    magicEditLlmModel,
     customServerUrl,
     configuredKeys,
     discoveredModels,
@@ -116,42 +110,80 @@ export default function ModelsSettingsScreen() {
     discoverModels,
   } = useModelConfig();
 
-  const [activeProviderTab, setActiveProviderTab] =
-    useState<ProviderId>("groq");
-  const [keyInputs, setKeyInputs] = useState<Record<string, string>>({});
-  const [customUrlInput, setCustomUrlInput] = useState(customServerUrl);
-  const [customCleanupInput, setCustomCleanupInput] = useState("");
-  const [_customMagicLlmInput, _setCustomMagicLlmInput] = useState("");
-  const [savingMap, setSavingMap] = useState<Record<string, boolean>>({});
+  // Active top-level mode: "transcription" or "cleanup"
+  const [activeMode, setActiveMode] = useState<"transcription" | "cleanup">(
+    "transcription",
+  );
 
-  const handleSaveKey = async (target: ProviderId) => {
-    const key = keyInputs[target]?.trim();
+  // Key input states
+  const [keyInput, setKeyInput] = useState("");
+  const [customUrlInput, setCustomUrlInput] = useState(customServerUrl);
+  const [customModelInput, setCustomModelInput] = useState("");
+  const [savingKey, setSavingKey] = useState(false);
+
+  // Switch active mode (Transcription vs Clean-up)
+  const handleSelectMode = (mode: "transcription" | "cleanup") => {
+    setActiveMode(mode);
+    setKeyInput("");
+    setCustomModelInput("");
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  // Provider meta for active selection
+  const activeVoiceProviderMeta = useMemo(
+    () => VOICE_PROVIDERS.find((p) => p.id === provider) || VOICE_PROVIDERS[0],
+    [provider],
+  );
+
+  const activeCleanupProviderMeta = useMemo(() => {
+    if (cleanupProvider === "off") return null;
+    return (
+      ALL_PROVIDERS.find((p) => p.id === cleanupProvider) || ALL_PROVIDERS[0]
+    );
+  }, [cleanupProvider]);
+
+  // Current provider depending on which mode is active
+  const currentTargetProvider: ProviderId =
+    activeMode === "transcription"
+      ? provider
+      : cleanupProvider === "off"
+        ? "groq"
+        : (cleanupProvider as ProviderId);
+
+  const isCurrentKeyConfigured = configuredKeys[currentTargetProvider];
+
+  const handleSaveKey = async () => {
+    const key = keyInput.trim();
     if (!key) return;
-    setSavingMap((prev) => ({ ...prev, [target]: true }));
+    setSavingKey(true);
     try {
-      await saveApiKey(target, key);
-      setKeyInputs((prev) => ({ ...prev, [target]: "" }));
+      await saveApiKey(currentTargetProvider, key);
+      setKeyInput("");
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         "Saved",
-        `${target.toUpperCase()} API key saved securely. Live models discovered.`,
+        `${currentTargetProvider.toUpperCase()} API key saved securely. Live models discovered.`,
       );
     } catch {
-      Alert.alert("Error", `Could not save ${target} key.`);
+      Alert.alert("Error", `Could not save ${currentTargetProvider} key.`);
     } finally {
-      setSavingMap((prev) => ({ ...prev, [target]: false }));
+      setSavingKey(false);
     }
   };
 
-  const handleDeleteKey = (target: ProviderId) => {
+  const handleDeleteKey = () => {
     Alert.alert(
-      `Remove ${target.toUpperCase()} key?`,
-      `This removes your stored ${target} credentials.`,
+      `Remove ${currentTargetProvider.toUpperCase()} Key?`,
+      `This removes your stored ${currentTargetProvider} credentials.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => deleteApiKey(target),
+          onPress: async () => {
+            await deleteApiKey(currentTargetProvider);
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          },
         },
       ],
     );
@@ -164,205 +196,313 @@ export default function ModelsSettingsScreen() {
     Alert.alert("Saved", "Custom endpoint saved and models queried.");
   };
 
-  const handleDiscover = async (target: ProviderId) => {
+  const handleDiscover = async () => {
     try {
-      const models = await discoverModels(target);
+      const models = await discoverModels(currentTargetProvider);
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         "Discovery Complete",
-        `Discovered ${models.length} active models for ${target.toUpperCase()}.`,
+        `Discovered ${models.length} active models for ${currentTargetProvider.toUpperCase()}.`,
       );
     } catch {
       Alert.alert(
         "Discovery Notice",
-        `Could not query live models from ${target}. Please verify your API key or network connection.`,
+        `Could not query live models from ${currentTargetProvider}. Please check your key or endpoint.`,
       );
     }
   };
 
-  const activeMeta =
-    ALL_PROVIDERS.find((p) => p.id === activeProviderTab) || ALL_PROVIDERS[0];
-  const activeDiscovered = discoveredModels[activeProviderTab] || [];
+  // Models list for current view
+  const currentAvailableModels = useMemo(() => {
+    if (activeMode === "transcription") {
+      const list = discoveredModels[provider] || [];
+      const voiceOnly = list.filter((m) => m.type === "voice");
+      if (voiceOnly.length > 0) return voiceOnly;
+      // Fallback
+      return [
+        {
+          id: activeVoiceProviderMeta.defaultModel,
+          name: activeVoiceProviderMeta.name,
+          providerId: provider,
+          providerName: activeVoiceProviderMeta.name,
+          type: "voice" as const,
+          curated: true,
+        },
+      ];
+    }
 
-  // Models available for current cleanup provider
-  const availableCleanupModels =
-    cleanupProvider !== "off" && cleanupProvider
-      ? discoveredModels[cleanupProvider as ProviderId] || []
-      : [];
-
-  // Models available for current magic edit LLM provider
-  const availableMagicLlmModels =
-    magicEditLlmProvider !== "auto" && magicEditLlmProvider
-      ? discoveredModels[magicEditLlmProvider as ProviderId] || []
-      : [];
+    if (cleanupProvider === "off") return [];
+    const list = discoveredModels[cleanupProvider as ProviderId] || [];
+    return list.filter((m) => m.type === "llm");
+  }, [
+    activeMode,
+    provider,
+    cleanupProvider,
+    discoveredModels,
+    activeVoiceProviderMeta,
+  ]);
 
   return (
     <SettingsScreenScaffold
       title="Models & Providers"
-      subtitle="Full desktop parity. Bring your own keys (BYOK), discover live models from your accounts, and configure clean-up & magic edits."
+      subtitle="Select a box below to configure Transcription or Clean-up. Everything edits directly in a single flow."
     >
-      {/* 1. Active Model Pair Card */}
-      <Card style={styles.activePairCard}>
-        <View style={styles.activePairRow}>
-          <View style={styles.pairHalf}>
-            <ThemedText style={styles.pairKicker}>TRANSCRIPTION</ThemedText>
-            <ThemedText type="title" style={styles.pairModelName}>
-              {provider === "groq"
-                ? "Whisper Turbo"
-                : provider === "openai"
-                  ? "Whisper-1"
-                  : "Nova-3"}
-            </ThemedText>
-            <ThemedText
-              themeColor="mutedForeground"
-              style={styles.pairProvider}
-            >
-              {provider.toUpperCase()} (BYOK)
-            </ThemedText>
-          </View>
-
-          <View
-            style={[styles.pairDivider, { backgroundColor: theme.border }]}
-          />
-
-          <View style={styles.pairHalf}>
-            <ThemedText style={styles.pairKicker}>CLEANUP (LLM)</ThemedText>
-            <ThemedText
-              type="title"
-              style={styles.pairModelName}
-              numberOfLines={1}
-            >
-              {cleanupProvider === "off"
-                ? "Disabled"
-                : cleanupModel || "Default"}
-            </ThemedText>
-            <ThemedText
-              themeColor="mutedForeground"
-              style={styles.pairProvider}
-            >
-              {cleanupProvider === "off"
-                ? "Raw audio transcript"
-                : `${cleanupProvider.toUpperCase()} Polish`}
-            </ThemedText>
-          </View>
-        </View>
-      </Card>
-
-      {/* 2. Provider Manager & Model Discovery */}
-      <Card>
-        <SectionTitle icon={Key} title="Provider Manager & Keys (BYOK)" />
-        <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
-          Configure any provider available in the desktop app. Tap "Discover
-          Models" to query models directly from your accounts.
-        </ThemedText>
-
-        {/* Provider Tabs */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.providerTabScroll}
+      {/* 1. The Two Hero Boxes: Transcription vs Clean-up */}
+      <View style={styles.boxesRow}>
+        {/* Box 1: Transcription */}
+        <Pressable
+          onPress={() => handleSelectMode("transcription")}
+          style={[
+            styles.heroBox,
+            {
+              backgroundColor:
+                activeMode === "transcription" ? theme.card : theme.secondary,
+              borderColor:
+                activeMode === "transcription" ? theme.primary : theme.border,
+              borderWidth: activeMode === "transcription" ? 2 : 1,
+            },
+          ]}
         >
-          {ALL_PROVIDERS.map((p) => {
-            const isSelected = p.id === activeProviderTab;
-            const isConfigured = configuredKeys[p.id];
-            return (
-              <Pressable
-                key={p.id}
-                onPress={() => setActiveProviderTab(p.id)}
+          <View style={styles.boxHeaderRow}>
+            <View style={styles.boxTagRow}>
+              <Mic
+                size={12}
+                color={
+                  activeMode === "transcription"
+                    ? theme.primary
+                    : theme.mutedForeground
+                }
+              />
+              <ThemedText
                 style={[
-                  styles.providerTab,
+                  styles.boxKicker,
                   {
-                    backgroundColor: isSelected
-                      ? theme.primary
-                      : theme.secondary,
-                    borderColor: isSelected ? theme.primary : theme.border,
+                    color:
+                      activeMode === "transcription"
+                        ? theme.primary
+                        : theme.mutedForeground,
                   },
                 ]}
               >
-                <ThemedText style={styles.providerTabIcon}>{p.icon}</ThemedText>
-                <ThemedText
-                  style={[
-                    styles.providerTabText,
-                    {
-                      color: isSelected
-                        ? theme.primaryForeground
-                        : theme.foreground,
-                      fontWeight: isSelected ? "700" : "500",
-                    },
-                  ]}
-                >
-                  {p.name}
-                </ThemedText>
-                {isConfigured ? (
-                  <View
-                    style={[
-                      styles.configDot,
-                      {
-                        backgroundColor: isSelected
-                          ? theme.primaryForeground
-                          : "#10B981",
-                      },
-                    ]}
-                  />
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        {/* Active Provider Detail Box */}
-        <View
-          style={[
-            styles.providerDetailBox,
-            { backgroundColor: theme.card, borderColor: theme.border },
-          ]}
-        >
-          <View style={styles.providerHeader}>
-            <View style={styles.providerTitleRow}>
-              <ThemedText style={styles.providerTitle}>
-                {activeMeta.icon} {activeMeta.name}
+                TRANSCRIPTION
               </ThemedText>
-              {configuredKeys[activeMeta.id] ? (
-                <View style={styles.statusBadge}>
-                  <Check size={12} color="#10B981" />
-                  <ThemedText style={styles.statusTextGreen}>
-                    Configured
-                  </ThemedText>
-                </View>
-              ) : (
-                <ThemedText style={styles.statusTextMuted}>Not set</ThemedText>
-              )}
             </View>
-
-            {activeMeta.keyUrl ? (
-              <Pressable
-                onPress={() => Linking.openURL(activeMeta.keyUrl!)}
-                hitSlop={8}
-                style={styles.linkRow}
+            {activeMode === "transcription" ? (
+              <View
+                style={[styles.activePill, { backgroundColor: theme.primary }]}
               >
-                <ThemedText style={[styles.linkText, { color: theme.primary }]}>
-                  Get key
-                </ThemedText>
-                <ExternalLink size={12} color={theme.primary} />
-              </Pressable>
+                <ThemedText style={styles.activePillText}>EDITING</ThemedText>
+              </View>
             ) : null}
           </View>
 
-          <ThemedText themeColor="mutedForeground" style={styles.providerDesc}>
-            {activeMeta.desc}
+          <ThemedText
+            type="title"
+            style={styles.boxModelName}
+            numberOfLines={1}
+          >
+            {provider === "groq"
+              ? "Whisper Turbo"
+              : provider === "openai"
+                ? "Whisper-1"
+                : "Nova-3"}
           </ThemedText>
 
-          {/* Custom URL input if custom provider */}
-          {activeMeta.id === "custom" ? (
-            <View style={styles.customUrlBlock}>
-              <ThemedText style={styles.inputLabel}>
-                Endpoint Base URL
+          <ThemedText
+            themeColor="mutedForeground"
+            style={styles.boxProvider}
+            numberOfLines={1}
+          >
+            {activeVoiceProviderMeta.icon} {activeVoiceProviderMeta.name}
+          </ThemedText>
+        </Pressable>
+
+        {/* Box 2: Clean-up */}
+        <Pressable
+          onPress={() => handleSelectMode("cleanup")}
+          style={[
+            styles.heroBox,
+            {
+              backgroundColor:
+                activeMode === "cleanup" ? theme.card : theme.secondary,
+              borderColor:
+                activeMode === "cleanup" ? theme.primary : theme.border,
+              borderWidth: activeMode === "cleanup" ? 2 : 1,
+            },
+          ]}
+        >
+          <View style={styles.boxHeaderRow}>
+            <View style={styles.boxTagRow}>
+              <Sparkles
+                size={12}
+                color={
+                  activeMode === "cleanup"
+                    ? theme.primary
+                    : theme.mutedForeground
+                }
+              />
+              <ThemedText
+                style={[
+                  styles.boxKicker,
+                  {
+                    color:
+                      activeMode === "cleanup"
+                        ? theme.primary
+                        : theme.mutedForeground,
+                  },
+                ]}
+              >
+                CLEAN-UP
               </ThemedText>
+            </View>
+            {activeMode === "cleanup" ? (
+              <View
+                style={[styles.activePill, { backgroundColor: theme.primary }]}
+              >
+                <ThemedText style={styles.activePillText}>EDITING</ThemedText>
+              </View>
+            ) : null}
+          </View>
+
+          <ThemedText
+            type="title"
+            style={styles.boxModelName}
+            numberOfLines={1}
+          >
+            {cleanupProvider === "off"
+              ? "Disabled (Raw)"
+              : cleanupModel || "Default"}
+          </ThemedText>
+
+          <ThemedText
+            themeColor="mutedForeground"
+            style={styles.boxProvider}
+            numberOfLines={1}
+          >
+            {cleanupProvider === "off"
+              ? "🚫 No AI Rewrite"
+              : `${activeCleanupProviderMeta?.icon || "✨"} ${activeCleanupProviderMeta?.name || cleanupProvider.toUpperCase()}`}
+          </ThemedText>
+        </Pressable>
+      </View>
+
+      {/* 2. The Integrated Configuration Panel (Directly Under the Active Box) */}
+      <Card style={styles.editorCard}>
+        {activeMode === "transcription" ? (
+          /* ================= TRANSCRIPTION CONFIGURATION ================= */
+          <View>
+            <SectionTitle
+              icon={Cpu}
+              title="Transcription Engine (Speech-to-Text)"
+            />
+            <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
+              Select the engine that converts your microphone audio into text.
+            </ThemedText>
+
+            {/* Provider Options */}
+            <View style={styles.providerRow}>
+              {VOICE_PROVIDERS.map((vp) => {
+                const isSelected = provider === vp.id;
+                const isConfigured = configuredKeys[vp.id];
+                return (
+                  <Pressable
+                    key={vp.id}
+                    onPress={() => {
+                      setProvider(vp.id);
+                      void Haptics.impactAsync(
+                        Haptics.ImpactFeedbackStyle.Light,
+                      );
+                    }}
+                    style={[
+                      styles.providerSelectCard,
+                      {
+                        backgroundColor: isSelected
+                          ? theme.accent
+                          : theme.secondary,
+                        borderColor: isSelected ? theme.primary : theme.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.providerTopLine}>
+                      <ThemedText style={styles.providerIconText}>
+                        {vp.icon}
+                      </ThemedText>
+                      {isConfigured ? (
+                        <View style={styles.dotConfigured} />
+                      ) : (
+                        <View style={styles.dotNotConfigured} />
+                      )}
+                    </View>
+                    <ThemedText style={styles.providerSelectName}>
+                      {vp.name}
+                    </ThemedText>
+                    <ThemedText
+                      themeColor="mutedForeground"
+                      style={styles.providerSelectDesc}
+                      numberOfLines={2}
+                    >
+                      {vp.desc}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Selected Voice Provider Key Management */}
+            <View
+              style={[
+                styles.keyContainer,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
+            >
+              <View style={styles.keyHeader}>
+                <View style={styles.keyTitleRow}>
+                  <Key size={14} color={theme.primary} />
+                  <ThemedText style={styles.keyHeading}>
+                    {activeVoiceProviderMeta.name} API Key
+                  </ThemedText>
+                  {isCurrentKeyConfigured ? (
+                    <View style={styles.statusBadgeGreen}>
+                      <Check size={11} color="#10B981" />
+                      <ThemedText style={styles.statusTextGreen}>
+                        Active
+                      </ThemedText>
+                    </View>
+                  ) : (
+                    <ThemedText style={styles.statusTextMuted}>
+                      Key Required
+                    </ThemedText>
+                  )}
+                </View>
+                {activeVoiceProviderMeta.keyUrl ? (
+                  <Pressable
+                    onPress={() =>
+                      Linking.openURL(activeVoiceProviderMeta.keyUrl)
+                    }
+                    hitSlop={8}
+                    style={styles.linkRow}
+                  >
+                    <ThemedText
+                      style={[styles.linkText, { color: theme.primary }]}
+                    >
+                      Get key
+                    </ThemedText>
+                    <ExternalLink size={11} color={theme.primary} />
+                  </Pressable>
+                ) : null}
+              </View>
+
               <View style={styles.inputRow}>
                 <TextInput
-                  value={customUrlInput}
-                  onChangeText={setCustomUrlInput}
-                  placeholder="http://192.168.1.50:11434"
+                  value={keyInput}
+                  onChangeText={setKeyInput}
+                  placeholder={
+                    isCurrentKeyConfigured
+                      ? "Paste new key to update…"
+                      : "Paste API key…"
+                  }
                   placeholderTextColor={theme.mutedForeground}
+                  secureTextEntry
                   autoCapitalize="none"
                   autoCorrect={false}
                   style={[
@@ -375,404 +515,515 @@ export default function ModelsSettingsScreen() {
                   ]}
                 />
                 <Pressable
-                  onPress={handleSaveCustomUrl}
-                  style={[styles.actionBtn, { backgroundColor: theme.primary }]}
-                >
-                  <ThemedText
-                    style={[
-                      styles.actionBtnText,
-                      { color: theme.primaryForeground },
-                    ]}
-                  >
-                    Save URL
-                  </ThemedText>
-                </Pressable>
-              </View>
-            </View>
-          ) : null}
-
-          {/* Key Input Row */}
-          <View style={styles.inputBlock}>
-            <ThemedText style={styles.inputLabel}>
-              {activeMeta.id === "custom" ? "API Key (Optional)" : "API Key"}
-            </ThemedText>
-            <View style={styles.inputRow}>
-              <TextInput
-                value={keyInputs[activeMeta.id] || ""}
-                onChangeText={(val) =>
-                  setKeyInputs((prev) => ({ ...prev, [activeMeta.id]: val }))
-                }
-                placeholder={
-                  configuredKeys[activeMeta.id]
-                    ? "Enter new key to replace…"
-                    : "Paste API key…"
-                }
-                placeholderTextColor={theme.mutedForeground}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: theme.secondary,
-                    color: theme.foreground,
-                    borderColor: theme.border,
-                  },
-                ]}
-              />
-              <Pressable
-                onPress={() => handleSaveKey(activeMeta.id)}
-                disabled={
-                  !keyInputs[activeMeta.id]?.trim() || savingMap[activeMeta.id]
-                }
-                style={[
-                  styles.actionBtn,
-                  {
-                    backgroundColor: keyInputs[activeMeta.id]?.trim()
-                      ? theme.primary
-                      : theme.muted,
-                  },
-                ]}
-              >
-                {savingMap[activeMeta.id] ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={theme.primaryForeground}
-                  />
-                ) : (
-                  <ThemedText
-                    style={[
-                      styles.actionBtnText,
-                      { color: theme.primaryForeground },
-                    ]}
-                  >
-                    Save
-                  </ThemedText>
-                )}
-              </Pressable>
-              {configuredKeys[activeMeta.id] ? (
-                <Pressable
-                  onPress={() => handleDeleteKey(activeMeta.id)}
-                  style={[styles.deleteBtn, { borderColor: theme.border }]}
-                >
-                  <Trash2 size={16} color={theme.destructive} />
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-
-          {/* Discover Models Button */}
-          <View style={styles.discoveryHeader}>
-            <View style={styles.discoveryTitleRow}>
-              <ThemedText style={styles.discoveryTitle}>
-                Discovered Models
-              </ThemedText>
-              <ThemedText style={styles.discoveryCount}>
-                ({activeDiscovered.length} available)
-              </ThemedText>
-            </View>
-            <Pressable
-              onPress={() => handleDiscover(activeMeta.id)}
-              disabled={discovering[activeMeta.id]}
-              style={[styles.discoverBtn, { borderColor: theme.border }]}
-            >
-              {discovering[activeMeta.id] ? (
-                <ActivityIndicator size="small" color={theme.primary} />
-              ) : (
-                <>
-                  <RefreshCw size={12} color={theme.primary} />
-                  <ThemedText
-                    style={[styles.discoverBtnText, { color: theme.primary }]}
-                  >
-                    Discover
-                  </ThemedText>
-                </>
-              )}
-            </Pressable>
-          </View>
-
-          {/* Discovered Model Badges */}
-          <View style={styles.badgeWrap}>
-            {activeDiscovered.map((m) => {
-              const isCleanupActive =
-                cleanupProvider === activeMeta.id && cleanupModel === m.id;
-              return (
-                <View
-                  key={m.id}
+                  onPress={handleSaveKey}
+                  disabled={!keyInput.trim() || savingKey}
                   style={[
-                    styles.modelBadge,
+                    styles.actionBtn,
                     {
-                      backgroundColor: isCleanupActive
-                        ? theme.accent
-                        : theme.secondary,
-                      borderColor: isCleanupActive
+                      backgroundColor: keyInput.trim()
                         ? theme.primary
-                        : theme.border,
+                        : theme.muted,
                     },
                   ]}
                 >
-                  <ThemedText style={styles.modelBadgeName} numberOfLines={1}>
-                    {m.name || m.id}
-                  </ThemedText>
-                  {m.type === "voice" ? (
-                    <ThemedText style={styles.modelBadgeType}>STT</ThemedText>
-                  ) : null}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      </Card>
-
-      {/* 3. Speech Recognition Provider */}
-      <Card>
-        <SectionTitle icon={Cpu} title="Speech Recognition Provider" />
-        <View style={styles.list}>
-          {[
-            {
-              id: "groq" as TranscriptionProvider,
-              title: "Groq Whisper",
-              model: "whisper-large-v3-turbo",
-              description:
-                "Ultra-fast direct dictation (~200ms). Free API key.",
-              badge: "RECOMMENDED",
-            },
-            {
-              id: "openai" as TranscriptionProvider,
-              title: "OpenAI Whisper",
-              model: "whisper-1",
-              description: "Industry-standard accuracy across 99+ languages.",
-            },
-            {
-              id: "deepgram" as TranscriptionProvider,
-              title: "Deepgram Nova-3",
-              model: "nova-3",
-              description: "Next-generation high-speed voice engine.",
-            },
-          ].map((p) => {
-            const active = provider === p.id;
-            return (
-              <SelectableModelCard
-                key={p.id}
-                title={p.title}
-                description={p.description}
-                active={active}
-                onPress={() => setProvider(p.id)}
-              >
-                <View style={styles.modelMetaRow}>
-                  <ThemedText
-                    style={[
-                      styles.monoBadge,
-                      {
-                        backgroundColor: theme.secondary,
-                        color: theme.mutedForeground,
-                      },
-                    ]}
-                  >
-                    {p.model}
-                  </ThemedText>
-                  {p.badge ? (
+                  {savingKey ? (
+                    <ActivityIndicator
+                      size="small"
+                      color={theme.primaryForeground}
+                    />
+                  ) : (
                     <ThemedText
                       style={[
-                        styles.badgeTag,
+                        styles.actionBtnText,
+                        { color: theme.primaryForeground },
+                      ]}
+                    >
+                      Save
+                    </ThemedText>
+                  )}
+                </Pressable>
+                {isCurrentKeyConfigured ? (
+                  <Pressable
+                    onPress={handleDeleteKey}
+                    style={[styles.deleteBtn, { borderColor: theme.border }]}
+                  >
+                    <Trash2 size={16} color={theme.destructive} />
+                  </Pressable>
+                ) : null}
+              </View>
+            </View>
+
+            {/* Model Discovery for Voice */}
+            <View style={styles.modelListHeader}>
+              <ThemedText style={styles.subHeading}>
+                Models for {activeVoiceProviderMeta.name}
+              </ThemedText>
+              <Pressable
+                onPress={handleDiscover}
+                disabled={discovering[provider]}
+                style={[styles.discoverBtn, { borderColor: theme.border }]}
+              >
+                {discovering[provider] ? (
+                  <ActivityIndicator size="small" color={theme.primary} />
+                ) : (
+                  <>
+                    <RefreshCw size={11} color={theme.primary} />
+                    <ThemedText
+                      style={[styles.discoverBtnText, { color: theme.primary }]}
+                    >
+                      Discover Models
+                    </ThemedText>
+                  </>
+                )}
+              </Pressable>
+            </View>
+
+            {/* Models list */}
+            <View style={styles.list}>
+              {currentAvailableModels.map((m) => (
+                <Pressable
+                  key={m.id}
+                  onPress={() => {
+                    // Current voice provider uses selected default
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  style={[
+                    styles.modelOptionCard,
+                    {
+                      borderColor: theme.primary,
+                      backgroundColor: theme.accent,
+                    },
+                  ]}
+                >
+                  <View style={styles.modelOptionContent}>
+                    <ThemedText style={styles.modelOptionTitle}>
+                      {m.name || m.id}
+                    </ThemedText>
+                    <ThemedText
+                      themeColor="mutedForeground"
+                      style={styles.modelOptionDesc}
+                    >
+                      {m.description ||
+                        `Active speech recognition model (${m.id})`}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.modelActiveCheck}>
+                    <Check size={14} color={theme.primary} />
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : (
+          /* ================= CLEAN-UP CONFIGURATION ================= */
+          <View>
+            <SectionTitle
+              icon={Sparkles}
+              title="Clean-up Intelligence (Post-Processing)"
+            />
+            <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
+              Select the LLM that removes filler words, fixes grammar, and
+              polishes your transcript.
+            </ThemedText>
+
+            {/* Provider Selector Pills */}
+            <ThemedText style={styles.subHeading}>Clean-up Provider</ThemedText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.hScroll}
+            >
+              <View style={styles.pillRow}>
+                {CLEANUP_PROVIDER_LIST.map((cp) => {
+                  const isSelected = cleanupProvider === cp.id;
+                  const isConfigured =
+                    cp.id === "off" || configuredKeys[cp.id as ProviderId];
+                  return (
+                    <Pressable
+                      key={cp.id}
+                      onPress={() => {
+                        setCleanupProvider(cp.id);
+                        if (cp.id !== "off") {
+                          const def =
+                            ALL_PROVIDERS.find((p) => p.id === cp.id)
+                              ?.defaultLlmModel || "";
+                          if (def) setCleanupModel(def);
+                        }
+                        void Haptics.impactAsync(
+                          Haptics.ImpactFeedbackStyle.Light,
+                        );
+                      }}
+                      style={[
+                        styles.choicePill,
                         {
-                          backgroundColor: `${theme.primary}22`,
-                          color: theme.primary,
+                          backgroundColor: isSelected
+                            ? theme.primary
+                            : theme.secondary,
+                          borderColor: isSelected
+                            ? theme.primary
+                            : theme.border,
                         },
                       ]}
                     >
-                      {p.badge}
-                    </ThemedText>
-                  ) : null}
-                </View>
-              </SelectableModelCard>
-            );
-          })}
-        </View>
-      </Card>
-
-      {/* 4. Clean-up Post-Processing */}
-      <Card>
-        <SectionTitle icon={Sparkles} title="Post-Processing & Clean-up" />
-        <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
-          Select which provider and model polishes your spoken words.
-        </ThemedText>
-
-        {/* Clean-up Provider Selector */}
-        <ThemedText style={styles.subHeading}>Clean-up Provider</ThemedText>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.hScroll}
-        >
-          <View style={styles.pillRow}>
-            {(
-              [
-                "off",
-                "groq",
-                "openai",
-                "anthropic",
-                "google",
-                "mistral",
-                "openrouter",
-                "custom",
-              ] as const
-            ).map((p) => {
-              const isSelected = cleanupProvider === p;
-              return (
-                <Pressable
-                  key={p}
-                  onPress={() => {
-                    setCleanupProvider(p);
-                    // Default model for provider
-                    const def =
-                      ALL_PROVIDERS.find((meta) => meta.id === p)
-                        ?.defaultLlmModel || "";
-                    if (def) setCleanupModel(def);
-                  }}
-                  style={[
-                    styles.choicePill,
-                    {
-                      backgroundColor: isSelected
-                        ? theme.primary
-                        : theme.secondary,
-                      borderColor: isSelected ? theme.primary : theme.border,
-                    },
-                  ]}
-                >
-                  <ThemedText
-                    style={[
-                      styles.choicePillText,
-                      {
-                        color: isSelected
-                          ? theme.primaryForeground
-                          : theme.foreground,
-                        fontWeight: isSelected ? "700" : "500",
-                      },
-                    ]}
-                  >
-                    {p === "off" ? "Off (Raw)" : p.toUpperCase()}
-                  </ThemedText>
-                </Pressable>
-              );
-            })}
-          </View>
-        </ScrollView>
-
-        {/* Discovered Models for Selected Clean-up Provider */}
-        {cleanupProvider !== "off" ? (
-          <View style={styles.modelSection}>
-            <ThemedText style={styles.subHeading}>
-              Select Clean-up Model ({cleanupProvider.toUpperCase()})
-            </ThemedText>
-            <View style={styles.list}>
-              {availableCleanupModels
-                .filter((m) => m.type === "llm")
-                .map((m) => {
-                  const active = cleanupModel === m.id;
-                  return (
-                    <SelectableModelCard
-                      key={m.id}
-                      title={m.name || m.id}
-                      description={m.description || `Model ID: ${m.id}`}
-                      active={active}
-                      onPress={() => setCleanupModel(m.id)}
-                    >
-                      <View style={styles.modelMetaRow}>
-                        <ThemedText
+                      <ThemedText style={styles.pillIcon}>{cp.icon}</ThemedText>
+                      <ThemedText
+                        style={[
+                          styles.choicePillText,
+                          {
+                            color: isSelected
+                              ? theme.primaryForeground
+                              : theme.foreground,
+                            fontWeight: isSelected ? "700" : "500",
+                          },
+                        ]}
+                      >
+                        {cp.name}
+                      </ThemedText>
+                      {cp.id !== "off" && isConfigured ? (
+                        <View
                           style={[
-                            styles.monoBadge,
+                            styles.dotInsidePill,
                             {
-                              backgroundColor: theme.secondary,
-                              color: theme.mutedForeground,
+                              backgroundColor: isSelected
+                                ? theme.primaryForeground
+                                : "#10B981",
                             },
                           ]}
-                        >
-                          {m.id}
-                        </ThemedText>
-                        {m.curated ? (
-                          <ThemedText
-                            style={[
-                              styles.badgeTag,
-                              {
-                                backgroundColor: `${theme.primary}22`,
-                                color: theme.primary,
-                              },
-                            ]}
-                          >
-                            RECOMMENDED
-                          </ThemedText>
-                        ) : null}
-                      </View>
-                    </SelectableModelCard>
+                        />
+                      ) : null}
+                    </Pressable>
                   );
                 })}
-            </View>
+              </View>
+            </ScrollView>
 
-            {/* Custom Model ID Entry */}
-            <View style={styles.customModelRow}>
-              <TextInput
-                value={customCleanupInput}
-                onChangeText={setCustomCleanupInput}
-                placeholder="Or enter custom model ID…"
-                placeholderTextColor={theme.mutedForeground}
-                autoCapitalize="none"
-                autoCorrect={false}
+            {cleanupProvider === "off" ? (
+              <View
                 style={[
-                  styles.textInput,
+                  styles.offNoticeBox,
                   {
                     backgroundColor: theme.secondary,
-                    color: theme.foreground,
                     borderColor: theme.border,
                   },
                 ]}
-              />
-              <Pressable
-                onPress={() => {
-                  if (customCleanupInput.trim()) {
-                    setCleanupModel(customCleanupInput.trim());
-                    setCustomCleanupInput("");
-                    Alert.alert(
-                      "Applied",
-                      `Set clean-up model to ${customCleanupInput.trim()}`,
-                    );
-                  }
-                }}
-                disabled={!customCleanupInput.trim()}
-                style={[
-                  styles.actionBtn,
-                  {
-                    backgroundColor: customCleanupInput.trim()
-                      ? theme.primary
-                      : theme.muted,
-                  },
-                ]}
               >
+                <ThemedText style={styles.offNoticeTitle}>
+                  🚫 Raw Audio Dictation Mode
+                </ThemedText>
                 <ThemedText
+                  themeColor="mutedForeground"
+                  style={styles.offNoticeDesc}
+                >
+                  Clean-up is disabled. Spoken words will be returned exactly as
+                  recognized by the voice engine without any AI editing or
+                  filler removal.
+                </ThemedText>
+              </View>
+            ) : (
+              <View>
+                {/* Custom Endpoint URL if custom */}
+                {cleanupProvider === "custom" ? (
+                  <View style={styles.customUrlBlock}>
+                    <ThemedText style={styles.inputLabel}>
+                      Endpoint Base URL (Ollama / Local LLM)
+                    </ThemedText>
+                    <View style={styles.inputRow}>
+                      <TextInput
+                        value={customUrlInput}
+                        onChangeText={setCustomUrlInput}
+                        placeholder="http://192.168.1.50:11434"
+                        placeholderTextColor={theme.mutedForeground}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        style={[
+                          styles.textInput,
+                          {
+                            backgroundColor: theme.secondary,
+                            color: theme.foreground,
+                            borderColor: theme.border,
+                          },
+                        ]}
+                      />
+                      <Pressable
+                        onPress={handleSaveCustomUrl}
+                        style={[
+                          styles.actionBtn,
+                          { backgroundColor: theme.primary },
+                        ]}
+                      >
+                        <ThemedText
+                          style={[
+                            styles.actionBtnText,
+                            { color: theme.primaryForeground },
+                          ]}
+                        >
+                          Save URL
+                        </ThemedText>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : null}
+
+                {/* API Key Management for Selected Clean-up Provider */}
+                <View
                   style={[
-                    styles.actionBtnText,
-                    { color: theme.primaryForeground },
+                    styles.keyContainer,
+                    { backgroundColor: theme.card, borderColor: theme.border },
                   ]}
                 >
-                  Apply
-                </ThemedText>
-              </Pressable>
-            </View>
+                  <View style={styles.keyHeader}>
+                    <View style={styles.keyTitleRow}>
+                      <Key size={14} color={theme.primary} />
+                      <ThemedText style={styles.keyHeading}>
+                        {activeCleanupProviderMeta?.name} API Key
+                      </ThemedText>
+                      {isCurrentKeyConfigured ? (
+                        <View style={styles.statusBadgeGreen}>
+                          <Check size={11} color="#10B981" />
+                          <ThemedText style={styles.statusTextGreen}>
+                            Active
+                          </ThemedText>
+                        </View>
+                      ) : (
+                        <ThemedText style={styles.statusTextMuted}>
+                          Key Required
+                        </ThemedText>
+                      )}
+                    </View>
+                    {activeCleanupProviderMeta?.keyUrl ? (
+                      <Pressable
+                        onPress={() =>
+                          Linking.openURL(activeCleanupProviderMeta.keyUrl!)
+                        }
+                        hitSlop={8}
+                        style={styles.linkRow}
+                      >
+                        <ThemedText
+                          style={[styles.linkText, { color: theme.primary }]}
+                        >
+                          Get key
+                        </ThemedText>
+                        <ExternalLink size={11} color={theme.primary} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      value={keyInput}
+                      onChangeText={setKeyInput}
+                      placeholder={
+                        isCurrentKeyConfigured
+                          ? "Paste new key to update…"
+                          : "Paste API key…"
+                      }
+                      placeholderTextColor={theme.mutedForeground}
+                      secureTextEntry
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={[
+                        styles.textInput,
+                        {
+                          backgroundColor: theme.secondary,
+                          color: theme.foreground,
+                          borderColor: theme.border,
+                        },
+                      ]}
+                    />
+                    <Pressable
+                      onPress={handleSaveKey}
+                      disabled={!keyInput.trim() || savingKey}
+                      style={[
+                        styles.actionBtn,
+                        {
+                          backgroundColor: keyInput.trim()
+                            ? theme.primary
+                            : theme.muted,
+                        },
+                      ]}
+                    >
+                      {savingKey ? (
+                        <ActivityIndicator
+                          size="small"
+                          color={theme.primaryForeground}
+                        />
+                      ) : (
+                        <ThemedText
+                          style={[
+                            styles.actionBtnText,
+                            { color: theme.primaryForeground },
+                          ]}
+                        >
+                          Save
+                        </ThemedText>
+                      )}
+                    </Pressable>
+                    {isCurrentKeyConfigured ? (
+                      <Pressable
+                        onPress={handleDeleteKey}
+                        style={[
+                          styles.deleteBtn,
+                          { borderColor: theme.border },
+                        ]}
+                      >
+                        <Trash2 size={16} color={theme.destructive} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+
+                {/* Model Selection for Clean-up */}
+                <View style={styles.modelListHeader}>
+                  <ThemedText style={styles.subHeading}>
+                    Select Model for {activeCleanupProviderMeta?.name}
+                  </ThemedText>
+                  <Pressable
+                    onPress={handleDiscover}
+                    disabled={discovering[currentTargetProvider]}
+                    style={[styles.discoverBtn, { borderColor: theme.border }]}
+                  >
+                    {discovering[currentTargetProvider] ? (
+                      <ActivityIndicator size="small" color={theme.primary} />
+                    ) : (
+                      <>
+                        <RefreshCw size={11} color={theme.primary} />
+                        <ThemedText
+                          style={[
+                            styles.discoverBtnText,
+                            { color: theme.primary },
+                          ]}
+                        >
+                          Discover Models
+                        </ThemedText>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+
+                {/* Models List */}
+                <View style={styles.list}>
+                  {currentAvailableModels.map((m) => {
+                    const isSelected = cleanupModel === m.id;
+                    return (
+                      <Pressable
+                        key={m.id}
+                        onPress={() => {
+                          setCleanupModel(m.id);
+                          void Haptics.impactAsync(
+                            Haptics.ImpactFeedbackStyle.Light,
+                          );
+                        }}
+                        style={[
+                          styles.modelOptionCard,
+                          {
+                            borderColor: isSelected
+                              ? theme.primary
+                              : theme.border,
+                            backgroundColor: isSelected
+                              ? theme.accent
+                              : "transparent",
+                          },
+                        ]}
+                      >
+                        <View style={styles.modelOptionContent}>
+                          <ThemedText
+                            style={[
+                              styles.modelOptionTitle,
+                              {
+                                color: isSelected
+                                  ? theme.primary
+                                  : theme.foreground,
+                                fontWeight: isSelected ? "700" : "500",
+                              },
+                            ]}
+                          >
+                            {m.name || m.id}
+                          </ThemedText>
+                          <ThemedText
+                            themeColor="mutedForeground"
+                            style={styles.modelOptionDesc}
+                          >
+                            {m.description || `ID: ${m.id}`}
+                          </ThemedText>
+                        </View>
+                        {isSelected ? (
+                          <View style={styles.modelActiveCheck}>
+                            <Check size={14} color={theme.primary} />
+                          </View>
+                        ) : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* Custom Model ID Fallback */}
+                <View style={styles.customModelBox}>
+                  <ThemedText style={styles.inputLabel}>
+                    Or specify custom model ID:
+                  </ThemedText>
+                  <View style={styles.inputRow}>
+                    <TextInput
+                      value={customModelInput}
+                      onChangeText={setCustomModelInput}
+                      placeholder="e.g. llama-3.1-8b-instant…"
+                      placeholderTextColor={theme.mutedForeground}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={[
+                        styles.textInput,
+                        {
+                          backgroundColor: theme.secondary,
+                          color: theme.foreground,
+                          borderColor: theme.border,
+                        },
+                      ]}
+                    />
+                    <Pressable
+                      onPress={() => {
+                        if (customModelInput.trim()) {
+                          setCleanupModel(customModelInput.trim());
+                          setCustomModelInput("");
+                          Alert.alert(
+                            "Model Set",
+                            `Clean-up model set to ${customModelInput.trim()}`,
+                          );
+                        }
+                      }}
+                      disabled={!customModelInput.trim()}
+                      style={[
+                        styles.actionBtn,
+                        {
+                          backgroundColor: customModelInput.trim()
+                            ? theme.primary
+                            : theme.muted,
+                        },
+                      ]}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.actionBtnText,
+                          { color: theme.primaryForeground },
+                        ]}
+                      >
+                        Set
+                      </ThemedText>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
-        ) : null}
+        )}
       </Card>
 
-      {/* 5. Magic Edit Settings */}
+      {/* 3. Magic Edit Model Settings */}
       <Card>
-        <SectionTitle icon={Wand2} title="Magic Edit AI Engine" />
+        <SectionTitle icon={Wand2} title="Magic Edit Model" />
         <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
-          Configure which LLM executes your voice transformations and
-          ghostwriting.
+          Configure which LLM powers voice rewriting in the Magic Edit tab.
         </ThemedText>
 
-        <ThemedText style={styles.subHeading}>
-          Magic Edit LLM Provider
-        </ThemedText>
+        <ThemedText style={styles.subHeading}>Magic Edit Provider</ThemedText>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -803,6 +1054,7 @@ export default function ModelsSettingsScreen() {
                         : ALL_PROVIDERS.find((meta) => meta.id === p)
                             ?.defaultLlmModel || "";
                     setMagicEditLlmModel(def);
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
                   style={[
                     styles.choicePill,
@@ -825,115 +1077,78 @@ export default function ModelsSettingsScreen() {
                       },
                     ]}
                   >
-                    {p === "auto" ? "AUTO (DEFAULT)" : p.toUpperCase()}
+                    {p === "auto" ? "AUTO (MATCH CLEAN-UP)" : p.toUpperCase()}
                   </ThemedText>
                 </Pressable>
               );
             })}
           </View>
         </ScrollView>
-
-        {magicEditLlmProvider !== "auto" &&
-        availableMagicLlmModels.length > 0 ? (
-          <View style={styles.modelSection}>
-            <ThemedText style={styles.subHeading}>
-              Selected Magic Edit Model: {magicEditLlmModel || "Default"}
-            </ThemedText>
-            <View style={styles.badgeWrap}>
-              {availableMagicLlmModels
-                .filter((m) => m.type === "llm")
-                .map((m) => {
-                  const isSelected = magicEditLlmModel === m.id;
-                  return (
-                    <Pressable
-                      key={m.id}
-                      onPress={() => setMagicEditLlmModel(m.id)}
-                      style={[
-                        styles.modelSelectPill,
-                        {
-                          backgroundColor: isSelected
-                            ? theme.primary
-                            : theme.secondary,
-                          borderColor: isSelected
-                            ? theme.primary
-                            : theme.border,
-                        },
-                      ]}
-                    >
-                      <ThemedText
-                        style={[
-                          styles.modelSelectPillText,
-                          {
-                            color: isSelected
-                              ? theme.primaryForeground
-                              : theme.foreground,
-                            fontWeight: isSelected ? "700" : "500",
-                          },
-                        ]}
-                      >
-                        {m.name || m.id}
-                      </ThemedText>
-                    </Pressable>
-                  );
-                })}
-            </View>
-          </View>
-        ) : null}
       </Card>
 
-      {/* 6. Cloud Sync & Architecture */}
+      {/* 4. Serverless Architecture */}
       <Card>
-        <SectionTitle icon={Server} title="Cloud Architecture" />
+        <SectionTitle icon={Server} title="Serverless Architecture" />
         <ThemedText themeColor="mutedForeground" style={styles.sectionLead}>
-          100% Serverless. Direct client-side speech recognition and
-          multi-provider AI completions (zero cold starts).
+          100% direct client-side speech recognition & LLM completions. Zero
+          cold-start delays. Data synced to Supabase.
         </ThemedText>
-        <View style={styles.serverInfoCard}>
-          <ThemedText style={styles.serverCurrentLabel}>
-            Database & Auth:
-          </ThemedText>
-          <ThemedText
-            style={[styles.serverCurrentUrl, { color: theme.primary }]}
-          >
-            Supabase (Connected & Synced)
-          </ThemedText>
-        </View>
       </Card>
     </SettingsScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  activePairCard: {
-    padding: Spacing.four,
+  boxesRow: {
+    flexDirection: "row",
+    gap: Spacing.three,
+    marginBottom: Spacing.four,
   },
-  activePairRow: {
+  heroBox: {
+    flex: 1,
+    padding: Spacing.three,
+    borderRadius: Radius.lg,
+  },
+  boxHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  boxTagRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
-  pairHalf: {
-    flex: 1,
-  },
-  pairDivider: {
-    width: 1,
-    height: 48,
-    marginHorizontal: Spacing.three,
-  },
-  pairKicker: {
+  boxKicker: {
     fontFamily: Fonts.mono,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    opacity: 0.6,
+    fontSize: 9,
+    letterSpacing: 1.1,
+    fontWeight: "700",
+  },
+  activePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  activePillText: {
+    color: "#FFFFFF",
+    fontSize: 8,
+    fontFamily: Fonts.mono,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  boxModelName: {
+    fontSize: 15,
+    fontWeight: "700",
     marginBottom: 2,
   },
-  pairModelName: {
-    fontFamily: Fonts.serif,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  pairProvider: {
-    fontSize: 12,
+  boxProvider: {
+    fontSize: 11,
     marginTop: 2,
+  },
+  editorCard: {
+    marginBottom: Spacing.four,
   },
   sectionLead: {
     fontSize: 13,
@@ -944,221 +1159,71 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     marginBottom: Spacing.two,
-    marginTop: Spacing.one,
   },
-  hScroll: {
-    marginBottom: Spacing.three,
-  },
-  pillRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  choicePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: Radius.full,
-    borderWidth: 1,
-  },
-  choicePillText: {
-    fontSize: 12,
-  },
-  providerTabScroll: {
-    flexDirection: "row",
-    gap: 8,
-    paddingBottom: Spacing.two,
-  },
-  providerTab: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    gap: 6,
-  },
-  providerTabIcon: {
-    fontSize: 14,
-  },
-  providerTabText: {
-    fontSize: 13,
-  },
-  configDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  providerDetailBox: {
-    marginTop: Spacing.two,
-    padding: Spacing.three,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-  },
-  providerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  providerTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  providerTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  providerDesc: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: Spacing.three,
-  },
-  customUrlBlock: {
-    marginBottom: Spacing.three,
-  },
-  inputBlock: {
-    marginBottom: Spacing.three,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  providerRow: {
     gap: Spacing.two,
+    marginBottom: Spacing.four,
   },
-  textInput: {
-    flex: 1,
-    height: 42,
+  providerSelectCard: {
     borderWidth: 1,
     borderRadius: Radius.md,
-    paddingHorizontal: Spacing.three,
-    fontSize: 13,
-    fontFamily: Fonts.mono,
+    padding: Spacing.three,
   },
-  actionBtn: {
-    height: 42,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionBtnText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  deleteBtn: {
-    height: 42,
-    width: 42,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  discoveryHeader: {
+  providerTopLine: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: Spacing.one,
+    marginBottom: 4,
+  },
+  providerIconText: {
+    fontSize: 16,
+  },
+  dotConfigured: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#10B981",
+  },
+  dotNotConfigured: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#9CA3AF",
+  },
+  providerSelectName: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  providerSelectDesc: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  keyContainer: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
+    marginBottom: Spacing.three,
+  },
+  keyHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.two,
   },
-  discoveryTitleRow: {
+  keyTitleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  discoveryTitle: {
+  keyHeading: {
     fontSize: 13,
     fontWeight: "600",
   },
-  discoveryCount: {
-    fontSize: 11,
-    opacity: 0.6,
-  },
-  discoverBtn: {
+  statusBadgeGreen: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderRadius: Radius.sm,
-  },
-  discoverBtnText: {
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  badgeWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  modelBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
-    borderWidth: 1,
-  },
-  modelBadgeName: {
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  modelBadgeType: {
-    fontSize: 9,
-    fontFamily: Fonts.mono,
-    opacity: 0.7,
-  },
-  modelSelectPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  modelSelectPillText: {
-    fontSize: 12,
-  },
-  modelSection: {
-    marginTop: Spacing.two,
-  },
-  list: {
-    gap: Spacing.two,
-  },
-  customModelRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: Spacing.two,
-  },
-  modelMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 6,
-  },
-  monoBadge: {
-    fontFamily: Fonts.mono,
-    fontSize: 11,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.sm,
-  },
-  badgeTag: {
-    fontFamily: Fonts.mono,
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Radius.sm,
-  },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+    gap: 3,
   },
   statusTextGreen: {
     color: "#10B981",
@@ -1177,50 +1242,137 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   linkText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "500",
   },
-  serverInfoCard: {
-    padding: Spacing.two,
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  textInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
     borderRadius: Radius.md,
-    marginBottom: Spacing.two,
-  },
-  serverCurrentLabel: {
-    fontSize: 11,
-    fontFamily: Fonts.mono,
-    opacity: 0.6,
-  },
-  serverCurrentUrl: {
+    paddingHorizontal: Spacing.three,
     fontSize: 13,
     fontFamily: Fonts.mono,
+  },
+  actionBtn: {
+    height: 40,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.md,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  actionBtnText: {
+    fontSize: 13,
     fontWeight: "600",
-    marginTop: 2,
   },
-  selectableCard: {
-    position: "relative",
+  deleteBtn: {
+    height: 40,
+    width: 40,
     borderWidth: 1,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modelListHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: Spacing.two,
+    marginBottom: Spacing.two,
+  },
+  discoverBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderRadius: Radius.sm,
+  },
+  discoverBtnText: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  list: {
+    gap: Spacing.two,
+  },
+  modelOptionCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: Radius.md,
     padding: Spacing.three,
-    overflow: "hidden",
   },
-  selectableMarker: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-  },
-  selectableContent: {
+  modelOptionContent: {
     flex: 1,
   },
-  selectableTitle: {
-    fontFamily: Fonts.serif,
-    fontSize: 15,
-    fontWeight: "600",
+  modelOptionTitle: {
+    fontSize: 13,
+    marginBottom: 2,
   },
-  selectableDesc: {
+  modelOptionDesc: {
+    fontSize: 11,
+  },
+  modelActiveCheck: {
+    marginLeft: Spacing.two,
+  },
+  hScroll: {
+    marginBottom: Spacing.three,
+  },
+  pillRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  choicePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  pillIcon: {
     fontSize: 12,
-    marginTop: 2,
+  },
+  choicePillText: {
+    fontSize: 12,
+  },
+  dotInsidePill: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  offNoticeBox: {
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  offNoticeTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  offNoticeDesc: {
+    fontSize: 12,
     lineHeight: 16,
+  },
+  customUrlBlock: {
+    marginBottom: Spacing.three,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  customModelBox: {
+    marginTop: Spacing.three,
   },
 });
