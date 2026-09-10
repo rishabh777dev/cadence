@@ -13,7 +13,7 @@
 
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useState } from "react";
-import { cloudUrl } from "./cloud/config";
+import { cadenceServerUrl } from "./cloud/config";
 import { getPref, setPref } from "./storage";
 
 export type TranscriptionProvider = "groq" | "openai" | "cadence";
@@ -61,7 +61,7 @@ export async function setSecureApiKey(
 
   // Also sync with the Cadence server's /api/keys endpoint
   try {
-    const base = cloudUrl();
+    const base = cadenceServerUrl();
     await fetch(`${base}/api/keys`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +83,7 @@ export async function removeSecureApiKey(
   }
 
   try {
-    const base = cloudUrl();
+    const base = cadenceServerUrl();
     await fetch(`${base}/api/keys/${provider}`, {
       method: "DELETE",
     });

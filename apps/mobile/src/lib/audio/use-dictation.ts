@@ -14,6 +14,7 @@ import { Alert } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 
 import type { MicState } from "@/components/mic-button";
+import { cadenceServerUrl, cloudStreamWsUrl } from "@/lib/cloud/config";
 import { authHeaders } from "@/lib/cloud/session";
 import { CloudStreamSession } from "@/lib/cloud/stream";
 import {
@@ -75,7 +76,12 @@ export function useDictation({
   const { settings } = useSettings();
   const { vocabulary, dictionary } = useEntries();
   const { addHistory } = useHistory();
-  const { groqConfigured, openAiConfigured } = useModelConfig();
+  const {
+    provider: modelProvider,
+    groqConfigured,
+    openAiConfigured,
+    customServerUrl,
+  } = useModelConfig();
 
   const [micState, setMicState] = useState<MicState>("idle");
   const [partial, setPartial] = useState("");
@@ -162,7 +168,10 @@ export function useDictation({
     setMicState("recording");
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const hasByokKey = groqConfigured || openAiConfigured;
+    const hasByokKey =
+      (modelProvider === "groq" && groqConfigured) ||
+      (modelProvider === "openai" && openAiConfigured) ||
+      (!signedIn && (groqConfigured || openAiConfigured));
     const canTranscribe = signedIn || hasByokKey;
 
     if (!canTranscribe) {
@@ -184,9 +193,15 @@ export function useDictation({
       return;
     }
 
+    const isByok = hasByokKey && (!signedIn || modelProvider !== "cadence");
+    const wsUrl = isByok
+      ? cloudStreamWsUrl(customServerUrl || cadenceServerUrl())
+      : cloudStreamWsUrl();
+
     const headers = authHeaders();
 
     sessionRef.current = new CloudStreamSession({
+      wsUrl,
       cookie: headers?.Cookie,
       language: languageHint(settings.language),
       vocabulary: vocabularyTerms(vocabulary),
@@ -264,8 +279,10 @@ export function useDictation({
     dictionary,
     teardownSession,
     signedIn,
+    modelProvider,
     groqConfigured,
     openAiConfigured,
+    customServerUrl,
     level,
   ]);
 
@@ -282,7 +299,10 @@ export function useDictation({
       return;
     }
 
-    const hasByokKey = groqConfigured || openAiConfigured;
+    const hasByokKey =
+      (modelProvider === "groq" && groqConfigured) ||
+      (modelProvider === "openai" && openAiConfigured) ||
+      (!signedIn && (groqConfigured || openAiConfigured));
     const canTranscribe = signedIn || hasByokKey;
 
     if (!canTranscribe) {
@@ -314,6 +334,7 @@ export function useDictation({
     teardownSession,
     level,
     signedIn,
+    modelProvider,
     groqConfigured,
     openAiConfigured,
     dictionary,

@@ -6,15 +6,15 @@
 
 import Constants from "expo-constants";
 
-const DEFAULT_CLOUD_URL = "https://cadence-server-5059.onrender.com";
+const DEFAULT_CLOUD_URL = "https://service.freestylevoice.com";
+const DEFAULT_SERVER_URL = "https://cadence-server-5059.onrender.com";
 
 /**
- * Base URL for Cadence Cloud. Resolution order:
- *   1. `EXPO_PUBLIC_CLOUD_URL` env var (set in `.env.local` for local dev —
- *      point it at your machine's LAN IP, e.g. `http://192.168.1.20:8787`, so
- *      a physical device running Expo Go can reach a locally-run cloud).
+ * Base URL for Cadence / Freestyle Cloud (better-auth, user accounts, credits).
+ * Resolution order:
+ *   1. `EXPO_PUBLIC_CLOUD_URL` env var.
  *   2. `extra.cadenceCloudUrl` or `extra.freestyleCloudUrl` in app config.
- *   3. Production (`https://api.cadencevoice.com`).
+ *   3. Production (`https://service.freestylevoice.com`).
  */
 export function cloudUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_CLOUD_URL;
@@ -31,9 +31,20 @@ export function cloudAuthUrl(): string {
 }
 
 /**
- * WebSocket URL for the v2 streaming STT endpoint. Converts `https` → `wss`
- * (and `http` → `ws` for local dev).
+ * Base URL for the dedicated Cadence Server deployed on Render
+ * (BYOK keys, model registry, local data sync).
  */
-export function cloudStreamWsUrl(): string {
-  return `${cloudUrl().replace(/^http/, "ws")}/v2/stream`;
+export function cadenceServerUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_SERVER_URL;
+  return (fromEnv || DEFAULT_SERVER_URL).replace(/\/+$/, "");
+}
+
+/**
+ * WebSocket URL for the streaming STT endpoint. Converts `https` → `wss`
+ * (and `http` → `ws` for local dev).
+ * If a customBaseUrl is provided (e.g. Render server for BYOK), routes to that.
+ */
+export function cloudStreamWsUrl(customBaseUrl?: string): string {
+  const base = customBaseUrl || cloudUrl();
+  return `${base.replace(/^http/, "ws")}/v2/stream`;
 }

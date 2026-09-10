@@ -75,8 +75,8 @@ export default function SignInScreen() {
             <ThemedText type="display">.</ThemedText>
           </ThemedText>
           <ThemedText themeColor="mutedForeground" style={styles.subtitle}>
-            Voice typing that works everywhere. Sign in to your Cadence account
-            to start dictating.
+            Voice typing that works everywhere. Sign in or create your Cadence
+            account to start dictating.
           </ThemedText>
         </View>
 
@@ -131,7 +131,8 @@ export default function SignInScreen() {
           </Pressable>
 
           <ThemedText themeColor="mutedForeground" style={styles.legal}>
-            We only use your account to sync Cadence credits and preferences.
+            Continuing with Google, Apple, or GitHub signs you in or
+            automatically creates a new account.
           </ThemedText>
         </View>
       </SafeAreaView>

@@ -57,6 +57,8 @@ export interface StreamCallbacks {
 export interface StreamSessionOptions {
   /** better-auth session cookie header value (from `authClient.getCookie()`). */
   cookie?: string;
+  /** Optional custom WebSocket URL (e.g. for Render BYOK server). */
+  wsUrl?: string;
   /** Normalized ISO-639-1 hint; omit for auto-detect. */
   language?: string;
   /** ASR recognition-bias terms (the user's vocabulary). */
@@ -98,7 +100,7 @@ export class CloudStreamSession {
     if (opts.cookie) {
       headers.Cookie = opts.cookie;
     }
-    this.ws = new WS(cloudStreamWsUrl(), undefined, { headers });
+    this.ws = new WS(opts.wsUrl || cloudStreamWsUrl(), undefined, { headers });
     this.ws.binaryType = "arraybuffer";
 
     this.ws.onopen = () => this.send(this.buildStartMessage());

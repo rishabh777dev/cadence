@@ -26,7 +26,7 @@ import {
 import { ThemedText } from "@/components/themed-text";
 import { Fonts, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
-import { cloudUrl } from "@/lib/cloud/config";
+import { cadenceServerUrl } from "@/lib/cloud/config";
 import {
   type CleanupModelId,
   type TranscriptionProvider,
@@ -554,7 +554,7 @@ export default function ModelsSettingsScreen() {
           <ThemedText
             style={[styles.serverCurrentUrl, { color: theme.primary }]}
           >
-            {cloudUrl()}
+            {cadenceServerUrl()}
           </ThemedText>
         </View>
 
