@@ -13,11 +13,12 @@ export default function TabsLayout() {
       tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen name="index" options={{ title: "Home" }} />
-      <Tabs.Screen name="history" options={{ title: "History" }} />
-      <Tabs.Screen name="vocabulary" options={{ title: "Vocabulary" }} />
+      <Tabs.Screen name="index" options={{ title: "Today" }} />
+      <Tabs.Screen name="magic-edit" options={{ title: "Magic Edit" }} />
       <Tabs.Screen name="tone" options={{ title: "Cleanup & Tone" }} />
+      <Tabs.Screen name="vocabulary" options={{ title: "Vocabulary" }} />
       <Tabs.Screen name="dictionary" options={{ title: "Dictionary" }} />
+      <Tabs.Screen name="history" options={{ href: null }} />
     </Tabs>
   );
 }

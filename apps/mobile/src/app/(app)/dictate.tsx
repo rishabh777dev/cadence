@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { CadenceMark } from "@/components/cadence-mark";
 import { MicButton } from "@/components/mic-button";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -60,9 +61,12 @@ export default function DictateScreen() {
         ]}
       >
         <View style={styles.header}>
-          <ThemedText type="eyebrow" themeColor="mutedForeground">
-            Voice Keyboard
-          </ThemedText>
+          <View style={styles.headerBrand}>
+            <CadenceMark size={18} color={theme.foreground} />
+            <ThemedText type="eyebrow" themeColor="foreground">
+              Cadence Voice
+            </ThemedText>
+          </View>
           <Pressable onPress={() => router.back()} hitSlop={12}>
             <ThemedText type="eyebrow" themeColor="primary">
               Done
@@ -76,13 +80,43 @@ export default function DictateScreen() {
           placeholder="Speak and your words appear here."
         />
 
+        {!signedIn ? (
+          <View
+            style={[
+              styles.guestPromptCard,
+              { borderColor: theme.border, backgroundColor: theme.card },
+            ]}
+          >
+            <ThemedText style={styles.returnTitle}>
+              Sign in to Dictate
+            </ThemedText>
+            <ThemedText themeColor="mutedForeground" style={styles.returnHint}>
+              Cadence Cloud powers voice recognition. Sign in to start dictating
+              from your keyboard or app.
+            </ThemedText>
+            <Pressable
+              onPress={() => router.push("/sign-in")}
+              style={[styles.signInBtn, { backgroundColor: theme.primary }]}
+            >
+              <ThemedText
+                style={[
+                  styles.signInBtnText,
+                  { color: theme.primaryForeground },
+                ]}
+              >
+                Sign in to Cadence
+              </ThemedText>
+            </Pressable>
+          </View>
+        ) : null}
+
         {result && micState === "idle" ? (
           <View style={[styles.returnCard, { borderColor: theme.border }]}>
             <ThemedText style={styles.returnTitle}>
               Return to your app
             </ThemedText>
             <ThemedText themeColor="mutedForeground" style={styles.returnHint}>
-              Switch back to where you were typing — the Freestyle keyboard will
+              Switch back to where you were typing — the Cadence keyboard will
               drop this text in for you.
             </ThemedText>
           </View>
@@ -114,6 +148,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingBottom: Spacing.two,
   },
+  headerBrand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one + 2,
+  },
   returnCard: {
     borderWidth: 1,
     borderRadius: Radius.lg,
@@ -122,6 +161,24 @@ const styles = StyleSheet.create({
   },
   returnTitle: { fontFamily: Fonts.sansSemiBold, fontSize: 15 },
   returnHint: { fontSize: 13, lineHeight: 19 },
+  guestPromptCard: {
+    borderWidth: 1,
+    borderRadius: Radius.xl,
+    padding: Spacing.four,
+    gap: Spacing.two,
+    marginVertical: Spacing.two,
+  },
+  signInBtn: {
+    height: 48,
+    borderRadius: Radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: Spacing.one,
+  },
+  signInBtnText: {
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 15,
+  },
   footer: {
     alignItems: "center",
     gap: Spacing.three,

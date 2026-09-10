@@ -17,8 +17,8 @@ export const authClient = createAuthClient({
   baseURL: cloudAuthUrl(),
   plugins: [
     expoClient({
-      scheme: "freestyle",
-      storagePrefix: "freestyle",
+      scheme: "cadence",
+      storagePrefix: "cadence",
       storage: SecureStore,
     }),
   ],

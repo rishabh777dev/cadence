@@ -419,9 +419,9 @@ export default function MagicEditPage(): React.JSX.Element {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Provider Selector */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">
+              <span className="text-xs font-medium text-muted-foreground">
                 Provider
-              </label>
+              </span>
               <Select value={provider} onValueChange={handleProviderChange}>
                 <SelectTrigger className="w-full h-10 rounded-xl bg-background/80">
                   <SelectValue placeholder="Select LLM Provider" />
@@ -457,9 +457,9 @@ export default function MagicEditPage(): React.JSX.Element {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <span className="text-xs font-medium text-muted-foreground">
                       Available Model
-                    </label>
+                    </span>
                     {liveModelsQuery.isFetching ? (
                       <span className="flex items-center gap-1 text-[10px] text-primary">
                         <Loader2 className="size-2.5 animate-spin" /> Live sync…

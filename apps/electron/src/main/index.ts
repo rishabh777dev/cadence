@@ -1268,6 +1268,9 @@ async function getOpenAppCandidates(): Promise<OpenAppCandidate[]> {
   return [];
 }
 
+let activeMagicEditRestore: (() => void) | null = null;
+let isDeliveringPaste = false;
+
 function hidePill(): void {
   if (mainWindow?.isVisible()) {
     mainWindow.hide();
@@ -1281,6 +1284,15 @@ function hidePill(): void {
   try {
     globalShortcut.unregister("Escape");
   } catch {}
+
+  if (!isDeliveringPaste && activeMagicEditRestore) {
+    try {
+      activeMagicEditRestore();
+    } catch (err) {
+      log.warn(`Failed to restore clipboard after magic edit: ${err}`);
+    }
+    activeMagicEditRestore = null;
+  }
 }
 
 function wait(ms: number): Promise<void> {
@@ -1324,12 +1336,30 @@ async function deliverOutput(
 
   try {
     if (mode === OutputMode.Paste) {
-      await pasteIntoFocusedApp(text, async () => {
-        hidePill();
-        await wait(HIDE_PILL_FOCUS_SETTLE_MS[process.platform] ?? 0);
-      });
+      isDeliveringPaste = true;
+      try {
+        await pasteIntoFocusedApp(text, async () => {
+          hidePill();
+          await wait(HIDE_PILL_FOCUS_SETTLE_MS[process.platform] ?? 0);
+        });
+      } finally {
+        isDeliveringPaste = false;
+        if (activeMagicEditRestore) {
+          try {
+            activeMagicEditRestore();
+          } catch (err) {
+            log.warn(
+              `Failed to restore clipboard after magic edit paste: ${err}`,
+            );
+          }
+          activeMagicEditRestore = null;
+        }
+      }
     } else {
       clipboard.writeText(text);
+      if (activeMagicEditRestore) {
+        activeMagicEditRestore = null;
+      }
     }
   } catch (err) {
     // pasteIntoFocusedApp left the transcript on the clipboard — tell the user
@@ -3083,7 +3113,9 @@ function registerMagicEditGlobalShortcutFallback(accel: string): void {
     const onToggle = async (): Promise<void> => {
       if (!magicEditPressed) {
         magicEditPressed = true;
-        const { text: selectedText } = await captureSelectedText();
+        const { text: selectedText, restoreSnapshot } =
+          await captureSelectedText();
+        activeMagicEditRestore = restoreSnapshot;
         showPill();
         mainWindow?.webContents.send("magic-edit:down", selectedText);
         settingsWindow?.webContents.send("magic-edit:down", selectedText);
@@ -3165,7 +3197,9 @@ async function registerMagicEditHotkey(hotkey?: string): Promise<void> {
         magicEditPressed = true;
         magicEditCapturePromise = (async () => {
           try {
-            const { text: selectedText } = await captureSelectedText();
+            const { text: selectedText, restoreSnapshot } =
+              await captureSelectedText();
+            activeMagicEditRestore = restoreSnapshot;
             showPill();
             if (pillReadyPromise) {
               await pillReadyPromise;

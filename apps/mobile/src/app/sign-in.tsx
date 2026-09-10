@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CadenceMark } from "@/components/cadence-mark";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Fonts, Radius, Spacing } from "@/constants/theme";
@@ -29,8 +30,9 @@ const PROVIDER_ORDER: SocialProvider[] = Platform.select({
 });
 
 export default function SignInScreen() {
+  const theme = useTheme();
   const router = useRouter();
-  const { signInWith } = useAuth();
+  const { signInWith, continueAsGuest } = useAuth();
 
   const [pending, setPending] = useState<SocialProvider | null>(null);
   const [error, setError] = useState("");
@@ -51,22 +53,30 @@ export default function SignInScreen() {
     [signInWith, router],
   );
 
+  const handleContinueAsGuest = useCallback(() => {
+    continueAsGuest();
+    router.replace("/(app)/(tabs)");
+  }, [continueAsGuest, router]);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.hero}>
-          <ThemedText type="eyebrow" themeColor="mutedForeground">
-            Freestyle
-          </ThemedText>
+          <View style={styles.brandRow}>
+            <CadenceMark size={36} color={theme.foreground} />
+            <ThemedText style={styles.brandWord}>Cadence</ThemedText>
+          </View>
           <ThemedText type="display" style={styles.title}>
+            speak
             <ThemedText type="displayItalic" themeColor="primary">
-              speak
+              {" "}
+              freely
             </ThemedText>
             <ThemedText type="display">.</ThemedText>
           </ThemedText>
           <ThemedText themeColor="mutedForeground" style={styles.subtitle}>
-            Voice typing that works everywhere. Sign in to your Freestyle
-            account to start dictating.
+            Voice typing that works everywhere. Sign in to your Cadence account
+            to start dictating.
           </ThemedText>
         </View>
 
@@ -88,8 +98,40 @@ export default function SignInScreen() {
             />
           ))}
 
+          <View style={styles.dividerContainer}>
+            <View
+              style={[styles.dividerLine, { backgroundColor: theme.border }]}
+            />
+            <ThemedText themeColor="mutedForeground" style={styles.dividerText}>
+              or
+            </ThemedText>
+            <View
+              style={[styles.dividerLine, { backgroundColor: theme.border }]}
+            />
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Continue without signing in"
+            onPress={handleContinueAsGuest}
+            disabled={pending !== null}
+            style={({ pressed }) => [
+              styles.guestButton,
+              {
+                borderColor: theme.border,
+                backgroundColor: pressed ? theme.secondary : "transparent",
+              },
+            ]}
+          >
+            <ThemedText
+              style={[styles.guestButtonText, { color: theme.foreground }]}
+            >
+              Continue without signing in
+            </ThemedText>
+          </Pressable>
+
           <ThemedText themeColor="mutedForeground" style={styles.legal}>
-            We only use your account to sync credits and preferences.
+            We only use your account to sync Cadence credits and preferences.
           </ThemedText>
         </View>
       </SafeAreaView>
@@ -151,6 +193,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   hero: { flex: 1, justifyContent: "center", gap: Spacing.two },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    marginBottom: Spacing.one,
+  },
+  brandWord: {
+    fontFamily: Fonts.serifItalic,
+    fontSize: 26,
+    lineHeight: 30,
+  },
   title: { marginTop: Spacing.one },
   subtitle: {
     fontSize: 15,
@@ -172,6 +225,33 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { fontFamily: Fonts.sansSemiBold, fontSize: 16 },
+  dividerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: Spacing.one,
+    gap: Spacing.two,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontFamily: Fonts.mono,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  guestButton: {
+    height: 50,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  guestButtonText: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 15,
+  },
   legal: {
     fontSize: 12,
     lineHeight: 18,

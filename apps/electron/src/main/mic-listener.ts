@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Microphone Activity Listener
  *
  * Monitors microphone usage across the system using native platform binaries.
@@ -194,6 +194,10 @@ export class MicListener {
   }
 
   private scheduleRestart(): void {
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer);
+      this.restartTimer = null;
+    }
     this.restartTimer = setTimeout(() => {
       if (!this.destroyed) {
         this.start();

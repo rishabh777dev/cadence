@@ -394,7 +394,10 @@ export function ProviderManager({
           {editingKey && !isLocal && (
             <div className="bg-secondary/40 border-border/80 border p-4 rounded-xl space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <label
+                  htmlFor="provider-api-key-input"
+                  className="text-xs font-semibold text-foreground flex items-center gap-1.5"
+                >
                   <Key className="size-3.5 text-primary" /> Enter{" "}
                   {activeProvider.name} API Key:
                 </label>
@@ -413,6 +416,7 @@ export function ProviderManager({
 
               <div className="flex items-center gap-2">
                 <Input
+                  id="provider-api-key-input"
                   type="password"
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}

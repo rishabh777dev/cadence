@@ -7,7 +7,7 @@ import { useTheme } from "@/hooks/use-theme";
 
 export default function Index() {
   const theme = useTheme();
-  const { signedIn, loading } = useAuth();
+  const { signedIn, isGuest, loading } = useAuth();
 
   if (loading) {
     return (
@@ -19,5 +19,5 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={signedIn ? "/(app)/(tabs)" : "/sign-in"} />;
+  return <Redirect href={signedIn || isGuest ? "/(app)/(tabs)" : "/sign-in"} />;
 }

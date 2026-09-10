@@ -1,4 +1,4 @@
-﻿import { createAppLogger } from "@cadence-voice/utils";
+import { createAppLogger } from "@cadence-voice/utils";
 import { clientErrorSchema, telemetrySchema } from "@cadence-voice/validations";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
@@ -78,6 +78,7 @@ const apiRouter = new Hono()
 
 const router = new Hono()
   .route("/api", apiRouter)
-  .route("/stream", streamRoute);
+  .route("/stream", streamRoute)
+  .route("/v2/stream", streamRoute);
 
 export default router;

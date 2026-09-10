@@ -1,14 +1,14 @@
 import Foundation
 
 /// Reads the dictation transcript the containing app shares with the keyboard
-/// through the App Group container (`group.com.freestylevoice.app`).
+/// through the App Group container (`group.com.cadencevoice.app`).
 ///
 /// The keyboard can't use the microphone (iOS blocks mic capture in keyboard
 /// extensions), so the mic button deep-links into the app, which records +
 /// streams and writes the final transcript here. When the keyboard reappears it
 /// inserts that text and clears the slot.
 enum SharedStore {
-    static let appGroup = "group.com.freestylevoice.app"
+    static let appGroup = "group.com.cadencevoice.app"
 
     private static var defaults: UserDefaults? {
         UserDefaults(suiteName: appGroup)

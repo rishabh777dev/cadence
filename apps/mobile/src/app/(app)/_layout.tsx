@@ -12,11 +12,11 @@ import { SettingsProvider } from "@/lib/settings";
  * tab was active — not always Home.
  */
 export default function AppLayout() {
-  const { signedIn, loading } = useAuth();
+  const { signedIn, isGuest, loading } = useAuth();
 
   // The root index shows the spinner during restore; once resolved, bounce
-  // unauthenticated users back to sign-in.
-  if (!loading && !signedIn) return <Redirect href="/sign-in" />;
+  // unauthenticated users back to sign-in unless guest mode is active.
+  if (!loading && !signedIn && !isGuest) return <Redirect href="/sign-in" />;
 
   return (
     <SettingsProvider>

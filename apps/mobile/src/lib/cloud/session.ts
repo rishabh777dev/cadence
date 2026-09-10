@@ -16,7 +16,7 @@ export interface CloudUser {
 }
 
 export class CloudAuthError extends Error {
-  constructor(message = "Freestyle Cloud sign-in required") {
+  constructor(message = "Cadence Cloud sign-in required") {
     super(message);
     this.name = "CloudAuthError";
   }

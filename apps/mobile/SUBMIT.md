@@ -1,11 +1,11 @@
-# Submitting Freestyle to the app stores
+# Submitting Cadence to the app stores
 
-Freestyle mobile is submitted via **EAS Build + EAS Submit** (cloud). This doc covers
+Cadence mobile is submitted via **EAS Build + EAS Submit** (cloud). This doc covers
 the config that lives in the repo and the one-time / manual steps that do not.
 
-- Bundle ID (iOS) / package (Android): `com.freestylevoice.app`
-- iOS keyboard extension: `com.freestylevoice.app.keyboard` (App Group `group.com.freestylevoice.app`)
-- EAS project: `freestyle-voice` org, projectId in `app.json` → `extra.eas.projectId`
+- Bundle ID (iOS) / package (Android): `com.cadencevoice.app`
+- iOS keyboard extension: `com.cadencevoice.app.keyboard` (App Group `group.com.cadencevoice.app`)
+- EAS project: `cadence-voice` org, projectId in `app.json` → `extra.eas.projectId`
 
 > **Status:** iOS first. Android is deferred — the Android submit workflow and
 > credentials setup will be added later.
@@ -33,8 +33,8 @@ Then fill `eas.json` `submit.production.ios.ascAppId` (App Store Connect →
 App Information → Apple ID) and `appleTeamId` — done: `6793253767` / `X87V5R2F7D`.
 
 Register both bundle IDs in the Apple Developer portal if not already present:
-`com.freestylevoice.app` and `com.freestylevoice.app.keyboard`, each with the
-App Group `group.com.freestylevoice.app` enabled.
+`com.cadencevoice.app` and `com.cadencevoice.app.keyboard`, each with the
+App Group `group.com.cadencevoice.app` enabled.
 
 For the `submit-ios.yml` workflow's `testflight` job, also configure the App Store
 Connect connection in the Expo dashboard (Project settings → Connections).
@@ -52,7 +52,7 @@ eas credentials --platform android
 # → production → Google Service Account → Upload a Google Service Account Key
 ```
 
-The app record for `com.freestylevoice.app` must already exist in Play Console.
+The app record for `com.cadencevoice.app` must already exist in Play Console.
 
 ## Build + submit (CLI)
 
@@ -62,7 +62,7 @@ eas build  --platform ios --profile production
 eas submit --platform ios --profile production   # → TestFlight (~10–15 min processing)
 ```
 
-Verify the iOS production build embeds and signs the `FreestyleKeyboard` extension.
+Verify the iOS production build embeds and signs the `CadenceKeyboard` extension.
 
 ## Finish in the consoles (manual — EAS Submit does not do these)
 

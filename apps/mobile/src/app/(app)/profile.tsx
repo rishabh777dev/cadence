@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { LogOut } from "lucide-react-native";
+import { LogIn, LogOut } from "lucide-react-native";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 
+import { CadenceMark } from "@/components/cadence-mark";
 import { Card, SettingsScreenScaffold } from "@/components/settings-ui";
 import { Skeleton } from "@/components/skeleton";
 import { ThemedText } from "@/components/themed-text";
@@ -15,7 +16,7 @@ import { initialsFor } from "@/lib/initials";
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
-  const { user, signedIn, signOut } = useAuth();
+  const { user, signedIn, signOut, leaveGuestMode } = useAuth();
 
   const { data: usage, isLoading: usageLoading } = useQuery({
     queryKey: ["cloud-usage"],
@@ -29,7 +30,7 @@ export default function ProfileScreen() {
       {/* Account */}
       <Card>
         <View style={styles.accountHeader}>
-          {user?.image ? (
+          {signedIn && user?.image ? (
             <Image
               source={{ uri: user.image }}
               style={styles.avatarImage}
@@ -37,26 +38,30 @@ export default function ProfileScreen() {
             />
           ) : (
             <View style={[styles.avatar, { backgroundColor: theme.accent }]}>
-              <ThemedText
-                style={[styles.avatarText, { color: theme.accentForeground }]}
-              >
-                {user ? initialsFor(user) : "?"}
-              </ThemedText>
+              {signedIn && user ? (
+                <ThemedText
+                  style={[styles.avatarText, { color: theme.accentForeground }]}
+                >
+                  {initialsFor(user)}
+                </ThemedText>
+              ) : (
+                <CadenceMark size={20} color={theme.accentForeground} />
+              )}
             </View>
           )}
           <View style={styles.accountInfo}>
             <ThemedText style={styles.accountName} numberOfLines={1}>
-              {user?.name ?? "Signed in"}
+              {signedIn ? (user?.name ?? "Signed in") : "Guest Account"}
             </ThemedText>
-            {user?.email ? (
-              <ThemedText
-                themeColor="mutedForeground"
-                style={styles.accountEmail}
-                numberOfLines={1}
-              >
-                {user.email}
-              </ThemedText>
-            ) : null}
+            <ThemedText
+              themeColor="mutedForeground"
+              style={styles.accountEmail}
+              numberOfLines={1}
+            >
+              {signedIn
+                ? (user?.email ?? "")
+                : "Browsing Cadence without an account"}
+            </ThemedText>
           </View>
         </View>
 
@@ -64,37 +69,89 @@ export default function ProfileScreen() {
 
         <View style={styles.inlineRow}>
           <ThemedText themeColor="mutedForeground" style={styles.rowLabel}>
-            Credits
+            {signedIn ? "Credits" : "Voice Dictation"}
           </ThemedText>
-          {usageLoading ? (
-            <Skeleton width={72} height={16} />
+          {signedIn ? (
+            usageLoading ? (
+              <Skeleton width={72} height={16} />
+            ) : (
+              <ThemedText style={styles.rowValue}>
+                {usage ? `${usage.remaining} / ${usage.limit}` : "—"}
+              </ThemedText>
+            )
           ) : (
-            <ThemedText style={styles.rowValue}>
-              {usage ? `${usage.remaining} / ${usage.limit}` : "—"}
+            <ThemedText
+              style={[styles.rowValue, { color: theme.mutedForeground }]}
+            >
+              Sign in to dictate
             </ThemedText>
           )}
         </View>
       </Card>
 
-      {/* Sign out */}
-      <Pressable
-        onPress={() => {
-          void signOut().then(() => router.replace("/sign-in"));
-        }}
-        style={({ pressed }) => [
-          styles.signOutCard,
-          {
-            backgroundColor: pressed
-              ? theme.destructiveTintPressed
-              : theme.destructiveTint,
-          },
-        ]}
-      >
-        <LogOut color={theme.destructive} size={18} />
-        <ThemedText style={[styles.signOutText, { color: theme.destructive }]}>
-          Sign out
-        </ThemedText>
-      </Pressable>
+      {/* Action button */}
+      {signedIn ? (
+        <Pressable
+          onPress={() => {
+            void signOut().then(() => router.replace("/sign-in"));
+          }}
+          style={({ pressed }) => [
+            styles.signOutCard,
+            {
+              backgroundColor: pressed
+                ? theme.destructiveTintPressed
+                : theme.destructiveTint,
+            },
+          ]}
+        >
+          <LogOut color={theme.destructive} size={18} />
+          <ThemedText
+            style={[styles.signOutText, { color: theme.destructive }]}
+          >
+            Sign out
+          </ThemedText>
+        </Pressable>
+      ) : (
+        <View style={styles.guestActions}>
+          <Pressable
+            onPress={() => router.push("/sign-in")}
+            style={({ pressed }) => [
+              styles.signInCard,
+              {
+                backgroundColor: theme.primary,
+                opacity: pressed ? 0.9 : 1,
+              },
+            ]}
+          >
+            <LogIn color={theme.primaryForeground} size={18} />
+            <ThemedText
+              style={[styles.signInText, { color: theme.primaryForeground }]}
+            >
+              Sign in to Cadence
+            </ThemedText>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              leaveGuestMode();
+              router.replace("/sign-in");
+            }}
+            style={({ pressed }) => [
+              styles.leaveGuestCard,
+              {
+                borderColor: theme.border,
+                backgroundColor: pressed ? theme.secondary : "transparent",
+              },
+            ]}
+          >
+            <ThemedText
+              style={[styles.leaveGuestText, { color: theme.mutedForeground }]}
+            >
+              Return to Welcome Screen
+            </ThemedText>
+          </Pressable>
+        </View>
+      )}
     </SettingsScreenScaffold>
   );
 }
@@ -142,4 +199,26 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   signOutText: { fontFamily: Fonts.sansMedium, fontSize: 15 },
+  guestActions: {
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  signInCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.two,
+    height: 52,
+    borderRadius: Radius.xl,
+  },
+  signInText: { fontFamily: Fonts.sansSemiBold, fontSize: 15 },
+  leaveGuestCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 48,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+  },
+  leaveGuestText: { fontFamily: Fonts.sansMedium, fontSize: 14 },
 });

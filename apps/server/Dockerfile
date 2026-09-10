@@ -25,16 +25,16 @@ COPY . .
 
 # Install only what the server needs and skip lifecycle scripts (the Electron
 # app's postinstall rebuilds native modules we don't need here).
-RUN pnpm install --frozen-lockfile --filter @freestyle-voice/server... --ignore-scripts
+RUN pnpm install --frozen-lockfile --filter @cadence-voice/server... --ignore-scripts
 
 # Build the server bundle. Build workspace deps first (they emit to dist/),
 # then the server, which pkgroll inlines them into. The scoped install above
 # omits the root `turbo`, so order the build with pnpm's `...` filter here
 # rather than `turbo build` (which CI uses).
-RUN pnpm --filter "@freestyle-voice/server..." build
+RUN pnpm --filter "@cadence-voice/server..." build
 
 # Produce a self-contained deployment with production deps only.
-RUN pnpm --filter @freestyle-voice/server deploy --prod --legacy /app
+RUN pnpm --filter @cadence-voice/server deploy --prod --legacy /app
 
 # ---------------------------------------------------------------------------
 # Runtime image

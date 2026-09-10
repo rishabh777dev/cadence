@@ -6,21 +6,22 @@
 
 import Constants from "expo-constants";
 
-const DEFAULT_CLOUD_URL = "https://service.freestylevoice.com";
+const DEFAULT_CLOUD_URL = "https://api.cadencevoice.com";
 
 /**
- * Base URL for Freestyle Cloud. Resolution order:
+ * Base URL for Cadence Cloud. Resolution order:
  *   1. `EXPO_PUBLIC_CLOUD_URL` env var (set in `.env.local` for local dev —
  *      point it at your machine's LAN IP, e.g. `http://192.168.1.20:8787`, so
  *      a physical device running Expo Go can reach a locally-run cloud).
- *   2. `extra.freestyleCloudUrl` in app config.
- *   3. Production (`https://service.freestylevoice.com`).
+ *   2. `extra.cadenceCloudUrl` or `extra.freestyleCloudUrl` in app config.
+ *   3. Production (`https://api.cadencevoice.com`).
  */
 export function cloudUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_CLOUD_URL;
-  const fromConfig = (
-    Constants.expoConfig?.extra as { freestyleCloudUrl?: string } | undefined
-  )?.freestyleCloudUrl;
+  const extra = Constants.expoConfig?.extra as
+    | { cadenceCloudUrl?: string; freestyleCloudUrl?: string }
+    | undefined;
+  const fromConfig = extra?.cadenceCloudUrl ?? extra?.freestyleCloudUrl;
   return (fromEnv || fromConfig || DEFAULT_CLOUD_URL).replace(/\/+$/, "");
 }
 

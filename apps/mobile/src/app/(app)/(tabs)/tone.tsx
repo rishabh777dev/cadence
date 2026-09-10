@@ -43,7 +43,7 @@ export default function ToneScreen() {
   return (
     <TabScreenScaffold
       title="Cleanup & Tone"
-      subtitle="Control how much Freestyle polishes your words, and the voice it uses for each kind of writing."
+      subtitle="Control how much Cadence polishes your words, and the voice it uses for each kind of writing."
     >
       {/* Cleanup on/off */}
       <Card>

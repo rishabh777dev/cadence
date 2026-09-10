@@ -1614,6 +1614,7 @@ export default function AppPage(): React.JSX.Element {
                 } as React.CSSProperties
               }
             >
+              <title>Processing</title>
               {/* Spinner track */}
               <circle
                 cx={(SVG_WIDTH + 8) / 2}

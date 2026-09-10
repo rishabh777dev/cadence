@@ -551,11 +551,20 @@ function applyMigrations(db: DatabaseSync, currentVersion: number): void {
         "SELECT id, raw_text, cleaned_text FROM transcription_history WHERE cleaned_text IS NOT NULL",
       )
       .all() as { id: number; raw_text: string; cleaned_text: string }[];
-    const update = db.prepare(
-      "UPDATE transcription_history SET fixes_count = ? WHERE id = ?",
-    );
-    for (const row of rows) {
-      update.run(countFixes(row.raw_text, row.cleaned_text), row.id);
+    if (rows.length > 0) {
+      const update = db.prepare(
+        "UPDATE transcription_history SET fixes_count = ? WHERE id = ?",
+      );
+      db.exec("BEGIN TRANSACTION");
+      try {
+        for (const row of rows) {
+          update.run(countFixes(row.raw_text, row.cleaned_text), row.id);
+        }
+        db.exec("COMMIT");
+      } catch (err) {
+        db.exec("ROLLBACK");
+        throw err;
+      }
     }
   }
 
@@ -578,11 +587,20 @@ function applyMigrations(db: DatabaseSync, currentVersion: number): void {
         "SELECT id, raw_text, cleaned_text FROM transcription_history WHERE cleaned_text IS NOT NULL",
       )
       .all() as { id: number; raw_text: string; cleaned_text: string }[];
-    const update = db.prepare(
-      "UPDATE transcription_history SET fixes_count = ? WHERE id = ?",
-    );
-    for (const row of rows) {
-      update.run(countFixes(row.raw_text, row.cleaned_text), row.id);
+    if (rows.length > 0) {
+      const update = db.prepare(
+        "UPDATE transcription_history SET fixes_count = ? WHERE id = ?",
+      );
+      db.exec("BEGIN TRANSACTION");
+      try {
+        for (const row of rows) {
+          update.run(countFixes(row.raw_text, row.cleaned_text), row.id);
+        }
+        db.exec("COMMIT");
+      } catch (err) {
+        db.exec("ROLLBACK");
+        throw err;
+      }
     }
   }
 

@@ -37,6 +37,13 @@ const MIN_RECORDING_MS = 350;
  */
 const HOLD_THRESHOLD_MS = 300;
 
+const GUEST_SAMPLE_TRANSCRIPTS = [
+  "Pushing the product sync to tomorrow morning at ten.",
+  "Cadence voice dictation test. Real-time speech recognition that works everywhere.",
+  "Let's deploy the staging release on Friday once all tests pass.",
+  "Reviewing the mobile interface design and keyboard extension integration.",
+];
+
 interface UseDictationOptions {
   signedIn: boolean;
   /** Called with the trimmed final transcript (non-empty). */
@@ -86,6 +93,8 @@ export function useDictation({
   // Timestamp of the last press-in, used to tell a hold (stop on release) from
   // a quick tap (toggle: stop on the next tap).
   const pressInAt = useRef(0);
+  // Tracks active touch press state to resolve quick hold/release races.
+  const isPressingRef = useRef(false);
 
   // Keep the latest onFinal without re-creating beginRecording each render.
   const onFinalRef = useRef(onFinal);
@@ -101,6 +110,7 @@ export function useDictation({
   useEffect(() => {
     addHistoryRef.current = addHistory;
   });
+  const finishRecordingRef = useRef<() => void>(() => {});
 
   const recorder = useRecorder({
     onFrame: (frame) => sessionRef.current?.sendAudio(frame),
@@ -114,12 +124,19 @@ export function useDictation({
     sessionRef.current = null;
   }, []);
 
-  useEffect(() => teardownSession, [teardownSession]);
+  useEffect(() => {
+    return () => {
+      if (recordingRef.current) {
+        recordingRef.current = false;
+        level.value = 0;
+        recorder.stop();
+      }
+      teardownSession();
+    };
+  }, [recorder, teardownSession, level]);
 
   const beginRecording = useCallback(async () => {
-    if (recordingRef.current || startingRef.current || !signedIn) return;
-    const headers = authHeaders();
-    if (!headers) return;
+    if (recordingRef.current || startingRef.current) return;
     startingRef.current = true;
 
     const perm =
@@ -142,6 +159,38 @@ export function useDictation({
     onStartRef.current?.();
     setMicState("recording");
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const isGuest = !signedIn;
+
+    if (isGuest) {
+      // Guest Demo Mode: Capture real microphone audio and animate live waveform
+      setPartial("Listening to your voice…");
+      try {
+        await recorder.start();
+        if (
+          !isPressingRef.current &&
+          Date.now() - pressInAt.current >= HOLD_THRESHOLD_MS
+        ) {
+          finishRecordingRef.current();
+        }
+      } catch {
+        recordingRef.current = false;
+        setMicState("idle");
+        Alert.alert("Recording failed", "Could not start the microphone.");
+      }
+      return;
+    }
+
+    const headers = authHeaders();
+    if (!headers?.Cookie) {
+      recordingRef.current = false;
+      setMicState("idle");
+      Alert.alert(
+        "Sign-in required",
+        "Please sign in to Cadence Cloud to dictate.",
+      );
+      return;
+    }
 
     sessionRef.current = new CloudStreamSession({
       cookie: headers.Cookie,
@@ -174,12 +223,15 @@ export function useDictation({
           );
         },
         onError: (message, code) => {
+          recordingRef.current = false;
+          level.value = 0;
+          recorder.stop();
           setMicState("idle");
           teardownSession();
           if (code === "usage_exceeded") {
             Alert.alert(
               "Out of credits",
-              "You've used your free Freestyle credits for now.",
+              "You've used your free Cadence credits for now.",
             );
           } else {
             Alert.alert("Transcription failed", message);
@@ -198,6 +250,12 @@ export function useDictation({
 
     try {
       await recorder.start();
+      if (
+        !isPressingRef.current &&
+        Date.now() - pressInAt.current >= HOLD_THRESHOLD_MS
+      ) {
+        finishRecordingRef.current();
+      }
     } catch {
       recordingRef.current = false;
       startingRef.current = false;
@@ -205,7 +263,15 @@ export function useDictation({
       teardownSession();
       Alert.alert("Recording failed", "Could not start the microphone.");
     }
-  }, [recorder, settings, vocabulary, dictionary, teardownSession, signedIn]);
+  }, [
+    recorder,
+    settings,
+    vocabulary,
+    dictionary,
+    teardownSession,
+    signedIn,
+    level,
+  ]);
 
   const finishRecording = useCallback(() => {
     if (!recordingRef.current) return;
@@ -220,13 +286,35 @@ export function useDictation({
       return;
     }
 
+    if (!signedIn) {
+      setMicState("finalizing");
+      committedDurationRef.current = elapsed;
+      setTimeout(() => {
+        setPartial("");
+        setMicState("idle");
+        const idx = Math.floor(Math.random() * GUEST_SAMPLE_TRANSCRIPTS.length);
+        const text = applyDictionaryReplacements(
+          GUEST_SAMPLE_TRANSCRIPTS[idx],
+          dictionary,
+        ).trim();
+        addHistoryRef.current(text, elapsed);
+        onFinalRef.current(text);
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+      }, 500);
+      return;
+    }
+
     setMicState("finalizing");
     committedDurationRef.current = elapsed;
     sessionRef.current?.setAudioDurationMs(elapsed);
     sessionRef.current?.commit();
-  }, [recorder, teardownSession, level]);
+  }, [recorder, teardownSession, level, signedIn, dictionary]);
+  finishRecordingRef.current = finishRecording;
 
   const onPressIn = useCallback(() => {
+    isPressingRef.current = true;
     // A press while already recording is the second tap of a tap-to-toggle
     // interaction → stop.
     if (recordingRef.current) {
@@ -238,6 +326,7 @@ export function useDictation({
   }, [beginRecording, finishRecording]);
 
   const onPressOut = useCallback(() => {
+    isPressingRef.current = false;
     if (!recordingRef.current) return;
     // Long enough to count as a hold → finish on release. Otherwise it was a
     // tap: leave recording running until the next tap.

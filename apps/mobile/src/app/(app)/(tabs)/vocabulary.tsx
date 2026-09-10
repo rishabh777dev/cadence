@@ -59,7 +59,7 @@ export default function VocabularyScreen() {
   return (
     <TabScreenScaffold
       title="Vocabulary"
-      subtitle="Names, jargon, and phrases Freestyle should recognize. These bias speech recognition so tricky words come out right."
+      subtitle="Names, jargon, and phrases Cadence should recognize. These bias speech recognition so tricky words come out right."
     >
       {editing ? (
         <Card>

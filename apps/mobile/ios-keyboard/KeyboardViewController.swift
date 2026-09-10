@@ -1,11 +1,9 @@
 import SwiftUI
 import UIKit
 
-/// Freestyle's design tokens, mirrored from `apps/mobile/src/constants/theme.ts`
-/// (which is itself lifted from `DESIGN.md`). A keyboard extension can't share
-/// code with the React Native app, so the palette is duplicated here as raw hex.
-/// Warm paper substrate, near-black ink, olive accent — never pure white/black.
-private enum Freestyle {
+/// Cadence design tokens, mirrored from `apps/mobile/src/constants/theme.ts`.
+/// Claude-inspired Warm Glass & Terracotta palette.
+private enum CadenceTheme {
     struct Palette {
         let background: UIColor
         let foreground: UIColor
@@ -19,27 +17,27 @@ private enum Freestyle {
     }
 
     static let light = Palette(
-        background: UIColor(hex: 0xF4F0E4),
-        foreground: UIColor(hex: 0x16140F),
-        card: UIColor(hex: 0xFBF8EE),
-        primary: UIColor(hex: 0x6B8F12),
-        primaryForeground: UIColor(hex: 0xFBF8EE),
-        secondary: UIColor(hex: 0xECE7D6),
-        mutedForeground: UIColor(hex: 0x7B7461),
-        border: UIColor(hex: 0xD6CDB8),
-        destructive: UIColor(hex: 0xDD6E4E)
+        background: UIColor(hex: 0xFAF7F2),
+        foreground: UIColor(hex: 0x1F1E1B),
+        card: UIColor(hex: 0xFFFFFF),
+        primary: UIColor(hex: 0xC15F3D),
+        primaryForeground: UIColor(hex: 0xFFFFFF),
+        secondary: UIColor(hex: 0xF2EFE8),
+        mutedForeground: UIColor(hex: 0x787369),
+        border: UIColor(hex: 0xE5E0D8),
+        destructive: UIColor(hex: 0xDC2626)
     )
 
     static let dark = Palette(
-        background: UIColor(hex: 0x16140F),
-        foreground: UIColor(hex: 0xECE7D6),
-        card: UIColor(hex: 0x1E1C16),
-        primary: UIColor(hex: 0x8AB62A),
-        primaryForeground: UIColor(hex: 0x16140F),
-        secondary: UIColor(hex: 0x2A2720),
-        mutedForeground: UIColor(hex: 0x9E977F),
-        border: UIColor(hex: 0x3A362D),
-        destructive: UIColor(hex: 0xE0805F)
+        background: UIColor(hex: 0x121211),
+        foreground: UIColor(hex: 0xEDE8DE),
+        card: UIColor(hex: 0x1A1916),
+        primary: UIColor(hex: 0xD97757),
+        primaryForeground: UIColor(hex: 0xFFFFFF),
+        secondary: UIColor(hex: 0x272521),
+        mutedForeground: UIColor(hex: 0x9B9484),
+        border: UIColor(hex: 0x2A2824),
+        destructive: UIColor(hex: 0xEF4444)
     )
 
     static func palette(dark: Bool) -> Palette { dark ? Self.dark : Self.light }
@@ -62,11 +60,11 @@ extension Color {
     init(hex: UInt32) { self.init(UIColor(hex: hex)) }
 }
 
-/// Freestyle voice keyboard — a minimal, mic-focused keyboard extension.
+/// Cadence voice keyboard — a minimal, mic-focused keyboard extension.
 ///
 /// iOS blocks microphone capture inside keyboard extensions (every capture API —
 /// AVAudioEngine, RemoteIO, AVAudioRecorder — fails on-device, matching Apple's
-/// app-extension restriction). So the mic button deep-links into the Freestyle
+/// app-extension restriction). So the mic button deep-links into the Cadence
 /// app (via a SwiftUI `Link`, the only mechanism that reliably opens the host
 /// app from a keyboard on iOS 18+), which records + streams to the cloud and
 /// writes the transcript into the App Group. When the keyboard reappears,
@@ -128,7 +126,7 @@ final class KeyboardViewController: UIInputViewController {
 
     /// Standard iOS keyboard height (4 rows × 46pt + 3 gaps × 9pt + toolbar 44pt
     /// + top/bottom spacing). Matches the system keyboard so the transition
-    /// between Freestyle and the user's normal keyboard doesn't jump.
+    /// between Cadence and the user's normal keyboard doesn't jump.
     private func buildLayout() {
         let keyboardHeight: CGFloat = 291
         let heightConstraint = view.heightAnchor.constraint(equalToConstant: keyboardHeight)
@@ -145,7 +143,7 @@ final class KeyboardViewController: UIInputViewController {
 
         // --- Mic button (center, prominent) — deep-links to the app
         let mic = UIHostingController(
-            rootView: MicLink(destination: URL(string: "freestyle://dictate")!, dark: isDark)
+            rootView: MicLink(destination: URL(string: "cadence://dictate")!, dark: isDark)
         )
         mic.view.backgroundColor = .clear
         mic.view.translatesAutoresizingMaskIntoConstraints = false
@@ -313,11 +311,11 @@ final class KeyboardViewController: UIInputViewController {
 
     private func applyColors() {
         let dark = isDark
-        let c = Freestyle.palette(dark: dark)
+        let c = CadenceTheme.palette(dark: dark)
 
         // Match the default Apple keyboard appearance — use system colors for
         // the background and keys so it feels native. Only the mic button
-        // keeps the Freestyle olive accent.
+        // keeps the Cadence terracotta accent.
 
         // Standard iOS keyboard background.
         view.backgroundColor = dark
@@ -357,7 +355,7 @@ final class KeyboardViewController: UIInputViewController {
             ? UIColor(white: 0.6, alpha: 1)
             : UIColor(white: 0.4, alpha: 1)
 
-        micHost?.rootView = MicLink(destination: URL(string: "freestyle://dictate")!, dark: dark)
+        micHost?.rootView = MicLink(destination: URL(string: "cadence://dictate")!, dark: dark)
     }
 
     // MARK: - App-handoff transcript insertion

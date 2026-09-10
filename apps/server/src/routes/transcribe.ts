@@ -405,7 +405,9 @@ const transcribeRoute = new Hono().post("/", async (c) => {
           );
         }
         if (isIgnorableSttError(err)) {
-          log.debug(`cloud STT skipped (short/empty audio): ${formatError(err)}`);
+          log.debug(
+            `cloud STT skipped (short/empty audio): ${formatError(err)}`,
+          );
           return suppressedResponse();
         }
         log.error(

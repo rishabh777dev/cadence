@@ -7,11 +7,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export async function getPref(key: string): Promise<string | null> {
+  const value = await AsyncStorage.getItem(`cadence_pref_${key}`);
+  if (value != null) return value;
   return AsyncStorage.getItem(`freestyle_pref_${key}`);
 }
 
 export async function setPref(key: string, value: string): Promise<void> {
-  await AsyncStorage.setItem(`freestyle_pref_${key}`, value);
+  await AsyncStorage.setItem(`cadence_pref_${key}`, value);
 }
 
 /** Read and parse a JSON-encoded preference, falling back on any error. */

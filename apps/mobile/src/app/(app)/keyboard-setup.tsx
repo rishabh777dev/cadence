@@ -13,11 +13,11 @@ import {
 } from "@/lib/audio/recorder";
 
 const STEPS = [
-  "Grant microphone access below (Freestyle records your voice when you dictate).",
+  "Grant microphone access below (Cadence records your voice when you dictate).",
   "Open Settings › General › Keyboard › Keyboards.",
-  "Tap “Add New Keyboard…” and choose Freestyle.",
-  "Tap Freestyle in the list, then enable “Allow Full Access”.",
-  "In any app, switch to the Freestyle keyboard and tap the mic to dictate.",
+  "Tap “Add New Keyboard…” and choose Cadence.",
+  "Tap Cadence in the list, then enable “Allow Full Access”.",
+  "In any app, switch to the Cadence keyboard and tap the mic to dictate.",
 ];
 
 export default function KeyboardSetupScreen() {
@@ -40,8 +40,8 @@ export default function KeyboardSetupScreen() {
 
   return (
     <SettingsScreenScaffold
-      title="Voice keyboard"
-      subtitle="Add the Freestyle keyboard once, then use it in any app. Tap the mic and Freestyle opens to capture your voice, then drops the transcript straight back into the field. Full Access lets the keyboard talk to Freestyle and insert your text."
+      title="Cadence Voice Keyboard"
+      subtitle="Add the Cadence keyboard once, then use it in any app. Tap the mic and Cadence opens to capture your voice, then drops the transcript straight back into the field. Full Access lets the keyboard talk to Cadence and insert your text."
     >
       <Pressable
         onPress={grantMic}
@@ -57,7 +57,7 @@ export default function KeyboardSetupScreen() {
           <ThemedText style={styles.rowLabel}>Microphone access</ThemedText>
           <ThemedText themeColor="mutedForeground" style={styles.rowHint}>
             {micStatus === "granted"
-              ? "Granted — Freestyle can record your dictation."
+              ? "Granted — Cadence can record your dictation."
               : micStatus === "denied"
                 ? "Denied — tap to open Settings and enable it."
                 : "Tap to grant microphone access."}

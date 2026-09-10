@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { Colors } from "@/constants/theme";
+import { AuthProvider } from "@/hooks/use-auth";
 import { ColorModeProvider, useColorMode } from "@/lib/color-mode";
 import { queryClient } from "@/lib/query";
 
@@ -38,16 +39,13 @@ if (process.env.EXPO_PUBLIC_SENTRY_DSN) {
       }),
     ],
     enableNativeFramesTracking: !isRunningInExpoGo(),
+    // Session Replay
+    replaysOnErrorSampleRate: 1.0,
+    replaysSessionSampleRate: 0.1,
+    // Logs
+    enableLogs: true,
   });
 }
-
-// Session Replay
-replaysOnErrorSampleRate: 1.0, replaysSessionSampleRate;
-: 0.1,
-
-  // Logs
-  enableLogs: true,
-})
 
 SplashScreen.preventAutoHideAsync();
 
@@ -89,7 +87,9 @@ function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ColorModeProvider>
-        <RootNavigator />
+        <AuthProvider>
+          <RootNavigator />
+        </AuthProvider>
       </ColorModeProvider>
     </QueryClientProvider>
   );

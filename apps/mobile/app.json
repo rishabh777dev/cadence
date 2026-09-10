@@ -1,22 +1,23 @@
-﻿{
+{
   "expo": {
-    "name": "Freestyle",
-    "slug": "freestyle",
+    "name": "Cadence",
+    "slug": "cadence",
     "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "freestyle",
+    "scheme": "cadence",
     "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.freestylevoice.app",
+      "bundleIdentifier": "com.cadencevoice.app",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "Freestyle needs microphone access to transcribe your voice.",
+        "NSMicrophoneUsageDescription": "Cadence needs microphone access to transcribe your voice.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.freestylevoice.app",
+      "package": "com.cadencevoice.app",
       "permissions": [
         "RECORD_AUDIO",
         "android.permission.RECORD_AUDIO",
@@ -25,8 +26,8 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#F4F0E4",
-        "foregroundImage": "./assets/images/freestyle-mark.png"
+        "backgroundColor": "#18181B",
+        "foregroundImage": "./assets/images/cadence-mark.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -35,7 +36,7 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "freestyle-mobile",
+          "project": "cadence-mobile",
           "organization": "test101-n4"
         }
       ],
@@ -43,7 +44,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F4F0E4",
+          "backgroundColor": "#FAF7F2",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }
@@ -51,14 +52,15 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Freestyle needs microphone access to transcribe your voice."
+          "microphonePermission": "Cadence needs microphone access to transcribe your voice."
         }
       ],
       "expo-secure-store",
       "expo-web-browser",
       "expo-asset",
       "./plugins/withKeyboardExtension",
-      "./plugins/withPodResourceBundleSigning"
+      "./plugins/withPodResourceBundleSigning",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -73,11 +75,11 @@
             "ios": {
               "appExtensions": [
                 {
-                  "targetName": "FreestyleKeyboard",
-                  "bundleIdentifier": "com.freestylevoice.app.keyboard",
+                  "targetName": "CadenceKeyboard",
+                  "bundleIdentifier": "com.cadencevoice.app.keyboard",
                   "entitlements": {
                     "com.apple.security.application-groups": [
-                      "group.com.freestylevoice.app"
+                      "group.com.cadencevoice.app"
                     ]
                   }
                 }

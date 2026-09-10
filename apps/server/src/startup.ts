@@ -23,12 +23,12 @@ if (Number.isNaN(port)) {
   process.exit(1);
 }
 
-if (!process.env.FREESTYLE_DB_PATH) {
-  console.error(
-    "FREESTYLE_DB_PATH environment variable is required. Set it to the desired SQLite database file path.",
-  );
-  process.exit(1);
-}
+const dbPath =
+  process.env.FREESTYLE_DB_PATH ??
+  process.env.CADENCE_DB_PATH ??
+  "./cadence.db";
+process.env.FREESTYLE_DB_PATH = dbPath;
+console.log(`Using database at: ${dbPath}`);
 
 const { server, port: boundPort } = await startServer({
   port,
@@ -40,7 +40,7 @@ const { server, port: boundPort } = await startServer({
   );
   process.exit(1);
 });
-console.log(`Freestyle server running on http://${host}:${boundPort}`);
+console.log(`Cadence server running on http://${host}:${boundPort}`);
 
 function shutdown(signal: string): void {
   console.log(`Received ${signal}, shutting down...`);

@@ -11,6 +11,7 @@ import {
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
+import { CadenceMark } from "@/components/cadence-mark";
 import { LanguageSheet } from "@/components/language-sheet";
 import {
   Card,
@@ -98,6 +99,22 @@ export default function SettingsScreen() {
         </View>
       </Card>
 
+      {/* About Cadence */}
+      <Card style={styles.aboutCard}>
+        <View style={styles.aboutRow}>
+          <CadenceMark size={28} color={theme.foreground} />
+          <View style={styles.aboutContent}>
+            <ThemedText style={styles.aboutTitle}>Cadence Voice</ThemedText>
+            <ThemedText
+              themeColor="mutedForeground"
+              style={styles.aboutSubtitle}
+            >
+              v0.0.1 · Voice typing that works everywhere
+            </ThemedText>
+          </View>
+        </View>
+      </Card>
+
       <LanguageSheet
         visible={languageOpen}
         selected={settings.language}
@@ -170,5 +187,24 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: "transparent",
+  },
+  aboutCard: {
+    paddingVertical: Spacing.three,
+  },
+  aboutRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+  },
+  aboutContent: {
+    flex: 1,
+  },
+  aboutTitle: {
+    fontFamily: Fonts.sansSemiBold,
+    fontSize: 15,
+  },
+  aboutSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
 });

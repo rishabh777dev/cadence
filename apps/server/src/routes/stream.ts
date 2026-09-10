@@ -1,4 +1,4 @@
-﻿import { sanitizeTranscriptText } from "@cadence-voice/stt";
+import { sanitizeTranscriptText } from "@cadence-voice/stt";
 import { createAppLogger } from "@cadence-voice/utils";
 import { upgradeWebSocket } from "@hono/node-server";
 import { Hono } from "hono";
@@ -142,18 +142,36 @@ const stream = new Hono().get(
       } catch {}
     }
 
+    function safeSend(
+      targetWs: { send: (data: string) => void },
+      data: string | object,
+    ): boolean {
+      if (closed) return false;
+      try {
+        const payload = typeof data === "string" ? data : JSON.stringify(data);
+        targetWs.send(payload);
+        return true;
+      } catch (err) {
+        log.debug(
+          `Failed to send on websocket (client closed or error): ${err}`,
+        );
+        return false;
+      }
+    }
+
     function notifySessionReady(
       ws: { send: (data: string) => void },
       model: string,
       token: number,
     ): void {
-      if (token !== readyToken || notifiedReadyToken === token) return;
+      if (closed || token !== readyToken || notifiedReadyToken === token)
+        return;
       notifiedReadyToken = token;
       flushPendingAudio();
       if (voiceDefaults?.provider === "soniox") {
         prewarmPostProcess();
       }
-      ws.send(JSON.stringify({ type: "session.ready", model }));
+      safeSend(ws, { type: "session.ready", model });
       if (pendingCommit) {
         pendingCommit = false;
         upstream?.commit();
@@ -175,12 +193,10 @@ const stream = new Hono().get(
         })
         .catch((err: Error) => {
           if (closed) return;
-          ws.send(
-            JSON.stringify({
-              type: "error",
-              message: err.message,
-            }),
-          );
+          safeSend(ws, {
+            type: "error",
+            message: err.message,
+          });
         });
     }
 
@@ -325,19 +341,19 @@ const stream = new Hono().get(
         cleanup,
         callbacks: {
           onReady: (readyModel) => {
-            if (upstream !== session) return;
+            if (closed || upstream !== session) return;
             reconnectAttempts = 0;
             notifySessionReady(ws, readyModel || modelShort, token);
           },
           onPartial: (text) => {
-            if (upstream !== session) return;
+            if (closed || upstream !== session) return;
             if (LOG_STREAM_PARTIALS) {
               log.info(`partial ${voice.provider}/${modelShort}: ${text}`);
             }
-            ws.send(JSON.stringify({ type: "partial", text }));
+            safeSend(ws, { type: "partial", text });
           },
           onFinal: async (rawText, upstreamRawText) => {
-            if (upstream !== session) return;
+            if (closed || upstream !== session) return;
             rawText = sanitizeTranscriptText(rawText);
             const upstreamRaw = upstreamRawText
               ? sanitizeTranscriptText(upstreamRawText)
@@ -375,9 +391,7 @@ const stream = new Hono().get(
               // paste nothing. The post-process-off branch below has its own
               // empty guard after afterTranscribe.
               if (cloudHandledPostProcess && !cloudText) {
-                if (!closed) {
-                  ws.send(JSON.stringify({ type: "final", text: "" }));
-                }
+                safeSend(ws, { type: "final", text: "" });
                 return;
               }
 
@@ -468,9 +482,7 @@ const stream = new Hono().get(
                   has_app_context: !!streamCtx,
                 });
               }
-              if (!closed) {
-                ws.send(JSON.stringify({ type: "final", text: finalText }));
-              }
+              safeSend(ws, { type: "final", text: finalText });
               if (!suppressed) {
                 const historyRawText = upstreamRaw || cloudText;
                 try {
@@ -514,7 +526,7 @@ const stream = new Hono().get(
             // A plugin may suppress the dictation explicitly (consume/abort) or
             // implicitly by emptying the transcript — either skips cleanup.
             if (api.control.state !== "running" || !rawText?.trim()) {
-              ws.send(JSON.stringify({ type: "final", text: "" }));
+              safeSend(ws, { type: "final", text: "" });
               return;
             }
 
@@ -588,9 +600,7 @@ const stream = new Hono().get(
                   });
                 }
                 const deliverText = suppressed ? "" : pp.cleaned;
-                if (!closed) {
-                  ws.send(JSON.stringify({ type: "final", text: deliverText }));
-                }
+                safeSend(ws, { type: "final", text: deliverText });
                 if (!suppressed) {
                   try {
                     saveProcessedHistory({
@@ -614,33 +624,23 @@ const stream = new Hono().get(
               .catch((err) => {
                 if (err instanceof FreestyleCloudAuthError) {
                   invalidateSession();
-                  if (!closed) {
-                    ws.send(
-                      JSON.stringify({
-                        type: "error",
-                        code: "cloud_auth_required",
-                        message: "Sign in to Freestyle Transcribe",
-                      }),
-                    );
-                  }
+                  safeSend(ws, {
+                    type: "error",
+                    code: "cloud_auth_required",
+                    message: "Sign in to Freestyle Transcribe",
+                  });
                   return;
                 }
                 if (err instanceof FreestyleCloudUsageError) {
-                  if (!closed) {
-                    ws.send(
-                      JSON.stringify({
-                        type: "error",
-                        code: "usage_exceeded",
-                        message: "Freestyle Cloud usage limit reached",
-                      }),
-                    );
-                  }
+                  safeSend(ws, {
+                    type: "error",
+                    code: "usage_exceeded",
+                    message: "Freestyle Cloud usage limit reached",
+                  });
                   return;
                 }
                 captureException(err);
-                if (!closed) {
-                  ws.send(JSON.stringify({ type: "final", text: rawText }));
-                }
+                safeSend(ws, { type: "final", text: rawText });
                 try {
                   saveRawHistory({
                     rawText,
@@ -654,23 +654,19 @@ const stream = new Hono().get(
               });
           },
           onError: (message, code) => {
-            if (upstream !== session) return;
+            if (closed || upstream !== session) return;
             sessionTransportUnavailable = true;
-            ws.send(
-              JSON.stringify({
-                type: "config",
-                streaming: false,
-                sessionTransport: false,
-                model: modelShort,
-              }),
-            );
-            ws.send(
-              JSON.stringify({
-                type: "error",
-                ...(code ? { code } : {}),
-                message,
-              }),
-            );
+            safeSend(ws, {
+              type: "config",
+              streaming: false,
+              sessionTransport: false,
+              model: modelShort,
+            });
+            safeSend(ws, {
+              type: "error",
+              ...(code ? { code } : {}),
+              message,
+            });
             upstream = null;
             try {
               session.close();
@@ -707,12 +703,10 @@ const stream = new Hono().get(
           if (!announced.canUseSessionTransport) {
             readyToken++;
             notifiedReadyToken = readyToken;
-            ws.send(
-              JSON.stringify({
-                type: "session.ready",
-                model: announced.modelShort,
-              }),
-            );
+            safeSend(ws, {
+              type: "session.ready",
+              model: announced.modelShort,
+            });
             return;
           }
           if (
@@ -723,8 +717,10 @@ const stream = new Hono().get(
           connectUpstream(ws, announced);
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
-          ws.send(JSON.stringify({ type: "error", message }));
-          ws.close();
+          safeSend(ws, { type: "error", message });
+          try {
+            ws.close();
+          } catch {}
         }
       },
 
@@ -749,12 +745,10 @@ const stream = new Hono().get(
               // Tell the client so it can fall back to the recorded WAV
               // instead of silently losing audio.
               pendingChunksDropped = true;
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Streaming session stalled; audio buffer overflow",
-                }),
-              );
+              safeSend(ws, {
+                type: "error",
+                message: "Streaming session stalled; audio buffer overflow",
+              });
             }
             return;
           }

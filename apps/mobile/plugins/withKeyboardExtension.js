@@ -1,5 +1,5 @@
 /**
- * Expo config plugin: adds the Freestyle voice keyboard as an iOS Custom
+ * Expo config plugin: adds the Cadence voice keyboard as an iOS Custom
  * Keyboard Extension target during `expo prebuild`.
  *
  * Creates the target, copies the Swift sources (voice panel UI + App Group
@@ -8,7 +8,7 @@
  *
  * The keyboard can't use the microphone (iOS blocks mic capture in keyboard
  * extensions), so dictation is delegated to the containing app: the mic button
- * opens Freestyle via `freestyle://dictate` (needs Full Access), the app
+ * opens Cadence via `cadence://dictate` (needs Full Access), the app
  * captures + streams, and writes the transcript into the App Group; the keyboard
  * reads it via `SharedStore.swift` and inserts it. Full Access also gates App
  * Group and network access from the extension.
@@ -21,8 +21,8 @@ const {
 const fs = require("node:fs");
 const path = require("node:path");
 
-const EXT_NAME = "FreestyleKeyboard";
-const APP_GROUP = "group.com.freestylevoice.app";
+const EXT_NAME = "CadenceKeyboard";
+const APP_GROUP = "group.com.cadencevoice.app";
 const SOURCE_FILES = ["KeyboardViewController.swift", "SharedStore.swift"];
 const DEPLOYMENT_TARGET = "16.0";
 
@@ -45,6 +45,7 @@ function withMainAppEntitlements(config) {
 /** Expose the App Group id to JS so the bridge can target the same suite. */
 function withMainAppInfoPlist(config) {
   return withInfoPlist(config, (mod) => {
+    mod.modResults.CadenceAppGroup = APP_GROUP;
     mod.modResults.FreestyleAppGroup = APP_GROUP;
     return mod;
   });
@@ -54,8 +55,7 @@ function withKeyboardXcodeProject(config) {
   return withXcodeProject(config, (mod) => {
     const proj = mod.modResults;
     const { projectRoot } = mod.modRequest;
-    const mainBundleId =
-      config.ios?.bundleIdentifier ?? "com.freestylevoice.app";
+    const mainBundleId = config.ios?.bundleIdentifier ?? "com.cadencevoice.app";
     const keyboardBundleId = `${mainBundleId}.keyboard`;
 
     const iosDir = path.join(projectRoot, "ios");
@@ -191,7 +191,7 @@ function keyboardInfoPlist() {
   <key>CFBundleDevelopmentRegion</key>
   <string>$(DEVELOPMENT_LANGUAGE)</string>
   <key>CFBundleDisplayName</key>
-  <string>Freestyle</string>
+  <string>Cadence</string>
   <key>CFBundleExecutable</key>
   <string>$(EXECUTABLE_NAME)</string>
   <key>CFBundleIdentifier</key>

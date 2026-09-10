@@ -36,7 +36,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SiGithub } from "react-icons/si";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
@@ -245,7 +245,7 @@ export default function AppShell(): React.JSX.Element {
   const { t } = useTranslation();
   const { user } = useCloudAuth();
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => {
       const next = !prev;
       try {
@@ -253,7 +253,7 @@ export default function AppShell(): React.JSX.Element {
       } catch {}
       return next;
     });
-  };
+  }, []);
 
   // Keyboard shortcut: Cmd+\ or Ctrl+\ to toggle sidebar
   useEffect(() => {
@@ -265,7 +265,7 @@ export default function AppShell(): React.JSX.Element {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [toggleSidebar]);
 
   // A plugin page renders a native WebContentsView that paints above the DOM,
   // so the floating social bar would be occluded. Hide it while a plugin page

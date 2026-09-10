@@ -13,10 +13,10 @@
 import type { BottomTabBarProps } from "expo-router/build/react-navigation/bottom-tabs";
 import {
   BookOpen,
-  Clock,
   Home,
   type LucideIcon,
   Replace,
+  Sliders,
   Sparkles,
 } from "lucide-react-native";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -31,12 +31,12 @@ interface NavSpec {
   icon: LucideIcon;
 }
 
-// History · Vocab · Home · Tone · Dict — Home centered.
+// Today · Magic Edit · Tone · Vocab · Dict
 const ITEMS: NavSpec[] = [
-  { name: "history", label: "History", icon: Clock },
+  { name: "index", label: "Today", icon: Home },
+  { name: "magic-edit", label: "Magic Edit", icon: Sparkles },
+  { name: "tone", label: "Tone", icon: Sliders },
   { name: "vocabulary", label: "Vocab", icon: BookOpen },
-  { name: "index", label: "Home", icon: Home },
-  { name: "tone", label: "Tone", icon: Sparkles },
   { name: "dictionary", label: "Dict", icon: Replace },
 ];
 
