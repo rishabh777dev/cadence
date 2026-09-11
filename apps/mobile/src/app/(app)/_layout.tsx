@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 
+import { FloatingCircleBubble } from "@/components/floating-circle-bubble";
 import { EntriesProvider } from "@/lib/entries";
 import { HistoryProvider } from "@/lib/history";
 import { SettingsProvider } from "@/lib/settings";
@@ -27,6 +28,7 @@ export default function AppLayout() {
               }}
             />
           </Stack>
+          <FloatingCircleBubble />
         </HistoryProvider>
       </EntriesProvider>
     </SettingsProvider>

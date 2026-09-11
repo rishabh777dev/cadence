@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import type { LucideIcon } from "lucide-react-native";
 import {
   ChevronRight,
+  CircleDot,
   Cpu,
   Globe,
   Keyboard,
@@ -57,6 +58,12 @@ export default function SettingsScreen() {
           label="Models & Providers"
           value="BYOK (Groq, OpenAI)"
           onPress={() => router.push("/(app)/settings/models")}
+        />
+        <NavRow
+          icon={CircleDot}
+          label="Floating Voice Bubble"
+          value={settings.floatingBubbleEnabled ? "On" : "Off"}
+          onPress={() => router.push("/(app)/settings/floating-bubble")}
         />
         <NavRow
           icon={Globe}

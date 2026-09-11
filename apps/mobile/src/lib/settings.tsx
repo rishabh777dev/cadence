@@ -56,6 +56,7 @@ const PERSONAL_TONE_KEY = "cleanup_personal_tone";
 const WORK_TONE_KEY = "cleanup_work_tone";
 const EMAIL_TONE_KEY = "cleanup_email_tone";
 const OVERALL_TONE_KEY = "cleanup_overall_tone";
+const FLOATING_BUBBLE_KEY = "floating_bubble_enabled";
 
 export interface DictationSettings {
   language: LanguageCode;
@@ -66,6 +67,7 @@ export interface DictationSettings {
   workTone: CleanupWorkTone;
   emailTone: CleanupEmailTone;
   overallTone: CleanupOverallTone;
+  floatingBubbleEnabled: boolean;
 }
 
 const DEFAULTS: DictationSettings = {
@@ -77,6 +79,7 @@ const DEFAULTS: DictationSettings = {
   workTone: DEFAULT_WORK_TONE,
   emailTone: DEFAULT_EMAIL_TONE,
   overallTone: DEFAULT_OVERALL_TONE,
+  floatingBubbleEnabled: true,
 };
 
 interface SettingsContextValue {
@@ -90,6 +93,7 @@ interface SettingsContextValue {
   setWorkTone: (tone: CleanupWorkTone) => void;
   setEmailTone: (tone: CleanupEmailTone) => void;
   setOverallTone: (tone: CleanupOverallTone) => void;
+  setFloatingBubbleEnabled: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -109,6 +113,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         workTone,
         emailTone,
         overallTone,
+        floatingBubble,
       ] = await Promise.all([
         getPref(LANGUAGE_KEY),
         getPref(CLEANUP_KEY),
@@ -118,6 +123,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         getPref(WORK_TONE_KEY),
         getPref(EMAIL_TONE_KEY),
         getPref(OVERALL_TONE_KEY),
+        getPref(FLOATING_BUBBLE_KEY),
       ]);
       setSettings({
         language: (lang as LanguageCode) ?? DEFAULTS.language,
@@ -130,6 +136,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         emailTone: (emailTone as CleanupEmailTone) ?? DEFAULTS.emailTone,
         overallTone:
           (overallTone as CleanupOverallTone) ?? DEFAULTS.overallTone,
+        floatingBubbleEnabled:
+          floatingBubble == null
+            ? DEFAULTS.floatingBubbleEnabled
+            : floatingBubble === "true",
       });
       setReady(true);
     })();
@@ -162,6 +172,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setWorkTone: (tone) => persist(WORK_TONE_KEY, "workTone", tone),
       setEmailTone: (tone) => persist(EMAIL_TONE_KEY, "emailTone", tone),
       setOverallTone: (tone) => persist(OVERALL_TONE_KEY, "overallTone", tone),
+      setFloatingBubbleEnabled: (enabled) =>
+        persist(FLOATING_BUBBLE_KEY, "floatingBubbleEnabled", enabled),
     }),
     [settings, ready, persist],
   );
