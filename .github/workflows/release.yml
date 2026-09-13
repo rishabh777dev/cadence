@@ -144,7 +144,6 @@ jobs:
   build-android:
     name: Build Android (.apk)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
@@ -175,13 +174,18 @@ jobs:
 
       - name: Build Android APK
         working-directory: apps/mobile/android
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DISABLE_AUTO_UPLOAD: ${{ secrets.SENTRY_AUTH_TOKEN == '' && 'true' || 'false' }}
+          EXPO_PUBLIC_SENTRY_DSN: "https://f19221f8d8c843a3c264565cc89a313a@o4512079443984384.ingest.us.sentry.io/4512079455846400"
         run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: apps/mobile/android/app/build/outputs/apk/release/*.apk
+          path: apps/mobile/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
 
   publish-release:
     name: Publish to GitHub Releases

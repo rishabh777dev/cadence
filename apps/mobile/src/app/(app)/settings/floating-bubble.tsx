@@ -116,9 +116,12 @@ export default function FloatingBubbleSettingsScreen() {
         </Pressable>
       </Card>
 
-      {/* How It Works Across Apps */}
+      {/* How It Works */}
       <Card>
-        <SectionTitle icon={Layers} title="How It Works Across Other Apps" />
+        <SectionTitle
+          icon={Layers}
+          title="How Floating Quick Dictation Works"
+        />
 
         <View style={styles.featureItem}>
           <View
@@ -131,12 +134,12 @@ export default function FloatingBubbleSettingsScreen() {
           </View>
           <View style={styles.featureContent}>
             <ThemedText style={styles.featureTitle}>
-              Keeps Gboard Active
+              Instant Clipboard Copy
             </ThemedText>
             <ThemedText themeColor="mutedForeground" style={styles.featureDesc}>
-              Unlike keyboard switching where you leave your keyboard, the
-              floating bubble sits above Gboard so you can dictate on-demand
-              without changing keyboards.
+              Tap the orb to record anywhere inside the app. As soon as
+              transcription finishes, your text is automatically copied to the
+              system clipboard ready to paste anywhere.
             </ThemedText>
           </View>
         </View>

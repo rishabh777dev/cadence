@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cadence",
     "slug": "cadence",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": ["cadence", "freestyle"],
@@ -37,7 +37,7 @@
         {
           "url": "https://sentry.io/",
           "project": "cadence-mobile",
-          "organization": "test101-n4"
+          "organization": "ris-industries"
         }
       ],
       "expo-router",
