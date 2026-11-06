@@ -12,6 +12,8 @@
     "build": "turbo build --filter=!docs",
     "dev": "turbo dev --filter=!docs",
     "dev:docs": "turbo dev --filter=docs",
+    "dev:site": "pnpm --filter @cadence-voice/site dev",
+    "build:site": "pnpm --filter @cadence-voice/site build",
     "dev:ios": "turbo ios --filter=@cadence-voice/mobile",
     "dev:android": "turbo android --filter=@cadence-voice/mobile",
     "format": "biome check --write .",
