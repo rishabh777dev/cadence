@@ -27,6 +27,13 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const directDownloadUrl =
+    osName === "mac"
+      ? "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.dmg"
+      : osName === "linux"
+        ? "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.AppImage"
+        : "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1-setup.exe";
+
   const handleMobileNav = (hash: string) => {
     setMobileMenuOpen(false);
     if (typeof window !== "undefined") {
@@ -122,7 +129,7 @@ export function Navbar() {
             </a>
 
             <a
-              href="#download"
+              href={directDownloadUrl}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Download className="w-4 h-4" />
@@ -140,7 +147,7 @@ export function Navbar() {
           {/* Mobile hamburger */}
           <div className="flex sm:hidden items-center gap-2">
             <a
-              href="#download"
+              href={directDownloadUrl}
               className="p-2 rounded-lg bg-[#C15F3D] text-white"
               title="Download Cadence"
             >

@@ -41,28 +41,28 @@ export function DownloadSection() {
   > = {
     mac: [
       {
-        name: "macOS Apple Silicon",
-        badge: "Recommended for M1/M2/M3/M4",
+        name: "macOS Apple Silicon & Intel",
+        badge: "Recommended (.dmg)",
         version: "v0.7.1",
-        size: "94.2 MB",
+        size: "179.0 MB",
         description:
-          "Native ARM64 build optimized for Apple MLX Neural Engine acceleration.",
-        filename: "Cadence-0.7.1-arm64.dmg",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
+          "Universal DMG installer with embedded Whisper.cpp and Apple MLX acceleration.",
+        filename: "Cadence-0.7.1.dmg",
+        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.dmg",
         checksum:
-          "8f2a1b9c3e4d5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a",
+          "d3cbf988950c22e6b0004206742c4f072b7272ab1964f1f2b2c72713dd650c7c",
       },
       {
-        name: "macOS Intel",
-        badge: "x86_64",
+        name: "macOS Standalone Archive",
+        badge: "ARM64 (.zip)",
         version: "v0.7.1",
-        size: "98.5 MB",
+        size: "171.7 MB",
         description:
-          "Optimized for older Intel-based MacBooks and iMacs with Whisper.cpp AVX2.",
-        filename: "Cadence-0.7.1-x64.dmg",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
+          "Portable standalone zip for Apple Silicon (M1/M2/M3/M4) without installer.",
+        filename: "Cadence-0.7.1-arm64.zip",
+        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1-arm64.zip",
         checksum:
-          "3e4d5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a8f2a1b9c",
+          "077a6020ddc6816536746253e2d4c382467b14aa66ccc97363d939716256c94f",
       },
     ],
     windows: [
@@ -70,25 +70,25 @@ export function DownloadSection() {
         name: "Windows 64-bit Installer",
         badge: "Recommended (.exe)",
         version: "v0.7.1",
-        size: "88.6 MB",
+        size: "143.9 MB",
         description:
-          "Standard NSIS installer with automatic auto-updater and background tray service.",
-        filename: "Cadence-Setup-0.7.1.exe",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
+          "Official NSIS installer with automatic background tray service and instant hotkeys.",
+        filename: "Cadence-0.7.1-setup.exe",
+        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1-setup.exe",
         checksum:
-          "7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a8f2a1b9c3e4d5f6a",
+          "afca1d3fd5d208786619869bd91a74a72100ffde60758f18fdccdeb7a96c0ab1",
       },
       {
-        name: "Windows Portable (ZIP)",
-        badge: "Standalone",
+        name: "Source & Offline Bundle",
+        badge: "Full Bundle (.zip)",
         version: "v0.7.1",
-        size: "82.1 MB",
+        size: "38.5 MB",
         description:
-          "Zero-installation portable bundle. Extract and run directly from any folder.",
-        filename: "Cadence-0.7.1-win-x64.zip",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
+          "Full release source archive for custom builds, self-hosting, and inspection.",
+        filename: "cadence-v0.7.1.zip",
+        url: "https://github.com/rishabh777dev/cadence/archive/refs/tags/v0.7.1.zip",
         checksum:
-          "1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a8f2a1b9c3e4d5f6a7b8c9d0e",
+          "8b0b190b646732b97cc51b2875e77aab86fa86e29732e33ac14dc111129e7b5d",
       },
     ],
     linux: [
@@ -96,25 +96,25 @@ export function DownloadSection() {
         name: "Linux AppImage",
         badge: "Universal x64",
         version: "v0.7.1",
-        size: "112.4 MB",
+        size: "187.3 MB",
         description:
           "Self-contained executable for Ubuntu, Fedora, Arch, and all major distributions.",
         filename: "Cadence-0.7.1.AppImage",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
+        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.AppImage",
         checksum:
-          "9b0c1d2e3f4a5b6c7d8e9f0a8f2a1b9c3e4d5f6a7b8c9d0e1f2a3b4c5d6e7f8a",
+          "317f7c489f96b9213d0dc489486e76a4db74c6d7f3a214d17286de94c0b94d25",
       },
       {
         name: "Debian / Ubuntu Package",
         badge: ".deb",
         version: "v0.7.1",
-        size: "89.0 MB",
+        size: "133.1 MB",
         description:
-          "Native deb package with desktop integration and dependency verification.",
-        filename: "cadence_0.7.1_amd64.deb",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
+          "Native deb package with desktop shortcut, tray integration, and system services.",
+        filename: "Cadence-0.7.1.deb",
+        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.deb",
         checksum:
-          "5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a8f2a1b9c3e4d5f6a7b8c9d0e1f2a3b4c",
+          "15e305c5673a2b6b4796cbe480eb09b25b4b641b4bc3dc8bcb59b718cb12d6c2",
       },
     ],
     mobile: [
@@ -126,19 +126,20 @@ export function DownloadSection() {
         description:
           "On-the-go dictation companion that syncs dictionary and presets with your desktop.",
         filename: "Apple TestFlight Beta",
-        url: "https://github.com/rishabh777dev/cadence",
-        checksum: "testflight-invite-code",
+        url: "https://github.com/rishabh777dev/cadence#mobile-companions",
+        checksum: "testflight-invite-cadence",
       },
       {
         name: "Cadence Mobile for Android",
-        badge: "Direct APK / Play Store",
+        badge: "Direct APK (.apk)",
         version: "v0.7.1",
-        size: "48.2 MB",
+        size: "110.6 MB",
         description:
           "Native Android companion keyboard and audio transcriber with Whisper on-device.",
-        filename: "Cadence-Mobile-0.7.1.apk",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest",
-        checksum: "android-sha256-verified",
+        filename: "Cadence-0.7.1.apk",
+        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.apk",
+        checksum:
+          "f1c2e5266f32d769a318dea2d8359be410df1ee4dd08ec0f330e2be11444709d",
       },
     ],
   };
