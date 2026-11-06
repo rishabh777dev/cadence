@@ -192,59 +192,43 @@ export function Hero() {
 
         {/* Hero Visual Mockup: The Desktop App */}
         <div className="mt-16 sm:mt-20 relative max-w-5xl mx-auto">
+          {/* Ambient Glow behind window */}
+          <div className="absolute -inset-2 bg-gradient-to-r from-[#C15F3D]/25 via-amber-500/10 to-[#C15F3D]/20 rounded-3xl blur-2xl opacity-60 pointer-events-none -z-10" />
+
           {/* Outer glowing border card */}
-          <div className="relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-[#E2DBD0] via-white/50 to-[#E2DBD0] dark:from-[#2B2823] dark:via-[#1A1916]/50 dark:to-[#2B2823] shadow-2xl border border-[#E2DBD0]/60 dark:border-[#2B2823]/60">
-            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#16140F] shadow-inner">
+          <div className="relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-[#2B2823] via-[#1A1916] to-[#2B2823] shadow-2xl border border-[#C15F3D]/30">
+            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#121211] shadow-inner">
               {/* Window Title Bar */}
-              <div className="h-9 bg-[#1E1C16] border-b border-[#2B2823] px-4 flex items-center justify-between">
+              <div className="h-10 bg-[#1A1916] border-b border-[#2B2823] px-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-[#FF5F56]/80" />
                   <div className="w-3 h-3 rounded-full bg-[#FFBD2E]/80" />
                   <div className="w-3 h-3 rounded-full bg-[#27C93F]/80" />
                 </div>
-                <div className="text-[11px] font-mono text-[#A19B8E] flex items-center gap-1.5">
+                <div className="text-[11px] font-mono text-[#A19B8E] flex items-center gap-2">
                   <span>Cadence Voice Studio</span>
-                  <span className="px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 text-[9px] border border-emerald-800/40">
+                  <span className="text-[#787368]">•</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 text-[10px] border border-emerald-800/40 font-medium">
                     ONLINE • LOCAL MLX
                   </span>
                 </div>
-                <div className="w-12" />
+                <div className="w-12 text-right">
+                  <span className="text-[10px] font-mono text-[#787368]">
+                    v0.7.1
+                  </span>
+                </div>
               </div>
 
-              {/* Main Demo Graphic */}
+              {/* Latest App Interface Screenshot */}
               <div className="relative">
                 <Image
-                  src="/home-page-demo.png"
+                  src="/cadence-app-latest.jpg"
                   alt="Cadence Voice Dictation Desktop Interface"
-                  width={1920}
-                  height={1080}
+                  width={2048}
+                  height={1280}
                   priority
                   className="w-full h-auto object-cover rounded-b-xl"
                 />
-
-                {/* Floating pill simulation: "Control + Space to dictate" */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-full bg-[#1A1916]/95 border border-[#C15F3D]/50 text-white shadow-2xl backdrop-blur-xl flex items-center gap-3">
-                  <span className="flex h-2.5 w-2.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C15F3D] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#C15F3D]" />
-                  </span>
-                  <div className="flex items-center gap-1.5 text-xs font-mono">
-                    <span className="text-[#A19B8E]">Listening...</span>
-                    <div className="flex items-center gap-0.5 h-3">
-                      <span className="w-1 bg-[#C15F3D] rounded-full animate-wave-bar h-2" />
-                      <span className="w-1 bg-[#C15F3D] rounded-full animate-wave-bar h-3.5 delay-75" />
-                      <span className="w-1 bg-[#C15F3D] rounded-full animate-wave-bar h-1.5 delay-150" />
-                      <span className="w-1 bg-[#C15F3D] rounded-full animate-wave-bar h-3 delay-200" />
-                    </div>
-                  </div>
-                  <div className="h-3 w-px bg-white/20" />
-                  <span className="text-[11px] font-mono text-[#A19B8E] hidden sm:inline">
-                    Release key to paste
-                  </span>
-                  <kbd className="px-2 py-0.5 text-[10px] font-mono bg-white/10 rounded-md border border-white/20 text-[#EDE9DF]">
-                    Ctrl + Space
-                  </kbd>
-                </div>
               </div>
             </div>
           </div>
