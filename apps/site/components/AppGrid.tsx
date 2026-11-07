@@ -304,7 +304,127 @@ function GitHubLogo() {
   );
 }
 
-/* ---------------- Row Definitions (8 Apps Each) ---------------- */
+function ActionMateLogo() {
+  return (
+    <svg
+      className="w-5 h-5"
+      viewBox="0 0 100 100"
+      fill="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient
+          id="amBgGrad"
+          x1="0"
+          y1="0"
+          x2="100"
+          y2="100"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="#ED6F5C" />
+          <stop offset="100%" stopColor="#D95340" />
+        </linearGradient>
+        <radialGradient
+          id="amDomeGrad"
+          cx="50"
+          cy="92"
+          r="58"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
+          <stop offset="42%" stopColor="#FDF5EC" stopOpacity="0.85" />
+          <stop offset="72%" stopColor="#F0A89B" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#ED6F5C" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect x="4" y="4" width="92" height="92" rx="26" fill="url(#amBgGrad)" />
+      <rect
+        x="4.5"
+        y="4.5"
+        width="91"
+        height="91"
+        rx="25.5"
+        stroke="rgba(255,255,255,0.3)"
+        strokeWidth="1"
+      />
+      <path
+        d="M 12 96 C 12 52, 28 32, 50 32 C 72 32, 88 52, 88 96 Z"
+        fill="url(#amDomeGrad)"
+      />
+      <ellipse
+        cx="44"
+        cy="58"
+        rx="7.5"
+        ry="10.5"
+        fill="#FFFFFF"
+        transform="rotate(-10 44 58)"
+      />
+      <ellipse
+        cx="64"
+        cy="54"
+        rx="7.5"
+        ry="10.5"
+        fill="#FFFFFF"
+        transform="rotate(-5 64 54)"
+      />
+    </svg>
+  );
+}
+
+function VakyaBhedLogo() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5.5" fill="#2563EB" />
+      <path
+        d="M12 4.5L18.5 7.5V12C18.5 16.2 15.7 19.3 12 20.5C8.3 19.3 5.5 16.2 5.5 12V7.5L12 4.5Z"
+        fill="#1D4ED8"
+        stroke="#93C5FD"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M9.5 11.5L11.5 13.5L15 9.5"
+        stroke="#FFFFFF"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="7" r="0.9" fill="#93C5FD" />
+    </svg>
+  );
+}
+
+function LLMCTFLogo() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5.5" fill="#0F172A" />
+      <path
+        d="M6 19.5V4.5M6 5.5H16.5L14 9.5L16.5 13.5H6"
+        stroke="#EF4444"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 16.5L17.5 18.5L15 20.5"
+        stroke="#F59E0B"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line
+        x1="18.5"
+        y1="20.5"
+        x2="21"
+        y2="20.5"
+        stroke="#F59E0B"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/* ---------------- Row Definitions ---------------- */
 
 const row1: AppItem[] = [
   { name: "Slack", category: "Team Chat", icon: <SlackLogo /> },
@@ -315,6 +435,8 @@ const row1: AppItem[] = [
   { name: "Apple Mail", category: "Communication", icon: <AppleMailLogo /> },
   { name: "Superhuman", category: "Email", icon: <SuperhumanLogo /> },
   { name: "Linear", category: "Issue Tracking", icon: <LinearLogo /> },
+  { name: "ActionMate", category: "Merchant AI", icon: <ActionMateLogo /> },
+  { name: "VakyaBhed", category: "AI Safety CTF", icon: <VakyaBhedLogo /> },
 ];
 
 const row2: AppItem[] = [
@@ -326,6 +448,7 @@ const row2: AppItem[] = [
   { name: "Raycast", category: "Launcher", icon: <RaycastLogo /> },
   { name: "WhatsApp", category: "Messaging", icon: <WhatsAppLogo /> },
   { name: "GitHub PRs", category: "Code Review", icon: <GitHubLogo /> },
+  { name: "LLM CTF", category: "Prompt Injection", icon: <LLMCTFLogo /> },
 ];
 
 // Repeat 4x to guarantee buttery-smooth infinite loop with no pop on any screen size
