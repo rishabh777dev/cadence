@@ -3,7 +3,7 @@
 import confetti from "canvas-confetti";
 import { Download, Lock, Play, Sparkles, Zap } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CadenceStudioMockup } from "./CadenceStudioMockup";
 
 interface DownloadOption {
@@ -16,10 +16,6 @@ interface DownloadOption {
 
 export function Hero() {
   const [osName, setOsName] = useState<"mac" | "windows" | "linux">("mac");
-  const windowRef = useRef<HTMLDivElement>(null);
-  const [rotateX, setRotateX] = useState(0);
-  const [rotateY, setRotateY] = useState(0);
-  const [glare, setGlare] = useState({ x: 50, y: 50, opacity: 0 });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -75,33 +71,6 @@ export function Hero() {
   };
 
   const primaryDownload = downloadOptions[osName][0];
-
-  // 3D Perspective interactive mouse tilt
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!windowRef.current) return;
-    const rect = windowRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rX = ((y - centerY) / centerY) * -6; // -6 to +6 deg
-    const rY = ((x - centerX) / centerX) * 6; // -6 to +6 deg
-
-    setRotateX(rX);
-    setRotateY(rY);
-    setGlare({
-      x: (x / rect.width) * 100,
-      y: (y / rect.height) * 100,
-      opacity: 0.35,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setRotateX(0);
-    setRotateY(0);
-    setGlare((prev) => ({ ...prev, opacity: 0 }));
-  };
 
   const handleDownloadClick = () => {
     confetti({
@@ -256,38 +225,21 @@ export function Hero() {
           </div>
         </div>
 
-        {/* 3D Perspective Interactive Studio Mockup Window */}
+        {/* Studio Mockup Window */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-16 sm:mt-20 relative max-w-5xl mx-auto perspective-[1200px]"
+          transition={{ duration: 0.7, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-16 sm:mt-20 relative max-w-5xl mx-auto"
         >
           {/* Ambient Acoustic Glow behind window */}
-          <div className="absolute -inset-3 bg-gradient-to-r from-[#C15F3D]/25 via-amber-500/10 to-[#C15F3D]/25 rounded-3xl blur-2xl opacity-60 pointer-events-none -z-10 animate-pulse duration-700" />
+          <div className="absolute -inset-2 bg-gradient-to-r from-[#C15F3D]/20 via-amber-500/10 to-[#C15F3D]/20 rounded-3xl blur-2xl opacity-50 pointer-events-none -z-10" />
 
-          {/* 3D Tilted Card Container */}
+          {/* Clean Flat Window Container */}
           <section
-            ref={windowRef}
             aria-label="Cadence Desktop Window Mockup"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            style={{
-              transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
-              transition: "transform 0.15s ease-out",
-            }}
-            className="relative rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 bg-gradient-to-b from-[#2B2823] via-[#1A1916] to-[#2B2823] shadow-2xl border border-[#C15F3D]/30 transition-shadow duration-300 hover:shadow-[#C15F3D]/15 overflow-hidden"
+            className="relative rounded-2xl sm:rounded-3xl p-1.5 sm:p-2.5 bg-gradient-to-b from-[#2B2823] via-[#1A1916] to-[#2B2823] shadow-2xl border border-[#C15F3D]/30 overflow-hidden"
           >
-            {/* Dynamic Specular Sheen Flare */}
-            <div
-              className="pointer-events-none absolute -inset-full transition-opacity duration-300 z-30"
-              style={{
-                opacity: glare.opacity,
-                background: `radial-gradient(600px circle at ${glare.x}% ${glare.y}%, rgba(255, 255, 255, 0.12), transparent 60%)`,
-              }}
-              aria-hidden="true"
-            />
-
             <CadenceStudioMockup />
           </section>
         </motion.div>
