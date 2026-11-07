@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import { AmbientCanvas } from "../components/AmbientCanvas";
+import { FloatingCadencePill } from "../components/FloatingCadencePill";
 import { SmoothScroll } from "../components/SmoothScroll";
 import "./globals.css";
 
@@ -82,7 +84,11 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable} font-sans antialiased selection:bg-[#C15F3D]/20 selection:text-[#C15F3D]`}
       >
-        <SmoothScroll>{children}</SmoothScroll>
+        <SmoothScroll>
+          <AmbientCanvas />
+          {children}
+          <FloatingCadencePill />
+        </SmoothScroll>
       </body>
     </html>
   );
