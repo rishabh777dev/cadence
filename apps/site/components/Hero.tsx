@@ -1,6 +1,5 @@
 "use client";
 
-import confetti from "canvas-confetti";
 import { Download, Lock, Play, Sparkles, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -103,15 +102,6 @@ export function Hero() {
     setGlare((prev) => ({ ...prev, opacity: 0 }));
   };
 
-  const handleDownloadClick = () => {
-    confetti({
-      particleCount: 75,
-      spread: 75,
-      origin: { y: 0.6 },
-      colors: ["#C15F3D", "#D97757", "#E88C6F", "#F6EBE5", "#FBBF24"],
-    });
-  };
-
   return (
     <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
       {/* Background radial gradient glow */}
@@ -202,8 +192,8 @@ export function Hero() {
         >
           <a
             href={primaryDownload.url}
-            onClick={handleDownloadClick}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold rounded-full bg-[#C15F3D] hover:bg-[#AA4E2F] text-white shadow-lg hover:shadow-xl hover:shadow-[#C15F3D]/20 transition-all hover:scale-[1.03] active:scale-[0.97] whitespace-nowrap group"
+            download={primaryDownload.filename}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 text-base font-semibold rounded-full bg-[#C15F3D] hover:bg-[#AA4E2F] text-white shadow-lg hover:shadow-xl hover:shadow-[#C15F3D]/20 transition-all hover:scale-[1.03] active:scale-[0.97] whitespace-nowrap group cursor-pointer"
           >
             <Download className="w-5 h-5 shrink-0 group-hover:translate-y-0.5 transition-transform" />
             <span>Download for {primaryDownload.platform}</span>

@@ -27,6 +27,13 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const downloadFilename =
+    osName === "mac"
+      ? "Cadence-0.7.1.dmg"
+      : osName === "linux"
+        ? "Cadence-0.7.1.AppImage"
+        : "Cadence-0.7.1-setup.exe";
+
   const directDownloadUrl =
     osName === "mac"
       ? "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.dmg"
@@ -130,7 +137,8 @@ export function Navbar() {
 
             <a
               href={directDownloadUrl}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+              download={downloadFilename}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <Download className="w-4 h-4" />
               <span>
@@ -148,6 +156,7 @@ export function Navbar() {
           <div className="flex sm:hidden items-center gap-2">
             <a
               href={directDownloadUrl}
+              download={downloadFilename}
               className="p-2 rounded-lg bg-[#C15F3D] text-white"
               title="Download Cadence"
             >

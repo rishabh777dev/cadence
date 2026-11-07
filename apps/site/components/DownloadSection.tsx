@@ -248,7 +248,8 @@ export function DownloadSection() {
               <div className="space-y-3">
                 <a
                   href={item.url}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white font-medium text-sm shadow-xs transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  download={item.filename}
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white font-medium text-sm shadow-xs transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download {item.filename}</span>
