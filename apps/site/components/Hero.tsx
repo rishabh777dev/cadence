@@ -1,8 +1,8 @@
 "use client";
 
 import { Download, Lock, Play, Sparkles, Zap } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useState } from "react";
+import { CadenceStudioMockup } from "./CadenceStudioMockup";
 
 interface DownloadOption {
   platform: string;
@@ -196,41 +196,8 @@ export function Hero() {
           <div className="absolute -inset-2 bg-gradient-to-r from-[#C15F3D]/25 via-amber-500/10 to-[#C15F3D]/20 rounded-3xl blur-2xl opacity-60 pointer-events-none -z-10" />
 
           {/* Outer glowing border card */}
-          <div className="relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-[#2B2823] via-[#1A1916] to-[#2B2823] shadow-2xl border border-[#C15F3D]/30">
-            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-[#121211] shadow-inner">
-              {/* Window Title Bar */}
-              <div className="h-10 bg-[#1A1916] border-b border-[#2B2823] px-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#FF5F56]/80" />
-                  <div className="w-3 h-3 rounded-full bg-[#FFBD2E]/80" />
-                  <div className="w-3 h-3 rounded-full bg-[#27C93F]/80" />
-                </div>
-                <div className="text-[11px] font-mono text-[#A19B8E] flex items-center gap-2">
-                  <span>Cadence Voice Studio</span>
-                  <span className="text-[#787368]">•</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 text-[10px] border border-emerald-800/40 font-medium">
-                    ONLINE • LOCAL MLX
-                  </span>
-                </div>
-                <div className="w-12 text-right">
-                  <span className="text-[10px] font-mono text-[#787368]">
-                    v0.7.1
-                  </span>
-                </div>
-              </div>
-
-              {/* Latest App Interface Screenshot */}
-              <div className="relative">
-                <Image
-                  src="/cadence-app-latest.jpg"
-                  alt="Cadence Voice Dictation Desktop Interface"
-                  width={2048}
-                  height={1280}
-                  priority
-                  className="w-full h-auto object-cover rounded-b-xl"
-                />
-              </div>
-            </div>
+          <div className="relative rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 bg-gradient-to-b from-[#2B2823] via-[#1A1916] to-[#2B2823] shadow-2xl border border-[#C15F3D]/30">
+            <CadenceStudioMockup />
           </div>
         </div>
       </div>
