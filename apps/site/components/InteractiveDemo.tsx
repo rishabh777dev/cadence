@@ -1,5 +1,6 @@
 "use client";
 
+import confetti from "canvas-confetti";
 import {
   Check,
   Code2,
@@ -132,6 +133,12 @@ export function InteractiveDemo() {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(displayedText || activeScenario.cleanText);
     setCopied(true);
+    confetti({
+      particleCount: 45,
+      spread: 60,
+      origin: { y: 0.7 },
+      colors: ["#C15F3D", "#D97757", "#E88C6F", "#FBBF24"],
+    });
     setTimeout(() => setCopied(false), 2000);
   };
 

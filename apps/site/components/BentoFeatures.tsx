@@ -9,13 +9,21 @@ import {
   Wand2,
   Zap,
 } from "lucide-react";
+import { motion } from "motion/react";
+import { SpotlightCard } from "./SpotlightCard";
 
 export function BentoFeatures() {
   return (
-    <section id="features" className="py-24 relative">
+    <section id="features" className="py-24 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center max-w-3xl mx-auto mb-16"
+        >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C15F3D]/10 text-[#C15F3D] text-xs font-mono font-medium mb-3">
             <Zap className="w-3.5 h-3.5" />
             <span>Architecture & Capabilities</span>
@@ -31,12 +39,12 @@ export function BentoFeatures() {
             over public internet connections, Cadence gives you true local
             intelligence with the freedom to bring your own cloud models.
           </p>
-        </div>
+        </motion.div>
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Card 1: 100% Offline & Local (Spans 2 columns) */}
-          <div className="md:col-span-2 p-8 sm:p-10 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md relative overflow-hidden flex flex-col justify-between group hover:border-[#C15F3D]/50 transition-all">
+          <SpotlightCard className="md:col-span-2 p-8 sm:p-10 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 hover:shadow-xl transition-all">
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-6">
                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -85,12 +93,12 @@ export function BentoFeatures() {
                 </div>
               </div>
             </div>
-          </div>
+          </SpotlightCard>
 
           {/* Card 2: Magic Edit (1 column) */}
-          <div
+          <SpotlightCard
             id="magic-edit"
-            className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 transition-all"
+            className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 hover:shadow-xl transition-all"
           >
             <div>
               <div className="p-3 rounded-2xl bg-[#C15F3D]/10 text-[#C15F3D] border border-[#C15F3D]/20 w-fit mb-6">
@@ -113,10 +121,10 @@ export function BentoFeatures() {
               <span className="text-[#C15F3D]">Prompt:</span> "Make this concise
               for Slack"
             </div>
-          </div>
+          </SpotlightCard>
 
           {/* Card 3: Bring Your Own Model (BYOK) */}
-          <div className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 transition-all">
+          <SpotlightCard className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 hover:shadow-xl transition-all">
             <div>
               <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 w-fit mb-6">
                 <KeyRound className="w-6 h-6" />
@@ -142,10 +150,10 @@ export function BentoFeatures() {
                 Gemini Flash
               </span>
             </div>
-          </div>
+          </SpotlightCard>
 
           {/* Card 4: Custom Dictionary & Tone (Spans 2 columns) */}
-          <div className="md:col-span-2 p-8 sm:p-10 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 transition-all">
+          <SpotlightCard className="md:col-span-2 p-8 sm:p-10 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 hover:shadow-xl transition-all">
             <div>
               <div className="flex items-center justify-between mb-6">
                 <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
@@ -178,10 +186,10 @@ export function BentoFeatures() {
                 </span>
               </div>
             </div>
-          </div>
+          </SpotlightCard>
 
           {/* Card 5: 100+ Languages with Auto-Detect */}
-          <div className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 transition-all">
+          <SpotlightCard className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 hover:shadow-xl transition-all">
             <div>
               <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 w-fit mb-6">
                 <Globe2 className="w-6 h-6" />
@@ -200,10 +208,10 @@ export function BentoFeatures() {
               <span>Français</span> • <span>Deutsch</span> • <span>日本語</span>{" "}
               • <span>हिन्दी</span>
             </div>
-          </div>
+          </SpotlightCard>
 
           {/* Card 6: Extensible Voice Plugin SDK (Spans 2 columns) */}
-          <div className="md:col-span-2 p-8 sm:p-10 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 transition-all">
+          <SpotlightCard className="md:col-span-2 p-8 sm:p-10 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between group hover:border-[#C15F3D]/50 hover:shadow-xl transition-all">
             <div>
               <div className="flex items-center justify-between mb-6">
                 <div className="p-3 rounded-2xl bg-[#C15F3D]/10 text-[#C15F3D] border border-[#C15F3D]/20">
@@ -242,7 +250,7 @@ export function BentoFeatures() {
                 <span>&rarr;</span>
               </a>
             </div>
-          </div>
+          </SpotlightCard>
         </div>
       </div>
     </section>
