@@ -127,16 +127,21 @@ export function ComparisonTable() {
           </p>
         </div>
 
+        {/* Mobile scroll indicator */}
+        <div className="md:hidden flex items-center justify-center gap-1.5 text-xs font-mono text-[#787368] dark:text-[#A19B8E] mb-3 animate-pulse">
+          <span>&larr; Swipe to compare all platforms &rarr;</span>
+        </div>
+
         {/* Table Container */}
-        <div className="max-w-5xl mx-auto overflow-hidden rounded-3xl border border-[#E2DBD0] dark:border-[#2B2823] bg-[#FAF7F2] dark:bg-[#1A1916] shadow-xl">
+        <div className="max-w-5xl mx-auto overflow-hidden rounded-2xl sm:rounded-3xl border border-[#E2DBD0] dark:border-[#2B2823] bg-[#FAF7F2] dark:bg-[#1A1916] shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="min-w-[680px] w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#E2DBD0] dark:border-[#2B2823] bg-white/70 dark:bg-black/30 text-xs">
-                  <th className="py-5 px-6 font-semibold uppercase tracking-wider text-[#787368] dark:text-[#A19B8E] w-2/5">
+                  <th className="py-4 sm:py-5 px-4 sm:px-6 font-semibold uppercase tracking-wider text-[#787368] dark:text-[#A19B8E] w-2/5">
                     Feature & Capability
                   </th>
-                  <th className="py-5 px-6 font-bold text-[#C15F3D] bg-[#C15F3D]/8 border-x border-[#C15F3D]/25 text-center">
+                  <th className="py-4 sm:py-5 px-4 sm:px-6 font-bold text-[#C15F3D] bg-[#C15F3D]/8 border-x border-[#C15F3D]/25 text-center">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-sm font-bold text-[#1A1815] dark:text-[#EDE9DF]">
                         CADENCE
@@ -146,7 +151,7 @@ export function ComparisonTable() {
                       </span>
                     </div>
                   </th>
-                  <th className="py-5 px-6 font-semibold text-[#1A1815] dark:text-[#EDE9DF] text-center">
+                  <th className="py-4 sm:py-5 px-4 sm:px-6 font-semibold text-[#1A1815] dark:text-[#EDE9DF] text-center">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-sm">Wispr Flow</span>
                       <span className="text-[10px] text-[#787368] dark:text-[#A19B8E]">
@@ -154,7 +159,7 @@ export function ComparisonTable() {
                       </span>
                     </div>
                   </th>
-                  <th className="py-5 px-6 font-semibold text-[#1A1815] dark:text-[#EDE9DF] text-center">
+                  <th className="py-4 sm:py-5 px-4 sm:px-6 font-semibold text-[#1A1815] dark:text-[#EDE9DF] text-center">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-sm">Superwhisper</span>
                       <span className="text-[10px] text-[#787368] dark:text-[#A19B8E]">
@@ -162,7 +167,7 @@ export function ComparisonTable() {
                       </span>
                     </div>
                   </th>
-                  <th className="py-5 px-6 font-semibold text-[#1A1815] dark:text-[#EDE9DF] text-center">
+                  <th className="py-4 sm:py-5 px-4 sm:px-6 font-semibold text-[#1A1815] dark:text-[#EDE9DF] text-center">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-sm">Apple Dictation</span>
                       <span className="text-[10px] text-[#787368] dark:text-[#A19B8E]">
@@ -181,12 +186,12 @@ export function ComparisonTable() {
                     }`}
                   >
                     {/* Feature name */}
-                    <td className="py-4 px-6 font-medium text-[#1A1815] dark:text-[#EDE9DF]">
+                    <td className="py-3.5 sm:py-4 px-4 sm:px-6 font-medium text-[#1A1815] dark:text-[#EDE9DF]">
                       {f.name}
                     </td>
 
                     {/* Cadence Column */}
-                    <td className="py-4 px-6 text-center bg-[#C15F3D]/8 border-x border-[#C15F3D]/25 font-semibold text-[#1A1815] dark:text-[#EDE9DF]">
+                    <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-center bg-[#C15F3D]/8 border-x border-[#C15F3D]/25 font-semibold text-[#1A1815] dark:text-[#EDE9DF]">
                       {typeof f.cadence === "boolean" ? (
                         f.cadence ? (
                           <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
@@ -205,7 +210,7 @@ export function ComparisonTable() {
                     </td>
 
                     {/* Wispr Column */}
-                    <td className="py-4 px-6 text-center text-[#787368] dark:text-[#A19B8E]">
+                    <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-center text-[#787368] dark:text-[#A19B8E]">
                       {typeof f.wispr === "boolean" ? (
                         f.wispr ? (
                           <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mx-auto stroke-[2.5]" />
@@ -220,7 +225,7 @@ export function ComparisonTable() {
                     </td>
 
                     {/* Superwhisper Column */}
-                    <td className="py-4 px-6 text-center text-[#787368] dark:text-[#A19B8E]">
+                    <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-center text-[#787368] dark:text-[#A19B8E]">
                       {typeof f.superwhisper === "boolean" ? (
                         f.superwhisper ? (
                           <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mx-auto stroke-[2.5]" />
@@ -235,7 +240,7 @@ export function ComparisonTable() {
                     </td>
 
                     {/* Apple Column */}
-                    <td className="py-4 px-6 text-center text-[#787368] dark:text-[#A19B8E]">
+                    <td className="py-3.5 sm:py-4 px-4 sm:px-6 text-center text-[#787368] dark:text-[#A19B8E]">
                       {typeof f.apple === "boolean" ? (
                         f.apple ? (
                           <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mx-auto stroke-[2.5]" />

@@ -77,14 +77,14 @@ export function FloatingCadencePill() {
       <button
         type="button"
         onClick={() => setMinimized(false)}
-        className="fixed bottom-6 right-6 z-40 p-3.5 rounded-full bg-[#1A1815] text-[#EDE9DF] border border-[#C15F3D]/50 shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center gap-2 group backdrop-blur-md"
+        className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-40 p-3 sm:p-3.5 rounded-full bg-[#1A1815] text-[#EDE9DF] border border-[#C15F3D]/50 shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center gap-2 group backdrop-blur-md"
         title="Open Cadence Voice Simulator"
       >
         <span className="relative flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C15F3D] opacity-75" />
           <span className="relative inline-flex rounded-full h-3 w-3 bg-[#C15F3D]" />
         </span>
-        <Mic className="w-5 h-5 text-[#C15F3D] group-hover:rotate-12 transition-transform" />
+        <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-[#C15F3D] group-hover:rotate-12 transition-transform" />
         <span className="text-xs font-mono pr-1 text-[#EDE9DF] hidden sm:inline">
           Try Voice
         </span>
@@ -93,7 +93,7 @@ export function FloatingCadencePill() {
   }
 
   return (
-    <div className="fixed bottom-6 right-4 sm:right-6 z-40 max-w-[94vw] sm:max-w-md w-full">
+    <div className="fixed bottom-4 sm:bottom-6 right-3 sm:right-6 z-40 max-w-[calc(100vw-24px)] sm:max-w-md w-full">
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

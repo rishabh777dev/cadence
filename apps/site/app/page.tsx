@@ -12,7 +12,7 @@ import { Testimonials } from "@/components/Testimonials";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#FAF7F2] dark:bg-[#11100E] text-[#1A1815] dark:text-[#EDE9DF] selection:bg-[#C15F3D]/20 selection:text-[#C15F3D]">
+    <main className="min-h-screen bg-[#FAF7F2] dark:bg-[#11100E] text-[#1A1815] dark:text-[#EDE9DF] selection:bg-[#C15F3D]/20 selection:text-[#C15F3D] overflow-x-hidden">
       <Navbar />
       <Hero />
       <AppGrid />

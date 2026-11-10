@@ -180,7 +180,7 @@ export function InteractiveDemo() {
                   type="button"
                   key={sc.id}
                   onClick={() => handleSelectScenario(sc)}
-                  className={`flex items-center gap-2 px-5 py-3.5 text-xs font-mono border-b-2 transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-3 sm:py-3.5 text-xs font-mono border-b-2 transition-all whitespace-nowrap ${
                     isActive
                       ? "border-[#C15F3D] text-[#C15F3D] bg-white dark:bg-[#1A1916] font-semibold"
                       : "border-transparent text-[#787368] dark:text-[#A19B8E] hover:text-[#1A1815] dark:hover:text-[#EDE9DF]"
@@ -199,28 +199,28 @@ export function InteractiveDemo() {
           </div>
 
           {/* Interactive Simulation Area */}
-          <div className="p-6 sm:p-10">
+          <div className="p-4 sm:p-7 md:p-10">
             {/* Target App Bar */}
-            <div className="flex items-center justify-between pb-4 mb-6 border-b border-[#E2DBD0] dark:border-[#2B2823] text-xs font-mono text-[#787368] dark:text-[#A19B8E]">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span>Active Target:</span>
-                <span className="font-semibold text-[#1A1815] dark:text-[#EDE9DF]">
+            <div className="flex flex-wrap items-center justify-between pb-3 sm:pb-4 mb-4 sm:mb-6 border-b border-[#E2DBD0] dark:border-[#2B2823] text-xs font-mono text-[#787368] dark:text-[#A19B8E] gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="shrink-0">Target:</span>
+                <span className="font-semibold text-[#1A1815] dark:text-[#EDE9DF] truncate max-w-[160px] xs:max-w-[240px] sm:max-w-none">
                   {activeScenario.targetApp}
                 </span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 <span className="hidden sm:inline">Hotkey:</span>
-                <kbd className="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[#1A1815] dark:text-[#EDE9DF] border border-[#E2DBD0] dark:border-[#2B2823]">
+                <kbd className="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[#1A1815] dark:text-[#EDE9DF] border border-[#E2DBD0] dark:border-[#2B2823] text-[11px] sm:text-xs">
                   {activeScenario.shortcut}
                 </kbd>
               </div>
             </div>
 
             {/* Split Card: Raw Spoken vs Cadence Transformed */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Left Column: Raw Speech & Filler Analysis */}
-              <div className="p-5 rounded-2xl bg-white/70 dark:bg-black/20 border border-[#E2DBD0] dark:border-[#2B2823] flex flex-col justify-between">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/70 dark:bg-black/20 border border-[#E2DBD0] dark:border-[#2B2823] flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3 text-xs font-mono uppercase tracking-wider text-[#787368] dark:text-[#A19B8E]">
                     <span>1. What you spoke</span>
@@ -241,7 +241,7 @@ export function InteractiveDemo() {
                 </div>
 
                 {activeScenario.fillerWords.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-[#E2DBD0]/60 dark:border-[#2B2823]/60">
+                  <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#E2DBD0]/60 dark:border-[#2B2823]/60">
                     <span className="text-[11px] font-mono text-[#787368] dark:text-[#A19B8E] block mb-2">
                       Detected Fillers (Stripped automatically):
                     </span>
@@ -260,7 +260,7 @@ export function InteractiveDemo() {
               </div>
 
               {/* Right Column: Clean Transformed Text Output */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-[#1F1D19] border border-[#C15F3D]/30 shadow-md relative flex flex-col justify-between">
+              <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#1F1D19] border border-[#C15F3D]/30 shadow-md relative flex flex-col justify-between">
                 <div>
                   <div className="flex items-center justify-between mb-3 text-xs font-mono uppercase tracking-wider">
                     <span className="text-[#C15F3D] font-bold flex items-center gap-1.5">
@@ -272,7 +272,7 @@ export function InteractiveDemo() {
                     </span>
                   </div>
 
-                  <div className="font-mono text-sm leading-relaxed text-[#1A1815] dark:text-[#EDE9DF] min-h-[100px] whitespace-pre-wrap">
+                  <div className="font-mono text-sm leading-relaxed text-[#1A1815] dark:text-[#EDE9DF] min-h-[90px] whitespace-pre-wrap">
                     {step === "processing" ? (
                       <div className="flex items-center gap-2 text-xs text-[#787368] animate-pulse">
                         <Zap className="w-4 h-4 text-[#C15F3D]" />
@@ -289,7 +289,7 @@ export function InteractiveDemo() {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-[#E2DBD0] dark:border-[#2B2823] flex items-center justify-between text-xs font-mono">
+                <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-[#E2DBD0] dark:border-[#2B2823] flex items-center justify-between text-xs font-mono">
                   <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <Check className="w-3.5 h-3.5" />
                     <span>Formatted in 42ms</span>
@@ -316,13 +316,13 @@ export function InteractiveDemo() {
             </div>
 
             {/* Bottom Action Bar: Soundwave Simulator Trigger */}
-            <div className="mt-8 pt-6 border-t border-[#E2DBD0] dark:border-[#2B2823] flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+            <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-[#E2DBD0] dark:border-[#2B2823] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => startSimulation(activeScenario)}
                   disabled={isRecording}
-                  className={`inline-flex items-center gap-3 px-6 py-3 rounded-2xl font-mono text-sm transition-all shadow-md ${
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl font-mono text-xs sm:text-sm transition-all shadow-md ${
                     isRecording
                       ? "bg-[#C15F3D] text-white animate-pulse"
                       : "bg-[#1A1815] dark:bg-white text-white dark:text-[#1A1815] hover:opacity-90"
@@ -341,7 +341,7 @@ export function InteractiveDemo() {
                 <button
                   type="button"
                   onClick={() => startSimulation(activeScenario)}
-                  className="p-3 rounded-2xl border border-[#E2DBD0] dark:border-[#2B2823] hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#787368] dark:text-[#A19B8E]"
+                  className="p-2.5 sm:p-3 rounded-2xl border border-[#E2DBD0] dark:border-[#2B2823] hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#787368] dark:text-[#A19B8E] shrink-0"
                   title="Reset demo"
                 >
                   <RotateCcw className="w-4 h-4" />
@@ -349,11 +349,11 @@ export function InteractiveDemo() {
               </div>
 
               {/* Pulsing Audio Bar Simulation */}
-              <div className="flex items-center gap-1.5 h-8 px-4 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E2DBD0] dark:border-[#2B2823]">
-                <span className="text-[11px] font-mono text-[#787368] mr-2 hidden md:inline">
+              <div className="hidden xs:flex items-center gap-1 sm:gap-1.5 h-8 px-3 sm:px-4 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E2DBD0] dark:border-[#2B2823]">
+                <span className="text-[11px] font-mono text-[#787368] mr-1.5 sm:mr-2 hidden md:inline">
                   Audio Engine:
                 </span>
-                {[...Array(16)].map((_, i) => (
+                {[...Array(12)].map((_, i) => (
                   <span
                     key={i}
                     className={`w-1 rounded-full transition-all duration-150 ${

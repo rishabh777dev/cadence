@@ -167,12 +167,12 @@ export function DownloadSection() {
         </div>
 
         {/* Platform Selector Tabs */}
-        <div className="flex justify-center mb-10">
-          <div className="inline-flex p-1.5 rounded-2xl bg-[#F0ECE1] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823]">
+        <div className="flex justify-center mb-8 sm:mb-10 px-2">
+          <div className="inline-flex max-w-full overflow-x-auto no-scrollbar p-1 sm:p-1.5 rounded-2xl bg-[#F0ECE1] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823]">
             <button
               type="button"
               onClick={() => setActiveTab("mac")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                 activeTab === "mac"
                   ? "bg-white dark:bg-[#2A2720] text-[#1A1815] dark:text-[#EDE9DF] shadow-xs font-semibold"
                   : "text-[#787368] dark:text-[#A19B8E] hover:text-[#1A1815] dark:hover:text-[#EDE9DF]"
@@ -184,7 +184,7 @@ export function DownloadSection() {
             <button
               type="button"
               onClick={() => setActiveTab("windows")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                 activeTab === "windows"
                   ? "bg-white dark:bg-[#2A2720] text-[#1A1815] dark:text-[#EDE9DF] shadow-xs font-semibold"
                   : "text-[#787368] dark:text-[#A19B8E] hover:text-[#1A1815] dark:hover:text-[#EDE9DF]"
@@ -196,7 +196,7 @@ export function DownloadSection() {
             <button
               type="button"
               onClick={() => setActiveTab("linux")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                 activeTab === "linux"
                   ? "bg-white dark:bg-[#2A2720] text-[#1A1815] dark:text-[#EDE9DF] shadow-xs font-semibold"
                   : "text-[#787368] dark:text-[#A19B8E] hover:text-[#1A1815] dark:hover:text-[#EDE9DF]"
@@ -208,7 +208,7 @@ export function DownloadSection() {
             <button
               type="button"
               onClick={() => setActiveTab("mobile")}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
                 activeTab === "mobile"
                   ? "bg-white dark:bg-[#2A2720] text-[#1A1815] dark:text-[#EDE9DF] shadow-xs font-semibold"
                   : "text-[#787368] dark:text-[#A19B8E] hover:text-[#1A1815] dark:hover:text-[#EDE9DF]"
@@ -225,7 +225,7 @@ export function DownloadSection() {
           {downloads[activeTab].map((item, index) => (
             <div
               key={index}
-              className="p-6 sm:p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md hover:border-[#C15F3D]/50 transition-all flex flex-col justify-between group"
+              className="p-5 sm:p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md hover:border-[#C15F3D]/50 transition-all flex flex-col justify-between group"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -248,16 +248,16 @@ export function DownloadSection() {
               <div className="space-y-3">
                 <a
                   href={item.url}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white font-medium text-sm shadow-xs transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-3.5 rounded-xl bg-[#C15F3D] hover:bg-[#AA4E2F] text-white font-medium text-sm shadow-xs transition-all hover:scale-[1.01] active:scale-[0.99] text-center"
                 >
-                  <Download className="w-4 h-4" />
-                  <span>Download {item.filename}</span>
+                  <Download className="w-4 h-4 shrink-0" />
+                  <span className="truncate">Download {item.filename}</span>
                 </a>
 
                 {/* Checksum & verification */}
                 <div className="flex items-center justify-between text-[11px] font-mono text-[#787368] dark:text-[#A19B8E] pt-2">
                   <span
-                    className="truncate max-w-[200px]"
+                    className="truncate max-w-[170px] xs:max-w-[220px]"
                     title={item.checksum}
                   >
                     SHA: {item.checksum.slice(0, 16)}...
@@ -265,7 +265,7 @@ export function DownloadSection() {
                   <button
                     type="button"
                     onClick={() => copyChecksum(item.checksum)}
-                    className="flex items-center gap-1 hover:text-[#1A1815] dark:hover:text-[#EDE9DF] transition-colors"
+                    className="flex items-center gap-1 hover:text-[#1A1815] dark:hover:text-[#EDE9DF] transition-colors shrink-0"
                   >
                     {copiedChecksum === item.checksum ? (
                       <>
@@ -275,7 +275,7 @@ export function DownloadSection() {
                     ) : (
                       <>
                         <Copy className="w-3 h-3" />
-                        <span>Copy SHA-256</span>
+                        <span>Copy SHA</span>
                       </>
                     )}
                   </button>
@@ -286,9 +286,9 @@ export function DownloadSection() {
         </div>
 
         {/* Developer CLI Option */}
-        <div className="mt-12 max-w-4xl mx-auto p-6 rounded-2xl bg-white/60 dark:bg-black/20 border border-[#E2DBD0] dark:border-[#2B2823] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-10 sm:mt-12 max-w-4xl mx-auto p-4 sm:p-6 rounded-2xl bg-white/60 dark:bg-black/20 border border-[#E2DBD0] dark:border-[#2B2823] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E2DBD0] dark:border-[#2B2823]">
+            <div className="p-2.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[#E2DBD0] dark:border-[#2B2823] shrink-0">
               <Terminal className="w-5 h-5 text-[#C15F3D]" />
             </div>
             <div>
@@ -302,14 +302,14 @@ export function DownloadSection() {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <code className="px-3 py-2 text-xs font-mono bg-black/5 dark:bg-white/5 rounded-lg border border-[#E2DBD0] dark:border-[#2B2823] text-[#1A1815] dark:text-[#EDE9DF] select-all">
+            <code className="px-2.5 sm:px-3 py-2 text-[11px] sm:text-xs font-mono bg-black/5 dark:bg-white/5 rounded-lg border border-[#E2DBD0] dark:border-[#2B2823] text-[#1A1815] dark:text-[#EDE9DF] select-all break-all sm:break-normal flex-1 sm:flex-initial">
               git clone https://github.com/rishabh777dev/cadence.git
             </code>
             <a
               href="https://github.com/rishabh777dev/cadence"
               target="_blank"
               rel="noreferrer"
-              className="p-2 rounded-lg border border-[#E2DBD0] dark:border-[#2B2823] hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              className="p-2 rounded-lg border border-[#E2DBD0] dark:border-[#2B2823] hover:bg-black/5 dark:hover:bg-white/5 transition-colors shrink-0"
               title="GitHub Repository"
             >
               <ExternalLink className="w-4 h-4 text-[#787368]" />

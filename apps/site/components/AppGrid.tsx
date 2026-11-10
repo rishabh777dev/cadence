@@ -430,15 +430,15 @@ const row2Duplicated = [...row2, ...row2, ...row2, ...row2];
 
 function AppCard({ app }: { app: AppItem }) {
   return (
-    <div className="w-36 sm:w-44 shrink-0 p-3.5 sm:p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-2xs hover:border-[#1A1815]/30 dark:hover:border-[#EDE9DF]/30 hover:shadow-xs transition-all flex flex-col items-center justify-center text-center group cursor-default select-none">
+    <div className="w-32 sm:w-44 shrink-0 p-3 sm:p-4 rounded-2xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-2xs hover:border-[#1A1815]/30 dark:hover:border-[#EDE9DF]/30 hover:shadow-xs transition-all flex flex-col items-center justify-center text-center group cursor-default select-none">
       {/* Warmish Grey & Charcoal Icon Tile - Black & White palette matching theme */}
-      <div className="w-10 h-10 rounded-xl bg-[#F0ECE1] dark:bg-[#23211D] border border-[#E2DBD0] dark:border-[#2E2B25] shadow-2xs flex items-center justify-center mb-2.5 text-[#4A453E] dark:text-[#C5BFB3] group-hover:text-[#1A1815] dark:group-hover:text-white group-hover:scale-110 group-hover:border-[#C15F3D]/30 transition-all">
+      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#F0ECE1] dark:bg-[#23211D] border border-[#E2DBD0] dark:border-[#2E2B25] shadow-2xs flex items-center justify-center mb-2 sm:mb-2.5 text-[#4A453E] dark:text-[#C5BFB3] group-hover:text-[#1A1815] dark:group-hover:text-white group-hover:scale-110 group-hover:border-[#C15F3D]/30 transition-all">
         {app.icon}
       </div>
-      <span className="text-xs sm:text-sm font-semibold text-[#1A1815] dark:text-[#EDE9DF] tracking-tight group-hover:text-[#1A1815] dark:group-hover:text-white transition-colors">
+      <span className="text-xs sm:text-sm font-semibold text-[#1A1815] dark:text-[#EDE9DF] tracking-tight group-hover:text-[#1A1815] dark:group-hover:text-white transition-colors truncate max-w-full">
         {app.name}
       </span>
-      <span className="text-[10px] sm:text-[11px] font-mono text-[#787368] dark:text-[#A19B8E] mt-0.5">
+      <span className="text-[10px] sm:text-[11px] font-mono text-[#787368] dark:text-[#A19B8E] mt-0.5 truncate max-w-full">
         {app.category}
       </span>
     </div>
@@ -449,9 +449,9 @@ function AppCard({ app }: { app: AppItem }) {
 
 export function AppGrid() {
   return (
-    <section className="py-20 bg-white/40 dark:bg-black/10 border-b border-[#E2DBD0] dark:border-[#2B2823] overflow-hidden">
+    <section className="py-16 sm:py-20 bg-white/40 dark:bg-black/10 border-b border-[#E2DBD0] dark:border-[#2B2823] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-mono font-medium mb-3">
             <Check className="w-3.5 h-3.5" />
             <span>Universal System-Wide Paste</span>
@@ -460,7 +460,7 @@ export function AppGrid() {
             Works wherever your{" "}
             <span className="italic text-[#C15F3D]">cursor</span> can blink.
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-[#787368] dark:text-[#A19B8E]">
+          <p className="mt-3 text-sm sm:text-base text-[#787368] dark:text-[#A19B8E] px-2">
             No browser extensions or clunky copy-pasting. Hold your global
             shortcut and clean punctuated text streams in at 160 WPM.
           </p>
@@ -470,26 +470,26 @@ export function AppGrid() {
         <div className="relative w-full overflow-hidden py-2">
           {/* Frosted / Blurry Left Edge */}
           <div
-            className="pointer-events-none absolute left-0 inset-y-0 w-24 sm:w-44 md:w-56 z-20 bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent dark:from-[#11100E] dark:via-[#11100E]/80 backdrop-blur-[2px]"
+            className="pointer-events-none absolute left-0 inset-y-0 w-10 sm:w-28 md:w-56 z-20 bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent dark:from-[#11100E] dark:via-[#11100E]/80 backdrop-blur-[2px]"
             aria-hidden="true"
           />
 
           {/* Frosted / Blurry Right Edge */}
           <div
-            className="pointer-events-none absolute right-0 inset-y-0 w-24 sm:w-44 md:w-56 z-20 bg-gradient-to-l from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent dark:from-[#11100E] dark:via-[#11100E]/80 backdrop-blur-[2px]"
+            className="pointer-events-none absolute right-0 inset-y-0 w-10 sm:w-28 md:w-56 z-20 bg-gradient-to-l from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent dark:from-[#11100E] dark:via-[#11100E]/80 backdrop-blur-[2px]"
             aria-hidden="true"
           />
 
-          <div className="flex flex-col gap-4 sm:gap-5 [mask-image:linear-gradient(to_right,transparent_0%,black_6%,black_94%,transparent_100%)]">
+          <div className="flex flex-col gap-3 sm:gap-5 [mask-image:linear-gradient(to_right,transparent_0%,black_6%,black_94%,transparent_100%)]">
             {/* Row 1: Scrolling Left Infinitely */}
-            <div className="animate-marquee-left flex gap-3 sm:gap-4">
+            <div className="animate-marquee-left flex gap-2.5 sm:gap-4">
               {row1Duplicated.map((app, i) => (
                 <AppCard key={`r1-${i}-${app.name}`} app={app} />
               ))}
             </div>
 
             {/* Row 2: Scrolling Right Infinitely */}
-            <div className="animate-marquee-right flex gap-3 sm:gap-4">
+            <div className="animate-marquee-right flex gap-2.5 sm:gap-4">
               {row2Duplicated.map((app, i) => (
                 <AppCard key={`r2-${i}-${app.name}`} app={app} />
               ))}
@@ -498,18 +498,18 @@ export function AppGrid() {
         </div>
 
         {/* Feature snippet bar */}
-        <div className="mt-12 max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-6 text-xs font-mono text-[#787368] dark:text-[#A19B8E]">
-          <div className="flex items-center gap-2">
+        <div className="mt-10 sm:mt-12 max-w-3xl mx-auto flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs font-mono text-[#787368] dark:text-[#A19B8E] text-center px-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="w-2 h-2 rounded-full bg-[#C15F3D]"></span>
             <span>Simulates native OS keystrokes</span>
           </div>
           <div className="hidden sm:inline">•</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span>Zero clipboard hijacking</span>
           </div>
           <div className="hidden sm:inline">•</div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-500"></span>
             <span>Instant undo with Ctrl+Z</span>
           </div>

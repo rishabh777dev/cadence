@@ -123,29 +123,29 @@ export function CadenceStudioMockup() {
   return (
     <div className="w-full rounded-2xl md:rounded-3xl border border-[#3A332B] bg-[#12110F] text-[#EDE9DF] shadow-2xl overflow-hidden font-sans select-none text-left">
       {/* 1. Window Chrome Header */}
-      <div className="h-10 px-4 bg-[#181614] border-b border-[#28241F] flex items-center justify-between">
+      <div className="h-10 px-3 sm:px-4 bg-[#181614] border-b border-[#28241F] flex items-center justify-between">
         {/* macOS Traffic Lights */}
-        <div className="flex items-center gap-2 w-24">
-          <div className="w-3 h-3 rounded-full bg-[#FF5F56] shadow-xs" />
-          <div className="w-3 h-3 rounded-full bg-[#FFBD2E] shadow-xs" />
-          <div className="w-3 h-3 rounded-full bg-[#27C93F] shadow-xs" />
+        <div className="flex items-center gap-1.5 sm:gap-2 w-14 sm:w-24 shrink-0">
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FF5F56] shadow-xs" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#FFBD2E] shadow-xs" />
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-[#27C93F] shadow-xs" />
         </div>
 
         {/* Center Title & Status Badge */}
-        <div className="flex items-center gap-2 text-xs font-mono">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-mono truncate">
           <span className="text-[#A19B8E] font-medium hidden sm:inline">
             Cadence Voice Studio
           </span>
           <span className="text-[#4E4942] hidden sm:inline">•</span>
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 text-[10px] font-semibold border border-emerald-700/40">
+          <span className="inline-flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 text-[9px] sm:text-[10px] font-semibold border border-emerald-700/40 shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span>ONLINE • LOCAL MLX</span>
           </span>
         </div>
 
         {/* Window Controls / Version Tag */}
-        <div className="w-24 text-right">
-          <span className="text-[10px] font-mono text-[#787368] px-2 py-0.5 rounded-md bg-[#211E1A] border border-[#2D2924]">
+        <div className="w-14 sm:w-24 text-right shrink-0">
+          <span className="text-[9px] sm:text-[10px] font-mono text-[#787368] px-1.5 sm:px-2 py-0.5 rounded-md bg-[#211E1A] border border-[#2D2924]">
             v0.7.1
           </span>
         </div>
@@ -268,9 +268,9 @@ export function CadenceStudioMockup() {
         </div>
 
         {/* ================= COLUMN 2: CENTER CANVAS ================= */}
-        <div className="flex-1 bg-[#100E0C] p-4 sm:p-6 overflow-y-auto space-y-5">
+        <div className="flex-1 bg-[#100E0C] p-3.5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5">
           {/* Listening Tutorial Hero Card */}
-          <div className="relative rounded-2xl md:rounded-3xl border border-[#332A22] bg-[#191613]/90 backdrop-blur-md p-5 sm:p-7 text-center shadow-lg">
+          <div className="relative rounded-2xl md:rounded-3xl border border-[#332A22] bg-[#191613]/90 backdrop-blur-md p-4 sm:p-7 text-center shadow-lg">
             <button
               type="button"
               className="absolute top-3.5 right-3.5 p-1 text-[#6E685F] hover:text-[#EDE9DF] transition-colors"
@@ -280,28 +280,28 @@ export function CadenceStudioMockup() {
             </button>
 
             {/* Instruction Headline */}
-            <div className="text-xl sm:text-2xl md:text-3xl font-serif italic font-normal text-[#EDE9DF] tracking-tight mb-4">
+            <div className="text-lg sm:text-2xl md:text-3xl font-serif italic font-normal text-[#EDE9DF] tracking-tight mb-3 sm:mb-4">
               Press{" "}
-              <span className="inline-flex items-center align-middle mx-1 px-2.5 py-1 rounded-lg bg-[#24201A] border border-[#40352A] shadow-xs text-xs font-mono not-italic text-[#EDE9DF] font-semibold">
+              <span className="inline-flex items-center align-middle mx-0.5 sm:mx-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-[#24201A] border border-[#40352A] shadow-xs text-[11px] sm:text-xs font-mono not-italic text-[#EDE9DF] font-semibold">
                 Ctrl
               </span>{" "}
-              <span className="inline-flex items-center align-middle mx-1 px-3 py-1 rounded-lg bg-[#24201A] border border-[#40352A] shadow-xs text-xs font-mono not-italic text-[#EDE9DF] font-semibold">
+              <span className="inline-flex items-center align-middle mx-0.5 sm:mx-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg bg-[#24201A] border border-[#40352A] shadow-xs text-[11px] sm:text-xs font-mono not-italic text-[#EDE9DF] font-semibold">
                 ␣
               </span>{" "}
               , speak, release.
             </div>
 
             {/* Listening Wave Capsule */}
-            <div className="max-w-md mx-auto rounded-full border border-[#4A382A] bg-[#141210]/95 px-6 py-3 shadow-inner">
-              <div className="flex items-center justify-center gap-2 mb-1.5">
+            <div className="max-w-md mx-auto rounded-full border border-[#4A382A] bg-[#141210]/95 px-3 sm:px-6 py-2 sm:py-3 shadow-inner">
+              <div className="flex items-center justify-center gap-2 mb-1 sm:mb-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#D97757] animate-ping" />
-                <span className="text-[10px] font-mono tracking-widest text-[#D97757] uppercase font-bold">
+                <span className="text-[9px] sm:text-[10px] font-mono tracking-widest text-[#D97757] uppercase font-bold">
                   ● LISTENING..
                 </span>
               </div>
 
               {/* Fluid Terracotta Waveform SVG */}
-              <div className="h-10 flex items-center justify-center overflow-hidden">
+              <div className="h-8 sm:h-10 flex items-center justify-center overflow-hidden">
                 <svg
                   viewBox="0 0 520 70"
                   className="w-full h-full"
@@ -323,24 +323,24 @@ export function CadenceStudioMockup() {
 
           {/* Search Bar & Filter Row */}
           <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center justify-between px-3.5 py-2 rounded-xl bg-[#171512] border border-[#2B2620] text-xs text-[#787368]">
-              <div className="flex items-center gap-2.5">
-                <Search className="w-4 h-4 text-[#6E685F]" />
-                <span className="text-[#6E685F]">
+            <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-xl bg-[#171512] border border-[#2B2620] text-xs text-[#787368]">
+              <div className="flex items-center gap-2">
+                <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#6E685F] shrink-0" />
+                <span className="text-[#6E685F] text-[11px] sm:text-xs truncate">
                   Search 793 transcripts...
                 </span>
               </div>
-              <span className="font-mono text-[10px] text-[#58534C] px-1.5 py-0.5 rounded bg-[#211E19] border border-[#2E2922]">
+              <span className="font-mono text-[9px] sm:text-[10px] text-[#58534C] px-1.5 py-0.5 rounded bg-[#211E19] border border-[#2E2922] shrink-0">
                 Ctrl+K
               </span>
             </div>
 
             <button
               type="button"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#171512] hover:bg-[#201D18] border border-[#2B2620] text-xs text-[#A19B8E] transition-colors"
+              className="flex items-center gap-1 px-2.5 sm:px-3 py-2 rounded-xl bg-[#171512] hover:bg-[#201D18] border border-[#2B2620] text-xs text-[#A19B8E] transition-colors shrink-0"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-[#787368]" />
-              <span>Filters</span>
+              <span className="hidden sm:inline">Filters</span>
             </button>
           </div>
 
@@ -350,11 +350,11 @@ export function CadenceStudioMockup() {
           </div>
 
           {/* Transcription Cards */}
-          <div className="space-y-3.5">
+          <div className="space-y-3 sm:space-y-3.5">
             {/* Card 1 */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[#151310] border border-[#2B261F] hover:border-[#3D3328] transition-all text-left">
-              <div className="flex items-center justify-between text-xs font-mono text-[#787368] mb-2.5">
-                <div className="flex items-center gap-2">
+            <div className="p-3.5 sm:p-5 rounded-2xl bg-[#151310] border border-[#2B261F] hover:border-[#3D3328] transition-all text-left">
+              <div className="flex flex-wrap items-center justify-between text-xs font-mono text-[#787368] mb-2 sm:mb-2.5 gap-1.5">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <span className="text-[#A19B8E] font-medium">6:46 pm</span>
                   <span className="px-2 py-0.5 rounded-full bg-[#241F1A] border border-[#382E24] text-[10px] text-[#D97757]">
                     voice-instruction

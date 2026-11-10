@@ -8,9 +8,9 @@ export function Footer() {
   return (
     <footer className="border-t border-[#E2DBD0] dark:border-[#2B2823] bg-[#F5EFE6]/60 dark:bg-[#11100E] text-xs text-[#787368] dark:text-[#A19B8E] py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 mb-12">
           {/* Brand info */}
-          <div className="md:col-span-1 space-y-4">
+          <div className="sm:col-span-2 md:col-span-1 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#E2DBD0] dark:border-[#2B2823] bg-white dark:bg-[#1A1916] p-1 flex items-center justify-center">
                 <Image

@@ -52,10 +52,10 @@ export function Testimonials() {
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className="p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between"
+              className="p-5 sm:p-8 rounded-3xl bg-[#FAF7F2] dark:bg-[#1A1916] border border-[#E2DBD0] dark:border-[#2B2823] shadow-md flex flex-col justify-between"
             >
               <div>
-                <Quote className="w-8 h-8 text-[#C15F3D]/30 mb-4" />
+                <Quote className="w-7 h-7 sm:w-8 sm:h-8 text-[#C15F3D]/30 mb-3 sm:mb-4" />
                 <p className="text-sm sm:text-base text-[#1A1815] dark:text-[#EDE9DF] leading-relaxed mb-6">
                   "{t.quote}"
                 </p>

@@ -74,9 +74,9 @@ export function FAQ() {
                 <button
                   type="button"
                   onClick={() => toggle(i)}
-                  className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 hover:bg-black/2 dark:hover:bg-white/2 transition-colors"
+                  className="w-full px-4 sm:px-6 py-4 sm:py-5 text-left flex items-center justify-between gap-3 sm:gap-4 hover:bg-black/2 dark:hover:bg-white/2 transition-colors"
                 >
-                  <span className="font-semibold text-base sm:text-lg text-[#1A1815] dark:text-[#EDE9DF]">
+                  <span className="font-semibold text-sm sm:text-lg text-[#1A1815] dark:text-[#EDE9DF]">
                     {faq.question}
                   </span>
                   <ChevronDown
@@ -87,7 +87,7 @@ export function FAQ() {
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 text-sm text-[#787368] dark:text-[#A19B8E] leading-relaxed border-t border-[#E2DBD0]/50 dark:border-[#2B2823]/50 pt-4">
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6 text-xs sm:text-sm text-[#787368] dark:text-[#A19B8E] leading-relaxed border-t border-[#E2DBD0]/50 dark:border-[#2B2823]/50 pt-3 sm:pt-4">
                     {faq.answer}
                   </div>
                 )}
