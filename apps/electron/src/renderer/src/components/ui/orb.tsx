@@ -1,9 +1,18 @@
 import { useTexture } from "@react-three/drei";
+import type { ThreeElements } from "@react-three/fiber";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import type { CircleGeometry, Mesh, ShaderMaterial } from "three";
 import { Color, RepeatWrapping, Uniform } from "three";
 import perlinNoiseUrl from "../../assets/perlin-noise.png";
+
+declare global {
+  namespace React {
+    namespace JSX {
+      interface IntrinsicElements extends ThreeElements {}
+    }
+  }
+}
 
 export type AgentState = null | "thinking" | "listening" | "talking";
 
