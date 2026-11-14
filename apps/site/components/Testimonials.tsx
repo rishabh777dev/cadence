@@ -35,7 +35,7 @@ const testimonials: Testimonial[] = [
 
 export function Testimonials() {
   return (
-    <section className="py-24 bg-white/40 dark:bg-black/10 border-t border-[#E2DBD0] dark:border-[#2B2823]">
+    <section className="py-24 bg-white/40 dark:bg-black/10 border-t border-[#E2DBD0] dark:border-[#2B2823] section-auto-visibility">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C15F3D]/10 text-[#C15F3D] text-xs font-mono font-medium mb-3">

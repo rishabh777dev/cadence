@@ -1,6 +1,5 @@
 "use client";
 
-import confetti from "canvas-confetti";
 import {
   Check,
   Code2,
@@ -91,9 +90,11 @@ export function InteractiveDemo() {
   const [displayedText, setDisplayedText] = useState("");
   const [copied, setCopied] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const typewriterRef = useRef<NodeJS.Timeout | null>(null);
 
   const startSimulation = (scenario: Scenario = activeScenario) => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (typewriterRef.current) clearInterval(typewriterRef.current);
     setIsRecording(true);
     setStep("listening");
     setDisplayedText("");
@@ -113,12 +114,13 @@ export function InteractiveDemo() {
   };
 
   const typewriteText = (fullText: string) => {
+    if (typewriterRef.current) clearInterval(typewriterRef.current);
     let index = 0;
-    const interval = setInterval(() => {
+    typewriterRef.current = setInterval(() => {
       index += 3;
       if (index >= fullText.length) {
         setDisplayedText(fullText);
-        clearInterval(interval);
+        if (typewriterRef.current) clearInterval(typewriterRef.current);
       } else {
         setDisplayedText(fullText.slice(0, index));
       }
@@ -130,15 +132,20 @@ export function InteractiveDemo() {
     startSimulation(sc);
   };
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     navigator.clipboard.writeText(displayedText || activeScenario.cleanText);
     setCopied(true);
-    confetti({
-      particleCount: 45,
-      spread: 60,
-      origin: { y: 0.7 },
-      colors: ["#C15F3D", "#D97757", "#E88C6F", "#FBBF24"],
-    });
+    try {
+      const confetti = (await import("canvas-confetti")).default;
+      confetti({
+        particleCount: 45,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ["#C15F3D", "#D97757", "#E88C6F", "#FBBF24"],
+      });
+    } catch {
+      // Ignore
+    }
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -146,6 +153,13 @@ export function InteractiveDemo() {
     setDisplayedText(activeScenario.cleanText);
     setStep("done");
   }, [activeScenario.cleanText]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (typewriterRef.current) clearInterval(typewriterRef.current);
+    };
+  }, []);
 
   return (
     <section

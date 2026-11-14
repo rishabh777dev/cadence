@@ -145,7 +145,10 @@ export function DownloadSection() {
   };
 
   return (
-    <section id="download" className="py-24 relative overflow-hidden">
+    <section
+      id="download"
+      className="py-24 relative overflow-hidden section-auto-visibility"
+    >
       {/* Background radial glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-radial from-[#C15F3D]/8 to-transparent blur-3xl pointer-events-none -z-10" />
 

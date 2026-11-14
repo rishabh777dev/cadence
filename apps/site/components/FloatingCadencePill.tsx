@@ -1,6 +1,5 @@
 "use client";
 
-import confetti from "canvas-confetti";
 import { Check, Copy, Download, Mic, Sparkles, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +12,7 @@ export function FloatingCadencePill() {
   const [copied, setCopied] = useState(false);
   const [streamText, setStreamText] = useState("");
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const rawTranscript =
     "Hey Sarah, um, could you send over the updated Q4 design deck by tomorrow morning, actually make it afternoon so you have time to finish the user research notes.";
@@ -23,6 +23,9 @@ export function FloatingCadencePill() {
   const startDemo = () => {
     if (step === "listening" || step === "rewriting") return;
 
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
     setStep("listening");
     setStreamText("");
     setCopied(false);
@@ -31,30 +34,36 @@ export function FloatingCadencePill() {
     const words = rawTranscript.split(" ");
     let i = 0;
 
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       if (i < words.length) {
         setStreamText((prev) => (prev ? `${prev} ${words[i]}` : words[i]));
         i++;
       } else {
-        clearInterval(interval);
+        if (intervalRef.current) clearInterval(intervalRef.current);
         // Switch to rewriting
         setStep("rewriting");
 
-        timerRef.current = setTimeout(() => {
+        timerRef.current = setTimeout(async () => {
           setStep("done");
-          // Fire confetti!
-          confetti({
-            particleCount: 50,
-            spread: 60,
-            origin: { y: 0.85, x: 0.8 },
-            colors: ["#C15F3D", "#D97757", "#E88C6F", "#FBBF24"],
-          });
+          try {
+            const confetti = (await import("canvas-confetti")).default;
+            confetti({
+              particleCount: 50,
+              spread: 60,
+              origin: { y: 0.85, x: 0.8 },
+              colors: ["#C15F3D", "#D97757", "#E88C6F", "#FBBF24"],
+            });
+          } catch {
+            // Ignore
+          }
         }, 1200);
       }
     }, 110);
   };
 
   const resetDemo = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setStep("idle");
     setStreamText("");
     setCopied(false);
@@ -69,6 +78,7 @@ export function FloatingCadencePill() {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 

@@ -23,19 +23,34 @@ import { GithubIcon } from "./GithubIcon";
 export function CadenceStudioMockup() {
   const [activeNav, setActiveNav] = useState("Transcriptions");
   const wavePathRef = useRef<SVGPathElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Animate the terracotta waveform smoothly
+  // Animate the terracotta waveform smoothly only when visible in viewport
   useEffect(() => {
     const node = wavePathRef.current;
     if (!node) return;
 
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
     let rafId = 0;
+    let isRunning = false;
+    let isIntersecting = false;
     const start = performance.now();
     const W = 520;
     const H = 70;
-    const N = 100;
+    const N = 80;
 
     const draw = () => {
+      if (!isIntersecting || document.hidden) {
+        isRunning = false;
+        return;
+      }
+
       const t = (performance.now() - start) / 1000;
       // Organic breathing amplitude
       const amp =
@@ -80,8 +95,49 @@ export function CadenceStudioMockup() {
       rafId = requestAnimationFrame(draw);
     };
 
-    rafId = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(rafId);
+    const startAnimation = () => {
+      if (!isRunning && isIntersecting && !document.hidden) {
+        isRunning = true;
+        rafId = requestAnimationFrame(draw);
+      }
+    };
+
+    const stopAnimation = () => {
+      if (isRunning) {
+        cancelAnimationFrame(rafId);
+        isRunning = false;
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isIntersecting = entry.isIntersecting;
+        if (isIntersecting) {
+          startAnimation();
+        } else {
+          stopAnimation();
+        }
+      },
+      { threshold: 0.05 },
+    );
+
+    const el = containerRef.current || node;
+    observer.observe(el);
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopAnimation();
+      } else if (isIntersecting) {
+        startAnimation();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      stopAnimation();
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   const navItems = [
@@ -121,7 +177,10 @@ export function CadenceStudioMockup() {
   ];
 
   return (
-    <div className="w-full rounded-2xl md:rounded-3xl border border-[#3A332B] bg-[#12110F] text-[#EDE9DF] shadow-2xl overflow-hidden font-sans select-none text-left">
+    <div
+      ref={containerRef}
+      className="w-full rounded-2xl md:rounded-3xl border border-[#3A332B] bg-[#12110F] text-[#EDE9DF] shadow-2xl overflow-hidden font-sans select-none text-left"
+    >
       {/* 1. Window Chrome Header */}
       <div className="h-10 px-3 sm:px-4 bg-[#181614] border-b border-[#28241F] flex items-center justify-between">
         {/* macOS Traffic Lights */}

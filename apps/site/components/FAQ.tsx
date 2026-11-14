@@ -50,7 +50,7 @@ export function FAQ() {
   };
 
   return (
-    <section id="faq" className="py-24 relative">
+    <section id="faq" className="py-24 relative section-auto-visibility">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C15F3D]/10 text-[#C15F3D] text-xs font-mono font-medium mb-3">

@@ -19,17 +19,34 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       gestureOrientation: "vertical",
       smoothWheel: true,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.8,
+      touchMultiplier: 1.0,
+      syncTouch: false,
     });
 
     let rafId = 0;
+    let isRunning = true;
+
     function raf(time: number) {
+      if (!isRunning) return;
       lenis.raf(time);
       rafId = requestAnimationFrame(raf);
     }
     rafId = requestAnimationFrame(raf);
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        isRunning = false;
+        cancelAnimationFrame(rafId);
+      } else if (!isRunning) {
+        isRunning = true;
+        rafId = requestAnimationFrame(raf);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
+      isRunning = false;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       cancelAnimationFrame(rafId);
       lenis.destroy();
     };

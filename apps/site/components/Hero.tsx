@@ -1,6 +1,5 @@
 "use client";
 
-import confetti from "canvas-confetti";
 import { Download, Lock, Play, Sparkles, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -72,13 +71,18 @@ export function Hero() {
 
   const primaryDownload = downloadOptions[osName][0];
 
-  const handleDownloadClick = () => {
-    confetti({
-      particleCount: 75,
-      spread: 75,
-      origin: { y: 0.6 },
-      colors: ["#C15F3D", "#D97757", "#E88C6F", "#F6EBE5", "#FBBF24"],
-    });
+  const handleDownloadClick = async () => {
+    try {
+      const confetti = (await import("canvas-confetti")).default;
+      confetti({
+        particleCount: 75,
+        spread: 75,
+        origin: { y: 0.6 },
+        colors: ["#C15F3D", "#D97757", "#E88C6F", "#F6EBE5", "#FBBF24"],
+      });
+    } catch {
+      // Ignore if dynamic import fails
+    }
   };
 
   return (

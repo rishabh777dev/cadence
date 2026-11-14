@@ -109,7 +109,7 @@ export function ComparisonTable() {
   return (
     <section
       id="compare"
-      className="scroll-mt-24 py-24 bg-[#F5EFE6]/60 dark:bg-[#16140F]/80 border-y border-[#E2DBD0] dark:border-[#2B2823]"
+      className="scroll-mt-24 py-24 bg-[#F5EFE6]/60 dark:bg-[#16140F]/80 border-y border-[#E2DBD0] dark:border-[#2B2823] section-auto-visibility"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}

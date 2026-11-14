@@ -14,7 +14,10 @@ import { SpotlightCard } from "./SpotlightCard";
 
 export function BentoFeatures() {
   return (
-    <section id="features" className="py-24 relative overflow-hidden">
+    <section
+      id="features"
+      className="py-24 relative overflow-hidden section-auto-visibility"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div

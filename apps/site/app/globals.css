@@ -158,3 +158,9 @@ body {
 .animate-marquee-right:hover {
   animation-play-state: paused;
 }
+
+/* Off-screen layout containment for high-fps scrolling */
+.section-auto-visibility {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}

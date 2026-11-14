@@ -11,10 +11,15 @@ export function Navbar() {
   const [osName, setOsName] = useState<"mac" | "windows" | "linux">("mac");
 
   useEffect(() => {
+    let lastScrolled = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const isScrolled = window.scrollY > 20;
+      if (isScrolled !== lastScrolled) {
+        lastScrolled = isScrolled;
+        setScrolled(isScrolled);
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     // Detect OS
     if (typeof window !== "undefined") {

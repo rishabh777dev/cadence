@@ -470,13 +470,13 @@ export function AppGrid() {
         <div className="relative w-full overflow-hidden py-2">
           {/* Frosted / Blurry Left Edge */}
           <div
-            className="pointer-events-none absolute left-0 inset-y-0 w-10 sm:w-28 md:w-56 z-20 bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent dark:from-[#11100E] dark:via-[#11100E]/80 backdrop-blur-[2px]"
+            className="pointer-events-none absolute left-0 inset-y-0 w-12 sm:w-24 md:w-36 z-20 bg-gradient-to-r from-[#FAF7F2] via-[#FAF7F2]/90 to-transparent dark:from-[#11100E] dark:via-[#11100E]/90 backdrop-blur-[1px]"
             aria-hidden="true"
           />
 
           {/* Frosted / Blurry Right Edge */}
           <div
-            className="pointer-events-none absolute right-0 inset-y-0 w-10 sm:w-28 md:w-56 z-20 bg-gradient-to-l from-[#FAF7F2] via-[#FAF7F2]/80 to-transparent dark:from-[#11100E] dark:via-[#11100E]/80 backdrop-blur-[2px]"
+            className="pointer-events-none absolute right-0 inset-y-0 w-12 sm:w-24 md:w-36 z-20 bg-gradient-to-l from-[#FAF7F2] via-[#FAF7F2]/90 to-transparent dark:from-[#11100E] dark:via-[#11100E]/90 backdrop-blur-[1px]"
             aria-hidden="true"
           />
 

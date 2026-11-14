@@ -6,6 +6,13 @@ export function AmbientCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    // Respect user motion preferences
+    if (typeof window === "undefined") return;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (prefersReducedMotion) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -13,20 +20,51 @@ export function AmbientCanvas() {
     if (!ctx) return;
 
     let rafId = 0;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let width = window.innerWidth;
     let height = window.innerHeight;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    ctx.scale(dpr, dpr);
 
     let mouseX = width / 2;
     let mouseY = height / 3;
     let targetMouseX = mouseX;
     let targetMouseY = mouseY;
 
+    // Cache pre-computed gradients on resize
+    let ribbonGradients: CanvasGradient[] = [];
+    const updateGradients = () => {
+      ribbonGradients = [0, 1, 2].map((r) => {
+        const gradient = ctx.createLinearGradient(0, 0, width, 0);
+        gradient.addColorStop(0, "rgba(193, 95, 61, 0)");
+        gradient.addColorStop(
+          0.3,
+          r === 0 ? "rgba(217, 119, 87, 0.12)" : "rgba(193, 95, 61, 0.08)",
+        );
+        gradient.addColorStop(
+          0.5,
+          r === 0 ? "rgba(232, 140, 111, 0.18)" : "rgba(217, 119, 87, 0.12)",
+        );
+        gradient.addColorStop(
+          0.7,
+          r === 0 ? "rgba(193, 95, 61, 0.12)" : "rgba(217, 119, 87, 0.06)",
+        );
+        gradient.addColorStop(1, "rgba(193, 95, 61, 0)");
+        return gradient;
+      });
+    };
+    updateGradients();
+
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+      updateGradients();
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -34,11 +72,11 @@ export function AmbientCanvas() {
       targetMouseY = e.clientY;
     };
 
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
 
     // Floating acoustic harmonic dust particles
-    const particleCount = 45;
+    const particleCount = 40;
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
@@ -50,16 +88,11 @@ export function AmbientCanvas() {
     }));
 
     let time = 0;
-    let isVisible = true;
-
-    const handleVisibility = () => {
-      isVisible = !document.hidden;
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
+    let isRunning = false;
 
     const render = () => {
-      if (!isVisible) {
-        rafId = requestAnimationFrame(render);
+      if (document.hidden) {
+        isRunning = false;
         return;
       }
 
@@ -97,24 +130,7 @@ export function AmbientCanvas() {
           }
         }
 
-        // Gradient stroke
-        const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        gradient.addColorStop(0, "rgba(193, 95, 61, 0)");
-        gradient.addColorStop(
-          0.3,
-          r === 0 ? "rgba(217, 119, 87, 0.12)" : "rgba(193, 95, 61, 0.08)",
-        );
-        gradient.addColorStop(
-          0.5,
-          r === 0 ? "rgba(232, 140, 111, 0.18)" : "rgba(217, 119, 87, 0.12)",
-        );
-        gradient.addColorStop(
-          0.7,
-          r === 0 ? "rgba(193, 95, 61, 0.12)" : "rgba(217, 119, 87, 0.06)",
-        );
-        gradient.addColorStop(1, "rgba(193, 95, 61, 0)");
-
-        ctx.strokeStyle = gradient;
+        ctx.strokeStyle = ribbonGradients[r] || "rgba(193, 95, 61, 0.1)";
         ctx.lineWidth = 2.5 - r * 0.5;
         ctx.stroke();
       }
@@ -151,10 +167,33 @@ export function AmbientCanvas() {
       rafId = requestAnimationFrame(render);
     };
 
-    rafId = requestAnimationFrame(render);
+    const startLoop = () => {
+      if (!isRunning && !document.hidden) {
+        isRunning = true;
+        rafId = requestAnimationFrame(render);
+      }
+    };
+
+    const stopLoop = () => {
+      if (isRunning) {
+        cancelAnimationFrame(rafId);
+        isRunning = false;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopLoop();
+      } else {
+        startLoop();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    startLoop();
 
     return () => {
-      cancelAnimationFrame(rafId);
+      stopLoop();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("visibilitychange", handleVisibility);
