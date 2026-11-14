@@ -18,10 +18,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useLatestRelease } from "@/lib/useLatestRelease";
 import { GithubIcon } from "./GithubIcon";
 
 export function CadenceStudioMockup() {
   const [activeNav, setActiveNav] = useState("Transcriptions");
+  const release = useLatestRelease();
   const wavePathRef = useRef<SVGPathElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -205,7 +207,7 @@ export function CadenceStudioMockup() {
         {/* Window Controls / Version Tag */}
         <div className="w-14 sm:w-24 text-right shrink-0">
           <span className="text-[9px] sm:text-[10px] font-mono text-[#787368] px-1.5 sm:px-2 py-0.5 rounded-md bg-[#211E1A] border border-[#2D2924]">
-            v0.7.1
+            {release.tag}
           </span>
         </div>
       </div>

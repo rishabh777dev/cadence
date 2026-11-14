@@ -2,9 +2,11 @@
 
 import { Heart } from "lucide-react";
 import Image from "next/image";
+import { useLatestRelease } from "@/lib/useLatestRelease";
 import { GithubIcon } from "./GithubIcon";
 
 export function Footer() {
+  const release = useLatestRelease();
   return (
     <footer className="border-t border-[#E2DBD0] dark:border-[#2B2823] bg-[#F5EFE6]/60 dark:bg-[#11100E] text-xs text-[#787368] dark:text-[#A19B8E] py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,7 +33,7 @@ export function Footer() {
             </p>
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono text-[11px]">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>All systems operational • v0.7.1</span>
+              <span>All systems operational • {release.tag}</span>
             </div>
           </div>
 

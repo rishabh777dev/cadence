@@ -3,6 +3,7 @@
 import { Download, Menu, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useLatestRelease } from "@/lib/useLatestRelease";
 import { GithubIcon } from "./GithubIcon";
 
 export function Navbar() {
@@ -32,12 +33,8 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const directDownloadUrl =
-    osName === "mac"
-      ? "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.dmg"
-      : osName === "linux"
-        ? "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.AppImage"
-        : "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1-setup.exe";
+  const latestRelease = useLatestRelease();
+  const directDownloadUrl = `/api/download?platform=${osName}`;
 
   const handleMobileNav = (hash: string) => {
     setMobileMenuOpen(false);
@@ -73,7 +70,7 @@ export function Navbar() {
                   Cadence
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#C15F3D]/10 text-[#C15F3D] dark:bg-[#D97757]/15 dark:text-[#D97757] font-medium">
-                  v0.7.1
+                  {latestRelease.tag}
                 </span>
               </div>
             </div>
@@ -246,7 +243,7 @@ export function Navbar() {
               className="flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-mono rounded-lg border border-[#E2DBD0] dark:border-[#2B2823] bg-white/60 dark:bg-[#1A1916]/60 text-[#1A1815] dark:text-[#EDE9DF]"
             >
               <GithubIcon className="w-4 h-4 text-[#787368]" />
-              <span>GitHub Repository (v0.7.1)</span>
+              <span>GitHub Repository ({latestRelease.tag})</span>
               <span className="text-[#C15F3D] font-bold">★ Open Source</span>
             </a>
           </div>

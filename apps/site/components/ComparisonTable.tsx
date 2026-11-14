@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Sparkles, X } from "lucide-react";
+import { useLatestRelease } from "@/lib/useLatestRelease";
 
 interface FeatureRow {
   name: string;
@@ -106,6 +107,8 @@ const features: FeatureRow[] = [
 ];
 
 export function ComparisonTable() {
+  const release = useLatestRelease();
+
   return (
     <section
       id="compare"
@@ -147,7 +150,7 @@ export function ComparisonTable() {
                         CADENCE
                       </span>
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#C15F3D] text-white">
-                        v0.7.1 • Open Source
+                        {release.tag} • Open Source
                       </span>
                     </div>
                   </th>

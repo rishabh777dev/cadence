@@ -3,6 +3,7 @@
 import { Download, Lock, Play, Sparkles, Zap } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { useLatestRelease } from "@/lib/useLatestRelease";
 import { CadenceStudioMockup } from "./CadenceStudioMockup";
 
 interface DownloadOption {
@@ -15,6 +16,7 @@ interface DownloadOption {
 
 export function Hero() {
   const [osName, setOsName] = useState<"mac" | "windows" | "linux">("mac");
+  const release = useLatestRelease();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -30,15 +32,15 @@ export function Hero() {
       {
         platform: "macOS",
         arch: "Apple Silicon & Intel (.dmg)",
-        filename: "Cadence-0.7.1.dmg",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.dmg",
+        filename: `Cadence-${release.version}.dmg`,
+        url: "/api/download?platform=mac&format=dmg",
         icon: "apple",
       },
       {
         platform: "macOS",
         arch: "ARM64 (.zip)",
-        filename: "Cadence-0.7.1-arm64.zip",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1-arm64.zip",
+        filename: `Cadence-${release.version}-arm64.zip`,
+        url: "/api/download?platform=mac&format=zip",
         icon: "apple",
       },
     ],
@@ -46,8 +48,8 @@ export function Hero() {
       {
         platform: "Windows",
         arch: "x64 (.exe Installer)",
-        filename: "Cadence-0.7.1-setup.exe",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1-setup.exe",
+        filename: `Cadence-${release.version}-setup.exe`,
+        url: "/api/download?platform=windows",
         icon: "windows",
       },
     ],
@@ -55,15 +57,15 @@ export function Hero() {
       {
         platform: "Linux",
         arch: ".AppImage (x64)",
-        filename: "Cadence-0.7.1.AppImage",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.AppImage",
+        filename: `Cadence-${release.version}.AppImage`,
+        url: "/api/download?platform=linux&format=appimage",
         icon: "linux",
       },
       {
         platform: "Linux",
         arch: ".deb (Debian/Ubuntu)",
-        filename: "Cadence-0.7.1.deb",
-        url: "https://github.com/rishabh777dev/cadence/releases/latest/download/Cadence-0.7.1.deb",
+        filename: `Cadence-${release.version}.deb`,
+        url: "/api/download?platform=linux&format=deb",
         icon: "linux",
       },
     ],
@@ -106,7 +108,7 @@ export function Hero() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C15F3D]" />
           </span>
           <span className="text-xs font-medium tracking-wide text-[#787368] dark:text-[#A19B8E]">
-            Cadence v0.7.1 is live
+            Cadence {release.tag} is live
           </span>
           <span className="text-xs text-[#E2DBD0] dark:text-[#2B2823]">|</span>
           <a
@@ -181,7 +183,7 @@ export function Hero() {
             <Download className="w-5 h-5 shrink-0 group-hover:translate-y-0.5 transition-transform" />
             <span>Download for {primaryDownload.platform}</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 font-mono text-white">
-              v0.7.1
+              {release.tag}
             </span>
           </a>
 
